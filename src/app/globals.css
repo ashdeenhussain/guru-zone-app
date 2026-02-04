@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+:root {
+  /* Default (Dark Mode - Booyah Legend) */
+  --background: #050505;
+  /* Deeper Black */
+  --foreground: #fafafa;
+
+  /* Primary - Rich Gold */
+  --primary: #FFD700;
+  /* Gold */
+  --primary-foreground: #000000;
+
+  /* Muted/Secondary */
+  --muted: #1f1f1f;
+  --muted-foreground: #a3a3a3;
+
+  /* Card/Surface */
+  --card: #121212;
+  /* Slightly lighter than bg */
+  --card-foreground: #fafafa;
+
+  /* Borders */
+  --border: #262626;
+}
+
+[data-theme='light'] {
+  /* Light Mode - Premium & High Contrast */
+  --background: #f0f2f5;
+  /* Subtle cool gray - provides depth against white cards */
+  --foreground: #1a1a1a;
+  /* Sharp black for text */
+
+  /* Primary - Rich Gold/Amber for visibility on light */
+  --primary: #ca8a04;
+  /* Yellow-600 - darker/richer than default */
+  --primary-foreground: #ffffff;
+
+  /* Muted */
+  --muted: #e5e7eb;
+  /* Gray-200 */
+  --muted-foreground: #6b7280;
+  /* Gray-500 */
+
+  /* Card */
+  --card: #ffffff;
+  /* Pure white cards to pop against standard bg */
+  --card-foreground: #1a1a1a;
+
+  /* Borders */
+  --border: #d1d5db;
+  /* Gray-300 - more visible borders */
+}
+
+[data-theme='mix'] {
+  /* Intermediate Mode - Slate/Dim (Not fully black, not white) */
+  --background: #1e293b;
+  /* Slate-800 */
+  --foreground: #f0fdf4;
+
+  /* Primary */
+  --primary: #FDBA74;
+  /* Orange-300ish */
+  --primary-foreground: #1e293b;
+
+  /* Muted */
+  --muted: #334155;
+  /* Slate-700 */
+  --muted-foreground: #94a3b8;
+
+  /* Card */
+  --card: #334155;
+  /* Slate-700 */
+  --card-foreground: #f8fafc;
+
+  /* Borders */
+  --border: #475569;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+
+  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Custom Utilities */
+.text-stroke-primary {
+  -webkit-text-stroke: 1px var(--primary);
+  color: transparent;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom Glass Utilities */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-card {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
