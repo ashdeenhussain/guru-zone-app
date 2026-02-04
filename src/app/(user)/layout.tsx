@@ -8,6 +8,8 @@ import { authOptions } from "@/lib/auth";
 import OnboardingFlow from "@/components/onboarding/OnboardingFlow";
 import MobileNavigation from "@/components/MobileNavigation";
 
+export const dynamic = "force-dynamic";
+
 async function getMaintenanceStatus() {
     try {
         await connectDB();
