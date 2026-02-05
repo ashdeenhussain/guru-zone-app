@@ -245,7 +245,7 @@ export default function BuyCoinsModal({ isOpen, onClose }: BuyCoinsModalProps) {
                                                 : "border-border bg-muted/30 text-muted-foreground hover:border-primary/50 hover:text-foreground"
                                                 }`}
                                         >
-                                            {val} Coins
+                                            {val} Coins (Rs. {val})
                                         </button>
                                     ))}
                                 </div>
@@ -355,7 +355,7 @@ export default function BuyCoinsModal({ isOpen, onClose }: BuyCoinsModalProps) {
                                 </div>
 
                                 <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 text-center">
-                                    <p className="text-sm text-muted-foreground mb-1">Send {amount} PKR/Coins to</p>
+                                    <p className="text-sm text-muted-foreground mb-1">Send <strong>Rs. {amount}</strong> to</p>
                                     <p className="text-xl font-bold text-primary">
                                         {selectedMethod.bankName}
                                     </p>

@@ -23,6 +23,7 @@ import {
     MessageCircle,
     Settings,
 } from "lucide-react";
+import NotificationDropdown from "@/components/dashboard/NotificationDropdown";
 
 export default function MobileNavigation() {
     const pathname = usePathname();
@@ -51,10 +52,7 @@ export default function MobileNavigation() {
 
                 <div className="flex items-center gap-3">
                     <ThemeToggle />
-                    <Link href="/dashboard/settings" className="relative p-2 rounded-xl bg-muted/50 border border-border text-foreground hover:bg-muted transition-all">
-                        <Bell size={20} />
-                        <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full animate-pulse ring-2 ring-background"></span>
-                    </Link>
+                    <NotificationDropdown />
                 </div>
             </div>
 

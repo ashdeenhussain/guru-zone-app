@@ -99,7 +99,10 @@ export default function WalletPage() {
                             </div>
                             <div className="flex items-baseline gap-2">
                                 <h2 className="text-5xl font-black text-foreground tracking-tight">{balance}</h2>
-                                <span className="text-xl font-bold text-muted-foreground">Coins</span>
+                                <div className="flex flex-col">
+                                    <span className="text-xl font-bold text-muted-foreground">Coins</span>
+                                    <span className="text-xs text-muted-foreground/60 font-medium">1 Coin = 1 PKR</span>
+                                </div>
                             </div>
                         </div>
 

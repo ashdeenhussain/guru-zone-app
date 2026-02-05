@@ -24,6 +24,10 @@ const NotificationSchema = new Schema(
             enum: ['info', 'success', 'warning', 'error'],
             default: 'info',
         },
+        link: {
+            type: String,
+            required: false,
+        },
     },
     { timestamps: true }
 );

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Edit2 } from "lucide-react";
 import { AVATARS } from "@/lib/avatars";
+import NotificationDropdown from "@/components/dashboard/NotificationDropdown";
 
 interface DashboardHeaderProps {
     userName: string;
@@ -41,13 +42,16 @@ export default function DashboardHeader({ userName, avatarId }: DashboardHeaderP
             </div>
 
             {/* Edit Profile Button (Right Center) */}
-            <Link
-                href="/dashboard/profile"
-                className="p-3 bg-muted/40 hover:bg-muted rounded-2xl border border-transparent hover:border-border transition-all group/edit z-10"
-                aria-label="Edit Profile"
-            >
-                <Edit2 size={20} className="text-muted-foreground group-hover/edit:text-primary transition-colors" />
-            </Link>
+            <div className="flex items-center gap-2 z-10">
+                <NotificationDropdown />
+                <Link
+                    href="/dashboard/profile"
+                    className="p-3 bg-muted/40 hover:bg-muted rounded-2xl border border-transparent hover:border-border transition-all group/edit z-10"
+                    aria-label="Edit Profile"
+                >
+                    <Edit2 size={20} className="text-muted-foreground group-hover/edit:text-primary transition-colors" />
+                </Link>
+            </div>
         </div>
     );
 }

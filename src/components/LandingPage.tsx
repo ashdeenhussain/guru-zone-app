@@ -64,20 +64,19 @@ export default function LandingPage() {
                     </div>
 
                     {/* Floating Brand Header */}
-                    {/* Floating Brand Header */}
                     <div className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/80 backdrop-blur-md shadow-sm">
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="relative w-10 h-10 md:w-11 md:h-11 rounded-xl overflow-hidden shadow-lg border border-white/10">
                                     <Image
                                         src="/logo.png"
-                                        alt="Guru Warriors Logo"
+                                        alt="Guru Zone Logo"
                                         fill
                                         className="object-cover"
                                     />
                                 </div>
                                 <span className="font-black text-lg md:text-xl tracking-tighter text-foreground drop-shadow-md">
-                                    GURU WARRIORS <span className="text-primary">ARENA</span>
+                                    GURU <span className="text-primary">ZONE</span>
                                 </span>
                             </div>
                             <Link href="/login">
@@ -154,7 +153,7 @@ export default function LandingPage() {
                                 className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-4 w-full max-w-5xl mx-auto p-4 rounded-2xl border border-border bg-card/40 backdrop-blur-md shadow-lg"
                             >
                                 <StatItem icon={Users} label="Active Players" value="10K+" />
-                                <StatItem icon={Trophy} label="Prize Pool" value="PKR 5L+" />
+                                <StatItem icon={Trophy} label="Prize Pool" value="5L+ Coins" />
                                 <StatItem icon={Gamepad2} label="Daily Matches" value="50+" />
                                 <StatItem icon={Timer} label="Instant Payout" value="24/7" />
                             </motion.div>
@@ -208,8 +207,8 @@ export default function LandingPage() {
                                     mode="SOLO"
                                     modeColor="bg-primary text-black"
                                     title="Daily Survival #42"
-                                    prize="PKR 1,000"
-                                    entry="PKR 20"
+                                    prize="1,000 Coins"
+                                    entry="20 Coins"
                                     filled="41/48 Players"
                                     status="Filling Fast"
                                     statusColor="text-green-500"
@@ -223,8 +222,8 @@ export default function LandingPage() {
                                     mode="SQUAD"
                                     modeColor="bg-purple-500 text-white"
                                     title="Pro League Qualifier"
-                                    prize="PKR 5,000"
-                                    entry="PKR 100"
+                                    prize="5,000 Coins"
+                                    entry="100 Coins"
                                     filled="6/12 Squads"
                                     status="Open"
                                     statusColor="text-yellow-500"
@@ -238,8 +237,8 @@ export default function LandingPage() {
                                     mode="DUO vs DUO"
                                     modeColor="bg-blue-500 text-white"
                                     title="Sniper Only Challenge"
-                                    prize="PKR 2,000"
-                                    entry="PKR 50"
+                                    prize="2,000 Coins"
+                                    entry="50 Coins"
                                     filled="23/24 Duos"
                                     status="Last Spot!"
                                     statusColor="text-red-500"

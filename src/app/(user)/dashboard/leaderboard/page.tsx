@@ -144,7 +144,7 @@ export default function LeaderboardPage() {
                                         <div className="w-px h-8 bg-border"></div>
                                         <div className="text-center">
                                             <p className="text-xs text-muted-foreground uppercase">Earnings</p>
-                                            <p className="text-sm font-bold text-green-500">${rank2.netEarnings}</p>
+                                            <p className="text-sm font-bold text-green-500">🪙 {rank2.netEarnings}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -183,7 +183,7 @@ export default function LeaderboardPage() {
                                         </div>
                                         <div className="bg-muted/50 p-2 rounded-lg">
                                             <p className="text-xs text-muted-foreground uppercase">Earnings</p>
-                                            <p className="text-xl font-bold text-green-500">${rank1.netEarnings}</p>
+                                            <p className="text-xl font-bold text-green-500">🪙 {rank1.netEarnings}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -221,7 +221,7 @@ export default function LeaderboardPage() {
                                         <div className="w-px h-8 bg-border"></div>
                                         <div className="text-center">
                                             <p className="text-xs text-muted-foreground uppercase">Earnings</p>
-                                            <p className="text-sm font-bold text-green-500">${rank3.netEarnings}</p>
+                                            <p className="text-sm font-bold text-green-500">🪙 {rank3.netEarnings}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -264,7 +264,7 @@ export default function LeaderboardPage() {
                                         <span className="font-semibold text-foreground truncate">{user.name}</span>
                                     </div>
                                     <div className="w-20 text-center font-bold text-primary">{user.totalWins}</div>
-                                    <div className="w-24 text-right font-medium text-green-500">${user.netEarnings}</div>
+                                    <div className="w-24 text-right font-medium text-green-500">🪙 {user.netEarnings}</div>
                                 </motion.div>
                             ))}
                         </div>
@@ -294,7 +294,7 @@ export default function LeaderboardPage() {
                             </div>
                             <div className="text-center pl-4 border-l border-border">
                                 <p className="text-xs text-muted-foreground uppercase">Earned</p>
-                                <p className="text-xl font-bold text-green-500">${currentUser.netEarnings}</p>
+                                <p className="text-xl font-bold text-green-500">🪙 {currentUser.netEarnings}</p>
                             </div>
                         </div>
                     </div>

@@ -5,6 +5,7 @@ import User from "@/models/User";
 import StoreProduct from "@/models/StoreProduct";
 import Order from "@/models/Order";
 import Transaction from "@/models/Transaction";
+import Notification from "@/models/Notification";
 import mongoose from "mongoose";
 
 export async function POST(req: Request) {
@@ -74,6 +75,15 @@ export async function POST(req: Request) {
             type: 'shop_purchase',
             description: `Purchased ${product.title}`,
             status: 'approved' // Set to approved as the deduction already happened
+        });
+
+        // 4. Create Notification for User
+        await Notification.create({
+            userId: user._id,
+            title: "Purchase Successful",
+            message: `You successfully purchased ${product.title}. It is now pending processing.`,
+            type: "success",
+            link: "/dashboard/shop"
         });
 
         return Response.json({

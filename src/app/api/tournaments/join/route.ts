@@ -6,6 +6,7 @@ import Tournament from '@/models/Tournament';
 import User from '@/models/User';
 import Transaction from '@/models/Transaction';
 import { processRankRewards } from '@/lib/reward-processor';
+import Notification from '@/models/Notification';
 import mongoose from 'mongoose';
 
 export async function POST(req: Request) {
@@ -136,6 +137,16 @@ export async function POST(req: Request) {
         } catch (e) {
             console.error("Reward processing failed", e);
         }
+
+        // 10. Create Notification
+        const notification = new Notification({
+            userId: user._id,
+            title: "Tournament Joined!",
+            message: `You successfully joined ${tournament.title}. Good luck!`,
+            type: "success",
+            link: `/dashboard/tournaments/${tournament._id}`
+        });
+        await notification.save({ session });
 
         return NextResponse.json({ message: 'Joined tournament successfully', tournament }, { status: 200 });
 
