@@ -49,10 +49,10 @@ export default function Navbar() {
                         {/* Logo */}
                         <Link href={session ? "/dashboard" : "/"} className="flex items-center space-x-2">
                             <div className="relative h-10 w-10 overflow-hidden rounded-lg">
-                                <img src="/logo.png" alt="ZP Logo" className="h-full w-full object-cover" />
+                                <img src="/logo.jpg" alt="Guru Zone Logo" className="h-full w-full object-cover" />
                             </div>
                             <span className="hidden sm:block text-xl font-bold text-primary tracking-tighter">
-                                ZP BATTLE ZONE
+                                GURU ZONE
                             </span>
                         </Link>
                     </div>

@@ -54,7 +54,7 @@ export default function Sidebar({ onClose }: AdminSidebarProps) {
         <aside className="w-64 bg-card border-r border-border flex flex-col h-full relative">
             <div className="p-6 border-b border-border flex items-center justify-between">
                 <h2 className="text-2xl font-bold tracking-tight text-foreground">
-                    <span className="text-primary">ZP</span> Admin
+                    <span className="text-primary">Guru Zone</span> Admin
                 </h2>
                 {/* Mobile Close Button */}
                 <button onClick={onClose} className="lg:hidden p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground">

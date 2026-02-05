@@ -45,7 +45,7 @@ export default function MobileNavigation() {
             <div className="fixed top-0 left-0 right-0 z-40 h-16 px-4 bg-background/80 backdrop-blur-xl border-b border-border flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-3">
                     <div className="relative h-9 w-9 overflow-hidden rounded-xl border border-border shadow-sm">
-                        <img src="/logo.png" alt="ZP" className="h-full w-full object-cover" />
+                        <img src="/logo.jpg" alt="Guru Zone" className="h-full w-full object-cover" />
                     </div>
                 </div>
 

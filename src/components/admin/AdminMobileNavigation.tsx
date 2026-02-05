@@ -43,7 +43,7 @@ export default function AdminMobileNavigation() {
             {/* Top Bar for Admin */}
             <div className="fixed top-0 left-0 right-0 z-40 h-16 px-4 bg-background/95 backdrop-blur-md border-b border-border flex items-center justify-between shadow-sm transition-colors duration-300">
                 <div className="flex items-center gap-3">
-                    <span className="font-bold text-lg"><span className="text-primary">ZP</span> <span className="text-foreground">Admin</span></span>
+                    <span className="font-bold text-lg"><span className="text-primary">Guru Zone</span> <span className="text-foreground">Admin</span></span>
                 </div>
 
                 <div className="flex items-center gap-3">
