@@ -14,6 +14,7 @@ import {
     AlertCircle
 } from "lucide-react";
 import { motion } from "framer-motion";
+import PageHeader from "@/components/PageHeader";
 
 interface Transaction {
     _id: string;
@@ -81,22 +82,13 @@ export default function TransactionHistoryPage() {
     return (
         <div className="min-h-screen bg-background text-foreground p-4 md:p-8 pb-24 lg:pb-8">
             <div className="max-w-6xl mx-auto space-y-8">
-                {/* Minimal Header */}
-                <div className="pt-2 pb-3 px-4 border-b border-border/40 bg-background/50 backdrop-blur-md sticky top-0 z-30 mb-6 flex items-center justify-between -mx-4 md:-mx-8">
-                    <div className="flex items-center gap-3">
-                        <div className="p-1.5 bg-primary/10 rounded-lg shrink-0">
-                            <Clock className="w-5 h-5 text-primary" />
-                        </div>
-                        <div>
-                            <h1 className="text-base font-bold text-foreground leading-none">
-                                History
-                            </h1>
-                            <p className="text-[10px] text-muted-foreground font-medium mt-0.5">
-                                Transactions & Activities
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                {/* Page Title Header */}
+                <PageHeader
+                    title="History"
+                    description="Transactions & Activities"
+                    icon={Clock}
+                    className="-mx-4 md:-mx-8 lg:rounded-xl"
+                />
 
                 {/* Filter Tabs */}
                 <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">

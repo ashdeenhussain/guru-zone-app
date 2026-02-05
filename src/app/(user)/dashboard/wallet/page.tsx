@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import BuyCoinsModal from "@/components/wallet/BuyCoinsModal";
 import TransactionHistory from "@/components/wallet/TransactionHistory";
+import PageHeader from "@/components/PageHeader";
 
 interface Transaction {
     _id: string;
@@ -57,28 +58,20 @@ export default function WalletPage() {
 
     return (
         <div className="space-y-8 pb-24 lg:pb-8">
-            {/* Minimal Header */}
-            <div className="pt-2 pb-3 px-4 border-b border-border/40 bg-background/50 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <div className="p-1.5 bg-primary/10 rounded-lg shrink-0">
-                        <Wallet className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                        <h1 className="text-base font-bold text-foreground leading-none">
-                            My Wallet
-                        </h1>
-                        <p className="text-[10px] text-muted-foreground font-medium mt-0.5">
-                            Manage your coins
-                        </p>
-                    </div>
-                </div>
-                <button
-                    onClick={handleRefresh}
-                    className="p-1.5 rounded-full bg-muted/50 hover:bg-muted text-muted-foreground transition-colors"
-                >
-                    <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
-                </button>
-            </div>
+            {/* Page Title Header */}
+            <PageHeader
+                title="My Wallet"
+                description="Manage your coins"
+                icon={Wallet}
+                customElement={
+                    <button
+                        onClick={handleRefresh}
+                        className="p-1.5 rounded-full bg-muted/50 hover:bg-muted text-muted-foreground transition-colors"
+                    >
+                        <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+                    </button>
+                }
+            />
 
             <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-8">
                 {/* Hero Card */}
@@ -132,7 +125,7 @@ export default function WalletPage() {
                         </div>
                     </div>
 
-                    <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+                    <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm p-4 md:p-6">
                         <TransactionHistory transactions={transactions} loading={loading} />
                     </div>
                 </div>

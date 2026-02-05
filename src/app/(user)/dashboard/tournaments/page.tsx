@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import TournamentCard from '@/components/TournamentCard';
 import { Trophy, Filter, Wallet } from 'lucide-react';
+import PageHeader from '@/components/PageHeader';
 import { useSearchParams } from 'next/navigation';
 
 interface Tournament {
@@ -91,22 +92,12 @@ export default function TournamentsPage() {
 
     return (
         <div className="bg-background text-foreground pb-24 lg:pb-8">
-            {/* Minimal Header */}
-            <div className="pt-2 pb-3 px-4 border-b border-border/40 bg-background/50 backdrop-blur-md sticky top-0 z-30">
-                <div className="flex items-center gap-3">
-                    <div className="p-1.5 bg-primary/10 rounded-lg shrink-0">
-                        <Trophy className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                        <h1 className="text-base font-bold text-foreground leading-none">
-                            Tournaments
-                        </h1>
-                        <p className="text-[10px] text-muted-foreground font-medium mt-0.5">
-                            Join Battle & Win
-                        </p>
-                    </div>
-                </div>
-            </div>
+            {/* Page Title Header */}
+            <PageHeader
+                title="Tournaments"
+                description="Join Battle & Win"
+                icon={Trophy}
+            />
 
             <div className="p-4 md:p-6 space-y-6 max-w-4xl mx-auto">
 

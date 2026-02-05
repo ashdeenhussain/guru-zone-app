@@ -6,6 +6,7 @@ import { Info, X, CheckCircle, AlertCircle, Loader2, CreditCard, ShoppingBag, Wa
 import { useRouter } from "next/navigation";
 import LuckyWheelGame from "./spin/LuckyWheelGame";
 import BannerCarousel from "@/components/shop/BannerCarousel";
+import PageHeader from "@/components/PageHeader";
 
 // Types
 interface Product {
@@ -162,24 +163,12 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
 
     return (
         <div className="space-y-8 text-foreground pb-24 lg:pb-8">
-            {/* Minimal Header */}
-            <div className="pt-2 pb-3 px-4 border-b border-border/40 bg-background/50 backdrop-blur-md sticky top-0 z-30">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="p-1.5 bg-primary/10 rounded-lg shrink-0">
-                            <ShoppingBag className="w-5 h-5 text-primary" />
-                        </div>
-                        <div>
-                            <h1 className="text-base font-bold text-foreground leading-none">
-                                Diamond Shop
-                            </h1>
-                            <p className="text-[10px] text-muted-foreground font-medium mt-0.5">
-                                Instant Top-ups & Deals
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {/* Page Title Header */}
+            <PageHeader
+                title="Diamond Shop"
+                description="Instant Top-ups & Deals"
+                icon={ShoppingBag}
+            />
 
             <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
                 {/* Wallet & Lucky Spin Row */}

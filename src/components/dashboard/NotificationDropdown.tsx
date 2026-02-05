@@ -55,10 +55,11 @@ export default function NotificationDropdown() {
                 body: JSON.stringify({ notificationId: id }),
             });
 
-            if (link) {
-                setIsOpen(false);
-                router.push(link);
-            }
+            // Navigation removed as per user request (Read Only mode)
+            // if (link) {
+            //     setIsOpen(false);
+            //     router.push(link);
+            // }
         } catch (error) {
             console.error("Failed to mark as read", error);
         }
@@ -102,7 +103,7 @@ export default function NotificationDropdown() {
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
                             transition={{ duration: 0.2 }}
-                            className="absolute right-0 mt-2 w-80 md:w-96 max-h-[80vh] overflow-hidden bg-card/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl z-50 flex flex-col"
+                            className="fixed left-4 right-4 top-20 md:fixed-none md:absolute md:right-0 md:left-auto md:top-full md:mt-2 md:w-96 max-h-[80vh] overflow-hidden bg-card/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl z-50 flex flex-col"
                         >
                             {/* Header */}
                             <div className="p-4 border-b border-border flex items-center justify-between sticky top-0 bg-card/95 z-10">
@@ -130,8 +131,8 @@ export default function NotificationDropdown() {
                                             key={notification._id}
                                             onClick={() => markAsRead(notification._id, notification.link)}
                                             className={`
-                                                relative p-3 rounded-lg transition-all cursor-pointer group border border-transparent
-                                                ${notification.isRead ? 'bg-transparent hover:bg-muted/50' : 'bg-muted/30 hover:bg-muted border-l-2 border-l-primary'}
+                                                relative p-3 rounded-lg transition-all border border-transparent
+                                                ${notification.isRead ? 'bg-transparent' : 'bg-muted/30 border-l-2 border-l-primary'}
                                             `}
                                         >
                                             <div className="flex gap-3">

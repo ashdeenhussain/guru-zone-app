@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { AVATARS } from '@/lib/avatars';
+import PageHeader from "@/components/PageHeader";
 
 // Helper for tailwind class merging
 function cn(...inputs: (string | undefined | null | false)[]) {
@@ -81,22 +82,12 @@ export default function LeaderboardPage() {
 
     return (
         <div className="min-h-screen bg-background text-foreground pb-24 md:pb-10">
-            {/* Minimal Header */}
-            <div className="pt-2 pb-3 px-4 border-b border-border/40 bg-background/50 backdrop-blur-md sticky top-0 z-30 mb-6 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <div className="p-1.5 bg-primary/10 rounded-lg shrink-0">
-                        <Trophy className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                        <h1 className="text-base font-bold text-foreground leading-none">
-                            Leaderboard
-                        </h1>
-                        <p className="text-[10px] text-muted-foreground font-medium mt-0.5">
-                            Global Rankings
-                        </p>
-                    </div>
-                </div>
-            </div>
+            {/* Page Title Header */}
+            <PageHeader
+                title="Leaderboard"
+                description="Global Rankings"
+                icon={Trophy}
+            />
 
             <div className="max-w-5xl mx-auto px-4 py-8 space-y-10">
 
@@ -274,27 +265,33 @@ export default function LeaderboardPage() {
 
             {/* Sticky My Rank Bar */}
             {currentUser && (
-                <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 shadow-[0_-5px_20px_rgba(0,0,0,0.1)] z-40 transform translate-y-0 transition-transform md:translate-y-0 safe-pb">
-                    <div className="max-w-5xl mx-auto flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className="flex flex-col items-center justify-center bg-primary w-12 h-12 rounded-lg shadow-lg">
-                                <span className="text-xs text-primary-foreground uppercase font-bold">Your</span>
-                                <span className="text-lg font-bold text-primary-foreground leading-none">#{currentUser.rank}</span>
-                            </div>
-                            <div>
-                                <h4 className="font-bold text-foreground text-lg">My Ranking</h4>
-                                <p className="text-muted-foreground text-xs truncate max-w-[150px] md:max-w-none">Keep playing to reach the top!</p>
-                            </div>
-                        </div>
+                <div className="fixed bottom-[5.5rem] md:bottom-6 left-0 right-0 z-40 flex justify-center pointer-events-none">
+                    <div className="w-full pl-0 lg:pl-20 flex justify-center">
+                        <div className="w-full max-w-5xl px-4 pointer-events-auto">
+                            <div className="bg-card border border-border p-4 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.2)] dark:shadow-[0_0_50px_rgba(0,0,0,0.5)] transform translate-y-0 transition-transform">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex flex-col items-center justify-center bg-primary w-12 h-12 rounded-lg shadow-lg">
+                                            <span className="text-xs text-primary-foreground uppercase font-bold">Your</span>
+                                            <span className="text-lg font-bold text-primary-foreground leading-none">#{currentUser.rank}</span>
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-foreground text-lg">My Ranking</h4>
+                                            <p className="text-muted-foreground text-xs truncate max-w-[150px] md:max-w-none">Keep playing to reach the top!</p>
+                                        </div>
+                                    </div>
 
-                        <div className="flex items-center gap-4 md:gap-8">
-                            <div className="text-center">
-                                <p className="text-xs text-muted-foreground uppercase">Wins</p>
-                                <p className="text-xl font-bold text-primary">{currentUser.totalWins}</p>
-                            </div>
-                            <div className="text-center pl-4 border-l border-border">
-                                <p className="text-xs text-muted-foreground uppercase">Earned</p>
-                                <p className="text-xl font-bold text-green-500">🪙 {currentUser.netEarnings}</p>
+                                    <div className="flex items-center gap-4 md:gap-8">
+                                        <div className="text-center">
+                                            <p className="text-xs text-muted-foreground uppercase">Wins</p>
+                                            <p className="text-xl font-bold text-primary">{currentUser.totalWins}</p>
+                                        </div>
+                                        <div className="text-center pl-4 border-l border-border">
+                                            <p className="text-xs text-muted-foreground uppercase">Earned</p>
+                                            <p className="text-xl font-bold text-green-500">🪙 {currentUser.netEarnings}</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -1,4 +1,5 @@
 import DashboardSidebar from "@/components/DashboardSidebar";
+import DashboardHeader from "@/components/DashboardHeader";
 import connectDB from "@/lib/db";
 import SystemSetting from "@/models/SystemSetting";
 import User from "@/models/User";
@@ -73,8 +74,11 @@ export default async function UserLayout({
         <div className="min-h-screen flex bg-background">
             <DashboardSidebar />
             <MobileNavigation />
-            <main className="flex-1 lg:ml-0 overflow-x-hidden pb-16 lg:pb-0">
-                <div className="w-full pt-16 lg:pt-0">
+
+            <DashboardHeader />
+
+            <main className="flex-1 overflow-x-hidden pb-16 lg:pb-0 lg:pl-20 pt-20">
+                <div className="w-full">
                     {children}
                 </div>
             </main>

@@ -72,9 +72,9 @@ export default function TransactionHistory({ transactions, loading }: Transactio
 
     const getStatusColor = (status: string) => {
         switch (status.toLowerCase()) {
-            case 'approved': case 'completed': return 'text-green-500 bg-green-500/10 border-green-500/20';
-            case 'rejected': case 'failed': return 'text-red-500 bg-red-500/10 border-red-500/20';
-            default: return 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20';
+            case 'approved': case 'completed': return 'text-green-600 bg-green-500/15 dark:text-green-400 dark:bg-green-500/10';
+            case 'rejected': case 'failed': return 'text-red-600 bg-red-500/15 dark:text-red-400 dark:bg-red-500/10';
+            default: return 'text-amber-600 bg-amber-500/15 dark:text-amber-400 dark:bg-amber-500/10';
         }
     };
 
@@ -151,7 +151,7 @@ export default function TransactionHistory({ transactions, loading }: Transactio
                                         {trx.amount}
                                     </p>
                                     <div className="flex justify-end mt-1">
-                                        <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium border", getStatusColor(status))}>
+                                        <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold", getStatusColor(status))}>
                                             {getStatusIcon(status)}
                                             <span className="capitalize">{status}</span>
                                         </span>
