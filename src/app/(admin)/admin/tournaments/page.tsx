@@ -424,9 +424,15 @@ function CreateTournamentForm({ onBack, onSuccess }: { onBack: () => void, onSuc
         e.preventDefault();
         setLoading(true);
         try {
+            // Fix: Convert local datetime-local string to UTC ISO string
+            const payload = {
+                ...formData,
+                startTime: new Date(formData.startTime).toISOString()
+            };
+
             const res = await fetch('/api/admin/tournaments', {
                 method: 'POST',
-                body: JSON.stringify(formData),
+                body: JSON.stringify(payload),
                 headers: { 'Content-Type': 'application/json' }
             });
             const data = await res.json();
