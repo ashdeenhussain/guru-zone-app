@@ -27,7 +27,7 @@ export default function Navbar() {
     const pathname = usePathname();
 
     // Hide Navbar on dashboard pages as they have their own sidebar, and on the Landing Page ("/")
-    if (pathname?.startsWith("/dashboard") || pathname?.startsWith("/admin") || pathname === "/") {
+    if (pathname?.startsWith("/dashboard") || pathname?.startsWith("/admin") || pathname === "/" || pathname === "/login" || pathname === "/signup" || pathname === "/forgot-password" || pathname === "/reset-password") {
         return null;
     }
 

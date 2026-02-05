@@ -42,7 +42,7 @@ export default function AuthLayout({
                             />
                         </div>
                         <span className="font-black text-lg md:text-xl tracking-tighter text-foreground drop-shadow-md">
-                            GURU WARRIORS <span className="text-primary">ARENA</span>
+                            GURU <span className="text-primary">ZONE</span>
                         </span>
                     </Link>
 
