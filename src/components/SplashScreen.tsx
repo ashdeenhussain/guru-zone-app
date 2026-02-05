@@ -31,10 +31,11 @@ const SplashScreen = () => {
           className="relative w-40 h-40 md:w-56 md:h-56"
         >
           <Image
-            src="/logo.png"
-            alt="Logo"
-            fill
-            className="object-contain drop-shadow-[0_0_25px_rgba(250,204,21,0.5)] rounded-3xl"
+            src="/logo.jpg"
+            alt="Guru Zone Logo"
+            width={120}
+            height={120}
+            className="object-contain" // Use object-contain to prevent cropping
             priority
           />
         </motion.div>

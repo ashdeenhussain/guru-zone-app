@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     siteName: "Guru Zone",
     images: [
       {
-        url: "/logo.png", // Ensure this image exists in public folder
+        url: "/logo.jpg", // Ensure this image exists in public folder
         width: 800,
         height: 600,
         alt: "Guru Zone Logo",
@@ -39,9 +39,9 @@ export const metadata: Metadata = {
     type: "website",
   },
   icons: {
-    icon: "/logo.png",
-    shortcut: "/logo.png",
-    apple: "/logo.png",
+    icon: "/logo.jpg",
+    shortcut: "/logo.jpg",
+    apple: "/logo.jpg",
   },
 };
 

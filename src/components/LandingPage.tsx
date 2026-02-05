@@ -69,10 +69,11 @@ export default function LandingPage() {
                             <div className="flex items-center gap-3">
                                 <div className="relative w-10 h-10 md:w-11 md:h-11 rounded-xl overflow-hidden shadow-lg border border-white/10">
                                     <Image
-                                        src="/logo.png"
+                                        src="/logo.jpg"
                                         alt="Guru Zone Logo"
                                         fill
                                         className="object-cover"
+                                        priority
                                     />
                                 </div>
                                 <span className="font-black text-lg md:text-xl tracking-tighter text-foreground drop-shadow-md">

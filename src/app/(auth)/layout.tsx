@@ -35,7 +35,7 @@ export default function AuthLayout({
                     <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                         <div className="relative w-10 h-10 md:w-11 md:h-11 rounded-xl overflow-hidden shadow-lg border border-white/10">
                             <Image
-                                src="/logo.png"
+                                src="/logo.jpg"
                                 alt="Guru Warriors Logo"
                                 fill
                                 className="object-cover"
