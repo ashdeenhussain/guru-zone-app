@@ -28,6 +28,7 @@ export default async function ProfilePage() {
         freeFireUid: dbUser.freeFireUid || "",
         avatarId: dbUser.avatarId || 1,
         bio: dbUser.bio || "",
+        image: dbUser.image || "",
     };
 
     return (

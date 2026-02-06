@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { AVATARS } from '@/lib/avatars';
+import ImageUpload from '@/components/admin/ImageUpload';
+import Image from 'next/image';
 
 // Types
 interface Participant {
@@ -38,6 +40,7 @@ interface Tournament {
     format: 'Solo' | 'Duo' | 'Squad';
     gameType: 'BR' | 'CS';
     map: string;
+    banner?: string;
     entryFee: number;
     prizePool: number;
     prizeDistribution: {
@@ -326,8 +329,20 @@ function TournamentList({ tournaments, loading, onManage }: { tournaments: Tourn
                         onClick={() => onManage(tournament)}
                         className="group relative bg-card hover:bg-muted/30 border border-border/50 hover:border-primary/30 rounded-2xl p-5 cursor-pointer transition-all hover:scale-[1.01] hover:shadow-xl hover:shadow-primary/5 overflow-hidden"
                     >
-                        {/* Glow Effect */}
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/5 to-transparent rounded-bl-full pointer-events-none transition-opacity group-hover:opacity-100 opacity-0" />
+                        {/* Glow Effect or Banner */}
+                        {tournament.banner ? (
+                            <div className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity">
+                                <Image
+                                    src={tournament.banner}
+                                    alt={tournament.title}
+                                    fill
+                                    className="object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-b from-card/80 to-card" />
+                            </div>
+                        ) : (
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/5 to-transparent rounded-bl-full pointer-events-none transition-opacity group-hover:opacity-100 opacity-0" />
+                        )}
 
                         {/* Header */}
                         <div className="flex justify-between items-start mb-4 relative z-10">
@@ -402,6 +417,7 @@ function TournamentList({ tournaments, loading, onManage }: { tournaments: Tourn
 function CreateTournamentForm({ onBack, onSuccess }: { onBack: () => void, onSuccess: () => void }) {
     const [formData, setFormData] = useState({
         title: '',
+        banner: '',
         format: 'Solo',
         gameType: 'BR',
         map: 'Bermuda',
@@ -492,6 +508,15 @@ function CreateTournamentForm({ onBack, onSuccess }: { onBack: () => void, onSuc
                                     {name}
                                 </button>
                             ))}
+                        </div>
+
+                        <div className="space-y-2 pt-2">
+                            <ImageUpload
+                                value={formData.banner}
+                                onChange={(url) => setFormData({ ...formData, banner: url })}
+                                label="Tournament Banner (Optional)"
+                                className="w-full"
+                            />
                         </div>
                     </div>
 
@@ -610,8 +635,8 @@ function CreateTournamentForm({ onBack, onSuccess }: { onBack: () => void, onSuc
                         This will deduct fees from the Prize Pool wallet immediately.
                     </p>
                 </div>
-            </form>
-        </div>
+            </form >
+        </div >
     );
 }
 

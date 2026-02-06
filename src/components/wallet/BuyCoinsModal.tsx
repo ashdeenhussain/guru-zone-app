@@ -80,7 +80,8 @@ export default function BuyCoinsModal({ isOpen, onClose }: BuyCoinsModalProps) {
     const [senderName, setSenderName] = useState("");
     const [senderNumber, setSenderNumber] = useState("");
     const [trxId, setTrxId] = useState("");
-    const [screenshot, setScreenshot] = useState<File | null>(null);
+    const [proofUrl, setProofUrl] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
     const [showGuideModal, setShowGuideModal] = useState(false);
 
     // Helper to open file dialog safely
@@ -97,6 +98,34 @@ export default function BuyCoinsModal({ isOpen, onClose }: BuyCoinsModalProps) {
         }
     };
 
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const uploadRes = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const uploadData = await uploadRes.json();
+            if (uploadData.success) {
+                setProofUrl(uploadData.url);
+            } else {
+                alert('Failed to upload screenshot: ' + uploadData.error);
+            }
+        } catch (error) {
+            console.error("Upload error:", error);
+            alert("Failed to upload screenshot");
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     useEffect(() => {
         if (isOpen) {
             fetchMethods();
@@ -109,7 +138,8 @@ export default function BuyCoinsModal({ isOpen, onClose }: BuyCoinsModalProps) {
                 setSenderName("");
                 setSenderNumber("");
                 setTrxId("");
-                setScreenshot(null);
+                setProofUrl(null);
+                setIsUploading(false);
             }, 300);
         }
     }, [isOpen]);
@@ -138,35 +168,15 @@ export default function BuyCoinsModal({ isOpen, onClose }: BuyCoinsModalProps) {
 
     const handleSubmit = async () => {
         if (!selectedMethod || !amount) return;
+
+        if (!proofUrl) {
+            alert('Please upload a screenshot proof first.');
+            return;
+        }
+
         setIsSubmitting(true);
 
         try {
-            let screenshotUrl = "";
-
-            // 1. Upload Screenshot if exists
-            if (screenshot) {
-                const formData = new FormData();
-                formData.append('file', screenshot);
-
-                const uploadRes = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const uploadData = await uploadRes.json();
-                if (uploadData.success) {
-                    screenshotUrl = uploadData.url;
-                } else {
-                    alert('Failed to upload screenshot: ' + uploadData.error);
-                    setIsSubmitting(false);
-                    return;
-                }
-            } else {
-                alert('Please upload a screenshot proof.'); // Enforce screenshot
-                setIsSubmitting(false);
-                return;
-            }
-
             // 2. Submit Deposit Request
             const payload = {
                 amount: Number(amount),
@@ -174,7 +184,7 @@ export default function BuyCoinsModal({ isOpen, onClose }: BuyCoinsModalProps) {
                 senderName,
                 senderNumber,
                 trxId,
-                screenshot: screenshotUrl,
+                screenshot: proofUrl,
             };
 
             const res = await fetch('/api/finance/deposit', {
@@ -188,7 +198,6 @@ export default function BuyCoinsModal({ isOpen, onClose }: BuyCoinsModalProps) {
             if (res.ok) {
                 alert('Deposit request submitted! Please wait for approval.');
                 onClose();
-                // Ideally refresh parent state (trigger via prop if needed, or window reload for simple MVP)
                 window.location.reload();
             } else {
                 alert('Error: ' + data.message);
@@ -437,17 +446,27 @@ export default function BuyCoinsModal({ isOpen, onClose }: BuyCoinsModalProps) {
                                             id="screenshot-input"
                                             accept="image/*"
                                             className="hidden"
-                                            onChange={(e) => setScreenshot(e.target.files?.[0] || null)}
+                                            onChange={handleFileSelect}
                                         />
                                         <button
                                             onClick={handleUploadClick}
-                                            className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed p-6 transition-all ${screenshot
+                                            disabled={isUploading}
+                                            className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed p-6 transition-all relative overflow-hidden ${proofUrl
                                                 ? 'border-green-500/50 bg-green-500/10'
                                                 : 'border-border bg-muted/20 hover:border-primary hover:bg-primary/5'}`}
                                         >
-                                            <Upload size={20} className={screenshot ? "text-green-500" : "text-muted-foreground"} />
-                                            <span className={`text-sm font-medium ${screenshot ? "text-green-500" : "text-muted-foreground"}`}>
-                                                {screenshot ? screenshot.name : "Upload Payment Screenshot"}
+                                            {isUploading && (
+                                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10 backdrop-blur-[1px]">
+                                                    <div className="flex flex-col items-center gap-2">
+                                                        <Loader2 className="animate-spin text-primary" size={24} />
+                                                        <span className="text-xs font-bold text-white">Uploading Proof...</span>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <Upload size={20} className={proofUrl ? "text-green-500" : "text-muted-foreground"} />
+                                            <span className={`text-sm font-medium ${proofUrl ? "text-green-500" : "text-muted-foreground"}`}>
+                                                {proofUrl ? "Screenshot Uploaded!" : "Upload Payment Screenshot"}
                                             </span>
                                         </button>
                                     </div>

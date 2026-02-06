@@ -6,6 +6,10 @@ const TournamentSchema = new Schema(
             type: String,
             required: [true, 'Please provide a tournament title'],
         },
+        banner: {
+            type: String,
+            required: false,
+        },
         format: {
             type: String,
             enum: ['Solo', 'Duo', 'Squad'],

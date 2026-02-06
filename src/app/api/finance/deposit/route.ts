@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/db';
 import Transaction from '@/models/Transaction';
 import User from '@/models/User';
+import Notification from '@/models/Notification';
 
 export async function POST(req: Request) {
     try {
@@ -36,6 +37,14 @@ export async function POST(req: Request) {
                 senderName,
                 senderNumber
             }
+        });
+
+        // Create Notification for User
+        await Notification.create({
+            userId: session.user.id,
+            title: 'Deposit Request Submitted',
+            message: `Your deposit request of Rs ${amount} has been submitted and is pending approval.`,
+            type: 'info'
         });
 
         return NextResponse.json({ message: 'Deposit request submitted', transaction }, { status: 201 });

@@ -12,7 +12,7 @@ export async function PATCH(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { inGameName, freeFireUid, avatarId, bio } = body;
+        const { inGameName, freeFireUid, avatarId, bio, image } = body;
 
         await connectDB();
 
@@ -22,6 +22,7 @@ export async function PATCH(req: NextRequest) {
         if (freeFireUid !== undefined) updateData.freeFireUid = freeFireUid;
         if (avatarId !== undefined) updateData.avatarId = avatarId;
         if (bio !== undefined) updateData.bio = bio;
+        if (image !== undefined) updateData.image = image;
 
         const updatedUser = await User.findByIdAndUpdate(
             session.user.id,

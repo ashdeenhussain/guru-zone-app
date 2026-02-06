@@ -4,7 +4,8 @@ import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Edit2, Save, X, Shield, Crosshair, User as UserIcon, FileText, Plus } from "lucide-react";
+import { Edit2, Save, X, Shield, Crosshair, User as UserIcon, FileText, Plus, ImageIcon } from "lucide-react";
+import ImageUpload from "@/components/admin/ImageUpload";
 
 interface ProfileUser {
     name: string;
@@ -13,6 +14,7 @@ interface ProfileUser {
     freeFireUid: string;
     avatarId: number;
     bio: string;
+    image?: string;
 }
 
 import { AVATARS } from "@/lib/avatars";
@@ -27,6 +29,7 @@ export default function ProfileClient({ initialUser }: { initialUser: ProfileUse
         freeFireUid: initialUser.freeFireUid || "",
         avatarId: initialUser.avatarId || 1,
         bio: initialUser.bio || "",
+        image: initialUser.image || ""
     });
     const router = useRouter();
 
@@ -70,7 +73,7 @@ export default function ProfileClient({ initialUser }: { initialUser: ProfileUse
                     <div className="relative group">
                         <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-primary/50 shadow-[0_0_50px_rgba(234,179,8,0.2)] overflow-hidden bg-muted/50 relative backdrop-blur-sm">
                             <Image
-                                src={selectedAvatar.src}
+                                src={user.image || selectedAvatar.src}
                                 alt={selectedAvatar.name}
                                 fill
                                 className="object-cover"
@@ -148,19 +151,15 @@ export default function ProfileClient({ initialUser }: { initialUser: ProfileUse
                                 ))}
                             </div>
 
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setShowFeatureAlert(true);
-                                    setTimeout(() => setShowFeatureAlert(false), 3000);
-                                }}
-                                className="w-full mt-4 py-4 border-2 border-dashed border-border hover:border-primary/50 rounded-2xl flex items-center justify-center gap-3 text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all duration-300 group"
-                            >
-                                <div className="p-2 rounded-full bg-secondary/50 group-hover:bg-primary/10 transition-colors">
-                                    <Plus className="w-5 h-5" />
-                                </div>
-                                <span className="font-semibold">Create Custom Avatar</span>
-                            </button>
+                            <div className="mt-4">
+                                <label className="text-muted-foreground text-sm font-medium mb-2 block">Or Upload Custom Avatar</label>
+                                <ImageUpload
+                                    value={formData.image || ""}
+                                    onChange={(url) => setFormData({ ...formData, image: url })}
+                                    label="Upload Profile Picture"
+                                    className="w-full"
+                                />
+                            </div>
                         </div>
 
                         {/* Form Fields */}
@@ -235,27 +234,7 @@ export default function ProfileClient({ initialUser }: { initialUser: ProfileUse
                 </div>
             )}
 
-            {/* Custom "Coming Soon" Toast */}
-            <AnimatePresence>
-                {showFeatureAlert && (
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.5, y: 50 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.5, y: 20 }}
-                        className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50"
-                    >
-                        <div className="bg-[#1a1f3c] border border-yellow-500/50 shadow-[0_0_30px_rgba(234,179,8,0.3)] text-white px-6 py-4 rounded-2xl flex items-center gap-4 backdrop-blur-xl">
-                            <div className="bg-yellow-500/20 p-2 rounded-full">
-                                <Shield className="text-yellow-500 w-6 h-6" />
-                            </div>
-                            <div>
-                                <h4 className="font-bold text-yellow-500">Feature Locked</h4>
-                                <p className="text-sm text-gray-300">Avatar Creator is coming soon!</p>
-                            </div>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+
         </div>
     );
 }
