@@ -3,7 +3,8 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { RefreshCcw, X, ShieldAlert, DollarSign, TrendingUp, Eye, AlertCircle, CheckCircle, XCircle, Calendar, Filter, CreditCard } from 'lucide-react';
+import { RefreshCcw, X, ShieldAlert, DollarSign, TrendingUp, Eye, AlertCircle, CheckCircle, XCircle, Calendar, Filter, CreditCard, ZoomIn } from 'lucide-react';
+import ImageZoomModal from '@/components/admin/ImageZoomModal';
 
 interface Transaction {
     _id: string;
@@ -59,6 +60,7 @@ export default function AdminFinancePage() {
     const [showSafetyCheck, setShowSafetyCheck] = useState(false);
     const [showFinalReview, setShowFinalReview] = useState(false);
     const [showRejectReview, setShowRejectReview] = useState(false);
+    const [zoomImage, setZoomImage] = useState<{ src: string; alt: string } | null>(null);
 
 
 
@@ -811,15 +813,26 @@ export default function AdminFinancePage() {
                                 {/* DYNAMIC CONTENT BASED ON TYPE */}
                                 {selectedTrx.type === 'deposit' ? (
                                     // DEPOSIT: Show Proof Image
+                                    // DEPOSIT: Show Proof Image
                                     <div className="space-y-4">
-                                        <div className="bg-muted/10 rounded-lg border border-border p-2 flex justify-center items-center h-48 relative overflow-hidden group">
+                                        <div
+                                            className="bg-muted/10 rounded-lg border border-border p-2 flex justify-center items-center h-48 relative overflow-hidden group cursor-zoom-in"
+                                            onClick={() => selectedTrx.proofImage && setZoomImage({ src: selectedTrx.proofImage, alt: "Deposit Proof" })}
+                                        >
                                             {selectedTrx.proofImage ? (
-                                                <Image
-                                                    src={selectedTrx.proofImage}
-                                                    alt="Proof"
-                                                    fill
-                                                    className="object-contain"
-                                                />
+                                                <>
+                                                    <Image
+                                                        src={selectedTrx.proofImage}
+                                                        alt="Proof"
+                                                        fill
+                                                        className="object-contain transition-transform group-hover:scale-105"
+                                                    />
+                                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                        <div className="bg-white/10 text-white px-3 py-1.5 rounded-full backdrop-blur-md text-xs font-bold flex items-center gap-2 border border-white/20">
+                                                            <Eye size={14} /> Click to Zoom
+                                                        </div>
+                                                    </div>
+                                                </>
                                             ) : (
                                                 <p className="text-muted-foreground flex items-center gap-2"><ShieldAlert /> No Proof Image Attached</p>
                                             )}
@@ -1113,7 +1126,15 @@ export default function AdminFinancePage() {
                         </div>
                     </div>
                 )}
+
             </div>
+
+            <ImageZoomModal
+                isOpen={!!zoomImage}
+                onClose={() => setZoomImage(null)}
+                src={zoomImage?.src || ""}
+                alt={zoomImage?.alt || "Proof Image"}
+            />
         </div>
     );
 }

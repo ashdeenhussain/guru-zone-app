@@ -25,6 +25,7 @@ import ActiveTournamentsCard from "@/components/dashboard/ActiveTournamentsCard"
 import RankDisplay from "@/components/RankDisplay";
 import NotificationBanner from "@/components/dashboard/NotificationBanner";
 import PageHeader from "@/components/PageHeader";
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -77,15 +78,14 @@ export default async function DashboardPage() {
     const winRate = totalPlayed > 0 ? ((totalWins / totalPlayed) * 100).toFixed(1) : "0.0";
 
     return (
-        <div className="space-y-6 pb-24 lg:pb-8 max-w-4xl mx-auto animate-in fade-in-50 duration-500">
-            {/* Page Title Header */}
-            <PageHeader
-                title="Dashboard"
-                description="Welcome to your command center"
-                icon={LayoutGrid}
-            />
-
+        <div className="space-y-6 pt-6 pb-24 lg:pb-8 max-w-4xl mx-auto animate-in fade-in-50 duration-500">
             <div className="px-4 md:px-0 space-y-6">
+                {/* Page Title Header - REPLACED with DashboardHeader */}
+                <DashboardHeader
+                    userName={user.name!}
+                    avatarId={user.avatarId || 1}
+                />
+
                 {/* System Banners & Announcements */}
                 <SystemWidgets
                     announcement={settings?.announcement}

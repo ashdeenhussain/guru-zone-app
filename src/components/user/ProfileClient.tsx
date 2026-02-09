@@ -152,13 +152,21 @@ export default function ProfileClient({ initialUser }: { initialUser: ProfileUse
                             </div>
 
                             <div className="mt-4">
-                                <label className="text-muted-foreground text-sm font-medium mb-2 block">Or Upload Custom Avatar</label>
-                                <ImageUpload
-                                    value={formData.image || ""}
-                                    onChange={(url) => setFormData({ ...formData, image: url })}
-                                    label="Upload Profile Picture"
-                                    className="w-full"
-                                />
+                                <label className="text-muted-foreground text-sm font-medium mb-2 block">Create Custom Avatar</label>
+                                <div className="relative w-full p-4 border-2 border-dashed border-border rounded-xl flex items-center justify-center bg-muted/20 group hover:border-primary/50 transition-colors">
+                                    <button
+                                        disabled
+                                        className="flex items-center gap-2 text-muted-foreground font-bold cursor-not-allowed"
+                                    >
+                                        <div className="p-2 bg-primary/10 rounded-full text-primary">
+                                            <ImageIcon size={20} />
+                                        </div>
+                                        Create Your Avatar
+                                    </button>
+                                    <span className="absolute top-2 right-2 bg-primary text-primary-foreground text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider shadow-lg shadow-primary/20">
+                                        Coming Soon
+                                    </span>
+                                </div>
                             </div>
                         </div>
 
