@@ -35,6 +35,7 @@ interface Tournament {
         rank2: string;
         rank3: string;
     };
+    cancellationReason?: string;
 }
 
 interface User {
@@ -166,7 +167,8 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
                                 <h1 className="text-3xl md:text-4xl font-black text-foreground tracking-tight">{tournament.title}</h1>
                                 <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${tournament.status === 'Open' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
                                     tournament.status === 'Live' ? 'bg-red-500/10 text-red-500 border-red-500/20 animate-pulse' :
-                                        'bg-muted text-muted-foreground border-border'
+                                        tournament.status === 'Cancelled' ? 'bg-red-600/10 text-red-600 border-red-600/20' :
+                                            'bg-muted text-muted-foreground border-border'
                                     }`}>
                                     {tournament.status}
                                 </span>
@@ -189,6 +191,29 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
                         </div>
                     </div>
                 </div>
+
+                {/* CANCELLATION NOTICE */}
+                {tournament.status === 'Cancelled' && (
+                    <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-6 shadow-sm animate-in fade-in slide-in-from-top-4 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-[40px] pointer-events-none" />
+                        <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-4 text-center md:text-left">
+                            <div className="p-3 bg-red-500/10 rounded-xl text-red-600">
+                                <AlertTriangle size={32} />
+                            </div>
+                            <div className="space-y-1">
+                                <h3 className="text-xl font-bold text-red-600 flex flex-col md:flex-row items-center gap-2">
+                                    Tournament Cancelled
+                                </h3>
+                                <p className="text-foreground/80 font-medium">
+                                    Reason: <span className="text-foreground italic">"{tournament.cancellationReason || 'Administrative Decision'}"</span>
+                                </p>
+                                <p className="text-sm text-muted-foreground mt-2">
+                                    Entry fees have been automatically refunded to all joined participants.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Main Stats Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

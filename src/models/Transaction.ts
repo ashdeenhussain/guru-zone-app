@@ -48,7 +48,7 @@ const TransactionSchema = new Schema(
         },
         status: {
             type: String,
-            enum: ['pending', 'approved', 'rejected', 'failed', 'Pending', 'Approved', 'Rejected', 'Failed'], // Keeping capitalized for backward compatibility if needed, but per specs we will use lowercase
+            enum: ['pending', 'approved', 'rejected', 'failed', 'completed', 'Pending', 'Approved', 'Rejected', 'Failed', 'Completed'], // Keeping capitalized for backward compatibility if needed, but per specs we will use lowercase
             default: 'pending',
         },
         details: {

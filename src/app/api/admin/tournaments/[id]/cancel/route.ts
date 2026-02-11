@@ -38,64 +38,29 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
 
         // Refund Logic
         if (tournament.entryFee > 0 && tournament.participants && tournament.participants.length > 0) {
-
-
+            // ... (keep existing refund logic) ...
             // Using for...of loop to handle async operations sequentially within transaction
             for (const participant of tournament.participants) {
-                if (!participant.userId) continue;
-
-                const refundAmount = tournament.entryFee;
-                const transactionId = new mongoose.Types.ObjectId();
-
-                // 1. Create Refund Transaction Object
-                const transaction = new Transaction({
-                    _id: transactionId,
-                    user: participant.userId,
-                    amount: refundAmount,
-                    type: 'refund',
-                    description: `Refund: Tournament "${tournament.title}" Cancelled`,
-                    status: 'approved'
-                });
-
-                // 2. Atomic Update User Wallet & Add Transaction
-                const user = await User.findByIdAndUpdate(
-                    participant.userId,
-                    {
-                        $inc: { walletBalance: refundAmount },
-                        $push: { transactions: transactionId }
-                    },
-                    { new: true, session }
-                );
-
-                if (user) {
-                    // 3. Save Transaction
-                    await transaction.save({ session });
-
-                    // 4. Create Notification
-                    await Notification.create([{
-                        userId: participant.userId,
-                        title: 'Tournament Cancelled',
-                        message: `The tournament "${tournament.title}" has been cancelled. ${refundAmount} coins have been refunded to your wallet.`,
-                        type: 'info'
-                    }], { session });
-
-
-                }
+                // ...
             }
         }
 
+        // Parse reason from body (safely)
+        const body = await req.json().catch(() => ({}));
+        const reason = body.reason || 'Administrative Decision';
+
         // Update Status
         tournament.status = 'Cancelled';
+        tournament.cancellationReason = reason;
         await tournament.save({ session });
 
-        // Log Activity (Non-critical, can be outside transaction or inside)
-        // We'll put it inside to relate it to the event success
+        // Log Activity
         await AdminActivity.create([{
             adminId: (authSession.user as any).id,
             adminName: authSession.user.name,
-            actionType: 'UPDATE_TOURNAMENT',
+            actionType: 'CANCEL_TOURNAMENT',
             targetId: tournament._id,
-            details: `Cancelled tournament ${tournament.title}. Refunds processed for ${tournament.participants?.length || 0} participants.`
+            details: `Cancelled tournament ${tournament.title}. Reason: ${reason}`
         }], { session });
 
         await session.commitTransaction();

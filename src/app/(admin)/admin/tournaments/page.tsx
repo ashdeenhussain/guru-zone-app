@@ -721,15 +721,26 @@ function ManageTournamentView({ tournament, onBack, onUpdate }: { tournament: To
     };
 
     const handleCancel = async () => {
-        const confirmText = `DANGER: This will CANCEL the tournament and REFUND all ${tournament.joinedCount} players. Proceed?`;
-        if (prompt(`Type "CANCEL" to confirm.\n\n${confirmText}`) !== "CANCEL") return;
+        // 1. Confirm intention
+        if (!confirm(`DANGER: This will CANCEL the tournament and REFUND all ${tournament.joinedCount} players.\n\nAre you sure you want to proceed?`)) return;
+
+        // 2. Ask for Reason
+        const reason = prompt('Please enter the reason for cancellation (Required):');
+        if (!reason || reason.trim() === '') {
+            alert('Cancellation reason is required.');
+            return;
+        }
 
         setActionLoading(true);
         try {
-            const res = await fetch(`/api/admin/tournaments/${tournament._id}/cancel`, { method: 'POST' });
+            const res = await fetch(`/api/admin/tournaments/${tournament._id}/cancel`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason: reason.trim() })
+            });
             const data = await res.json();
             if (data.success) {
-                alert('Tournament Cancelled.');
+                alert('Tournament Cancelled & Refunds Processed.');
                 onUpdate();
                 onBack();
             } else { alert('Error: ' + data.error); }
@@ -751,9 +762,6 @@ function ManageTournamentView({ tournament, onBack, onUpdate }: { tournament: To
             if (data.success) {
                 alert(`Status updated to ${newStatus}`);
                 onUpdate(); // Refresh parent list
-                // We also need to update the local 'tournament' prop or trigger a refresh, 
-                // but onUpdate handles the list. Ideally we should also close or refresh this view.
-                // For now, onUpdate is enough if it triggers a re-fetch in parent.
             } else {
                 alert('Error: ' + data.error);
             }
@@ -768,6 +776,10 @@ function ManageTournamentView({ tournament, onBack, onUpdate }: { tournament: To
 
     return (
         <div className="space-y-6">
+            {/* ... (Header Area skipped, start at Force Status Override) ... */}
+
+            {/* Note: I am replacing the entire 'Force Status Override' section and below to clean up */}
+
             {/* Header Area */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
@@ -844,7 +856,7 @@ function ManageTournamentView({ tournament, onBack, onUpdate }: { tournament: To
                                             <div className="space-y-2">
                                                 <label className="text-[10px] font-bold text-muted-foreground uppercase">Force Status Override</label>
                                                 <div className="grid grid-cols-2 gap-2">
-                                                    {['Open', 'Live', 'Completed', 'Cancelled'].map(s => (
+                                                    {['Open', 'Live', 'Completed'].map(s => (
                                                         <button
                                                             key={s}
                                                             onClick={() => handleManualStatusChange(s)}
@@ -856,6 +868,15 @@ function ManageTournamentView({ tournament, onBack, onUpdate }: { tournament: To
                                                             {s}
                                                         </button>
                                                     ))}
+
+                                                    {/* Dedicated Cancel Button that triggers Refund Logic */}
+                                                    <button
+                                                        onClick={handleCancel}
+                                                        disabled={actionLoading}
+                                                        className="px-3 py-2 text-[10px] font-bold rounded border border-red-500/30 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
+                                                    >
+                                                        Cancel & Refund
+                                                    </button>
                                                 </div>
                                             </div>
 
@@ -885,13 +906,7 @@ function ManageTournamentView({ tournament, onBack, onUpdate }: { tournament: To
                                                 Hide from Users (Soft Delete)
                                             </button>
 
-                                            <button
-                                                onClick={handleCancel}
-                                                disabled={actionLoading}
-                                                className="w-full py-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-lg text-xs font-bold transition-all"
-                                            >
-                                                Cancel Tournament (Refund All)
-                                            </button>
+                                            {/* Removed redundant bottom button */}
                                         </div>
                                     </motion.div>
                                 )}

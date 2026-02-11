@@ -80,6 +80,10 @@ const TournamentSchema = new Schema(
             enum: ['Open', 'Live', 'Completed', 'Cancelled'],
             default: 'Open',
         },
+        cancellationReason: {
+            type: String,
+            required: false,
+        },
         isVisible: {
             type: Boolean,
             default: true,
