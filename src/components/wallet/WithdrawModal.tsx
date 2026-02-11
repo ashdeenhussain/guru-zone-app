@@ -71,7 +71,8 @@ export default function WithdrawModal({ isOpen, onClose, availableBalance }: Wit
                     </button>
                 </div>
 
-                <div className="p-6 space-y-4">
+
+                <div className="p-6 space-y-4 max-h-[65vh] overflow-y-auto">
                     <div className="bg-blue-900/20 p-3 rounded-lg flex justify-between items-center">
                         <span className="text-gray-400 text-sm">Available Balance</span>
                         <span className="text-yellow-500 font-bold">{availableBalance} Coins</span>
@@ -132,11 +133,14 @@ export default function WithdrawModal({ isOpen, onClose, availableBalance }: Wit
                             placeholder="0300..."
                         />
                     </div>
+                </div>
 
+                {/* Fixed Button Footer */}
+                <div className="p-4 border-t border-blue-900/30 bg-[#0a0f16]">
                     <button
                         onClick={handleSubmit}
                         disabled={!amount || Number(amount) < 250 || Number(amount) > availableBalance || !accountNumber || !accountTitle || isSubmitting}
-                        className="w-full mt-2 rounded-xl bg-red-500/90 hover:bg-red-500 p-4 font-bold text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full rounded-xl bg-red-500/90 hover:bg-red-500 p-4 font-bold text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isSubmitting ? (
                             <div className="flex items-center justify-center gap-2">

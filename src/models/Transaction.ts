@@ -13,7 +13,7 @@ const TransactionSchema = new Schema(
         },
         type: {
             type: String,
-            enum: ['deposit', 'withdrawal', 'entry_fee', 'prize_winnings', 'refund', 'shop_purchase', 'spin_win'],
+            enum: ['deposit', 'withdrawal', 'entry_fee', 'prize_winnings', 'refund', 'shop_purchase', 'spin_win', 'ADMIN_ADJUSTMENT'],
             required: true,
         },
         method: {
@@ -27,6 +27,11 @@ const TransactionSchema = new Schema(
         trxID: {
             type: String, // Transaction ID from user
             required: false,
+        },
+        referenceId: {
+            type: Schema.Types.Mixed, // ID of the related entity (Tournament, Order, etc.)
+            required: false,
+            index: true, // Index for faster lookups
         },
         description: {
             type: String,
@@ -43,7 +48,7 @@ const TransactionSchema = new Schema(
         },
         status: {
             type: String,
-            enum: ['pending', 'approved', 'rejected', 'Pending', 'Approved', 'Rejected'], // Keeping capitalized for backward compatibility if needed, but per specs we will use lowercase
+            enum: ['pending', 'approved', 'rejected', 'failed', 'Pending', 'Approved', 'Rejected', 'Failed'], // Keeping capitalized for backward compatibility if needed, but per specs we will use lowercase
             default: 'pending',
         },
         details: {

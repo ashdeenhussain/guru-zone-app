@@ -102,6 +102,22 @@ export default function BuyCoinsModal({ isOpen, onClose }: BuyCoinsModalProps) {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        // Client-side validation 1: File size check (2MB limit)
+        const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+        if (file.size > MAX_FILE_SIZE) {
+            alert('File too large!\n\nMaximum size: 2MB\nYour file: ' + (file.size / (1024 * 1024)).toFixed(2) + 'MB\n\nPlease compress or choose a smaller screenshot.');
+            e.target.value = ''; // Reset file input
+            return;
+        }
+
+        // Client-side validation 2: File type check
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Invalid file type!\n\nAllowed formats: JPEG, PNG, GIF, WebP\nYour file type: ' + (file.type || 'Unknown') + '\n\nPlease upload an image file.');
+            e.target.value = ''; // Reset file input
+            return;
+        }
+
         setIsUploading(true);
         try {
             const formData = new FormData();
@@ -116,13 +132,15 @@ export default function BuyCoinsModal({ isOpen, onClose }: BuyCoinsModalProps) {
             if (uploadData.success) {
                 setProofUrl(uploadData.url);
             } else {
-                alert('Failed to upload screenshot: ' + uploadData.error);
+                // Display specific error message from backend
+                alert('Upload Failed!\n\n' + uploadData.error + '\n\nPlease try again.');
             }
         } catch (error) {
             console.error("Upload error:", error);
-            alert("Failed to upload screenshot");
+            alert("Network Error!\n\nCouldn't connect to the server. Please check your internet connection and try again.");
         } finally {
             setIsUploading(false);
+            e.target.value = ''; // Reset file input for retry
         }
     };
 

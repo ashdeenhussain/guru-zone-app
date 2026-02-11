@@ -47,6 +47,8 @@ export async function GET(req: Request) {
                 { lastLogin: { $exists: false } },
                 { lastLogin: null }
             ];
+        } else if (filter === 'has_coins') {
+            query.walletBalance = { $gt: 0 };
         }
 
         const usersPromise = User.find(query)
@@ -64,13 +66,32 @@ export async function GET(req: Request) {
             lastLogin: { $gte: sevenDaysAgo }
         });
 
+        // Banned Users
+        const bannedUsersPromise = User.countDocuments({ status: 'banned' });
+
+        // Inactive Users: Active status but no login in last 7 days or never logged in
+        const inactiveUsersPromise = User.countDocuments({
+            status: 'active',
+            $or: [
+                { lastLogin: { $lt: sevenDaysAgo } },
+                { lastLogin: { $exists: false } }, // Never logged in
+                { lastLogin: null }
+            ]
+        });
+
+        // Users with Coins
+        const usersWithCoinsPromise = User.countDocuments({ walletBalance: { $gt: 0 } });
+
         // Also get total ALL users for the stats card (ignoring search filter)
         const totalAllUsersPromise = User.countDocuments({});
 
-        const [users, totalFilteredUsers, activeUsers, totalAllUsers] = await Promise.all([
+        const [users, totalFilteredUsers, activeUsers, bannedUsers, inactiveUsers, usersWithCoins, totalAllUsers] = await Promise.all([
             usersPromise,
             totalUsersPromise,
             activeUsersPromise,
+            bannedUsersPromise,
+            inactiveUsersPromise,
+            usersWithCoinsPromise,
             totalAllUsersPromise
         ]);
 
@@ -84,7 +105,13 @@ export async function GET(req: Request) {
             },
             stats: {
                 totalUsers: totalAllUsers,
-                activeUsers
+                activeUsers,
+                bannedUsers,
+                inactiveUsers,
+                usersWithCoins,
+                totalSystemBalance: (await User.aggregate([
+                    { $group: { _id: null, total: { $sum: "$walletBalance" } } }
+                ]))[0]?.total || 0
             }
         });
 

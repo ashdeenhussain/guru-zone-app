@@ -17,14 +17,12 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
         const { id } = params;
         const body = await req.json();
 
+
         // Prevent updating sensitive fields via this generic route if needed, 
         // but for now we trust the admin to send correct data.
         // We specifically want to allow updating the 'status'.
 
-        console.log(`[Tournament Update] ID: ${id}, Body:`, body);
-
         const tournament = await Tournament.findByIdAndUpdate(id, { $set: body }, { new: true });
-        console.log('[Tournament Update] Result:', tournament);
 
         if (!tournament) {
             return NextResponse.json({ success: false, error: 'Tournament not found' }, { status: 404 });

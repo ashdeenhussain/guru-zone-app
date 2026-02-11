@@ -9,9 +9,7 @@ export async function GET() {
 
         // DEBUG: If no active methods, fetch ALL to check if they exist but are inactive
         if (!methods || methods.length === 0) {
-            console.log("No active payment methods found. Checking for inactive ones...");
             const allMethods = await PaymentMethod.find({});
-            console.log(`Found ${allMethods.length} total methods.`);
 
             // Fallback for dev: return dummy if absolutely nothing exists
             if (allMethods.length === 0) {

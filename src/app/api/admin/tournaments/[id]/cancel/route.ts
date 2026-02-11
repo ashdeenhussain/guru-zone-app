@@ -38,7 +38,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
 
         // Refund Logic
         if (tournament.entryFee > 0 && tournament.participants && tournament.participants.length > 0) {
-            console.log(`[Cancel] Processing refunds for ${tournament.participants.length} participants...`);
+
 
             // Using for...of loop to handle async operations sequentially within transaction
             for (const participant of tournament.participants) {
@@ -79,7 +79,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
                         type: 'info'
                     }], { session });
 
-                    console.log(`[Cancel] Refunded ${refundAmount} to user ${participant.userId}`);
+
                 }
             }
         }
@@ -100,7 +100,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
 
         await session.commitTransaction();
 
-        console.log(`[Notification] Tournament ${tournament.title} CANCELLED. Refunds processed.`);
+
 
         return NextResponse.json({ success: true, message: 'Tournament cancelled and refunds processed' });
 

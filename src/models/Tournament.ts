@@ -55,6 +55,7 @@ const TournamentSchema = new Schema(
                 userId: { type: Schema.Types.ObjectId, ref: 'User' },
                 inGameName: String,
                 uid: String,
+                teamName: String, // Added for Duo/Squad
                 teammates: [
                     {
                         name: String,

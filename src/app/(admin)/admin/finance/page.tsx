@@ -4,7 +4,9 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { RefreshCcw, X, ShieldAlert, DollarSign, TrendingUp, Eye, AlertCircle, CheckCircle, XCircle, Calendar, Filter, CreditCard, ZoomIn } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import ImageZoomModal from '@/components/admin/ImageZoomModal';
+import UserLedgerModal from '@/components/admin/UserLedgerModal';
 
 interface Transaction {
     _id: string;
@@ -43,7 +45,9 @@ interface FinanceStats {
 }
 
 export default function AdminFinancePage() {
-    const [activeTab, setActiveTab] = useState<'deposits' | 'withdrawals' | 'reports'>('deposits');
+    const searchParams = useSearchParams();
+    const tabParam = searchParams?.get('tab');
+    const [activeTab, setActiveTab] = useState<'deposits' | 'withdrawals' | 'reports'>((tabParam === 'withdrawals' || tabParam === 'reports') ? tabParam : 'deposits');
     const [isLoading, setIsLoading] = useState(false);
 
     // Data States
@@ -61,6 +65,13 @@ export default function AdminFinancePage() {
     const [showFinalReview, setShowFinalReview] = useState(false);
     const [showRejectReview, setShowRejectReview] = useState(false);
     const [zoomImage, setZoomImage] = useState<{ src: string; alt: string } | null>(null);
+
+    // History Modal State
+    const [ledgerState, setLedgerState] = useState<{ isOpen: boolean; userId: string; userName: string }>({
+        isOpen: false,
+        userId: '',
+        userName: ''
+    });
 
 
 
@@ -146,13 +157,11 @@ export default function AdminFinancePage() {
         setIsProcessing(false);
         setShowSafetyCheck(false);
         setShowFinalReview(false);
-        setShowSafetyCheck(false);
-        setShowFinalReview(false);
         setShowRejectReview(false);
     };
 
     const processTransaction = async (action: 'approved' | 'rejected') => {
-        console.log('Processing Transaction:', action, selectedTrx); // DEBUG
+
         if (!selectedTrx) {
             console.error('No selected transaction!');
             return;
@@ -160,7 +169,7 @@ export default function AdminFinancePage() {
         setIsProcessing(true);
 
         try {
-            console.log(`Sending PATCH to /api/admin/finance/deposit/${selectedTrx._id}`);
+
             const res = await fetch(`/api/admin/finance/deposit/${selectedTrx._id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
@@ -171,7 +180,7 @@ export default function AdminFinancePage() {
                 })
             });
 
-            console.log('Response status:', res.status);
+
 
             if (res.ok) {
                 if (selectedTrx.type === 'deposit') {
@@ -213,6 +222,10 @@ export default function AdminFinancePage() {
 
         // Direct call for non-rejected or if logic changes
         processTransaction(action);
+    };
+
+    const handleOpenLedger = (userId: string, userName: string) => {
+        setLedgerState({ isOpen: true, userId, userName });
     };
 
     return (
@@ -615,38 +628,62 @@ export default function AdminFinancePage() {
                                     withdrawals.map((trx) => (
                                         <div
                                             key={trx._id}
-                                            onClick={() => handleOpenReview(trx)}
-                                            className="bg-card border border-border p-4 rounded-xl shadow-sm active:scale-[0.98] transition-transform cursor-pointer"
+                                            className="bg-card border border-border p-4 rounded-xl shadow-sm active:scale-[0.98] transition-transform"
                                         >
-                                            <div className="flex justify-between items-start mb-3">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center text-xs font-bold text-red-600 border border-red-500/20 uppercase">
-                                                        {trx.user.name.slice(0, 2)}
+                                            <div
+                                                onClick={() => handleOpenReview(trx)}
+                                                className="cursor-pointer"
+                                            >
+                                                <div className="flex justify-between items-start mb-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center text-xs font-bold text-red-600 border border-red-500/20 uppercase">
+                                                            {trx.user.name.slice(0, 2)}
+                                                        </div>
+                                                        <div>
+                                                            <div
+                                                                onClick={(e) => { e.stopPropagation(); handleOpenLedger(trx.user._id, trx.user.name); }}
+                                                                className="font-bold text-foreground text-sm hover:text-blue-400 hover:underline z-10"
+                                                            >
+                                                                {trx.user.name}
+                                                            </div>
+                                                            <p className="text-[10px] text-muted-foreground">{trx.method}</p>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <h4 className="font-bold text-foreground text-sm">{trx.user.name}</h4>
-                                                        <p className="text-[10px] text-muted-foreground">{trx.method}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <div className="flex items-center gap-1 justify-end text-red-600">
-                                                        <TrendingUp size={12} className="rotate-180" />
-                                                        <span className="font-mono font-bold text-base">
-                                                            Rs {trx.amount.toLocaleString()}
+                                                    <div className="text-right">
+                                                        <div className="flex items-center gap-1 justify-end text-red-600">
+                                                            <TrendingUp size={12} className="rotate-180" />
+                                                            <span className="font-mono font-bold text-base">
+                                                                Rs {trx.amount.toLocaleString()}
+                                                            </span>
+                                                        </div>
+                                                        <span className="text-[10px] text-muted-foreground">
+                                                            {new Date(trx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                         </span>
                                                     </div>
-                                                    <span className="text-[10px] text-muted-foreground">
-                                                        {new Date(trx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </div>
+                                                <div className="flex justify-between items-center pt-3 border-t border-border/50">
+                                                    <div className="max-w-[70%] truncate text-[11px] text-muted-foreground">
+                                                        {trx.details?.accountNumber || 'No Account Info'}
+                                                    </div>
+                                                    <span className="bg-yellow-500/10 text-yellow-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-yellow-500/20">
+                                                        Pending
                                                     </span>
                                                 </div>
                                             </div>
-                                            <div className="flex justify-between items-center pt-3 border-t border-border/50">
-                                                <div className="max-w-[70%] truncate text-[11px] text-muted-foreground">
-                                                    {trx.details?.accountNumber || 'No Account Info'}
-                                                </div>
-                                                <span className="bg-yellow-500/10 text-yellow-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-yellow-500/20">
-                                                    Pending
-                                                </span>
+                                            {/* Action Buttons */}
+                                            <div className="mt-3 flex gap-2">
+                                                <button
+                                                    onClick={() => handleOpenLedger(trx.user._id, trx.user.name)}
+                                                    className="flex-1 py-1.5 bg-blue-500/10 text-blue-500 text-xs font-bold rounded-lg border border-blue-500/20 hover:bg-blue-500/20"
+                                                >
+                                                    Inspect Wallet
+                                                </button>
+                                                <button
+                                                    onClick={() => handleOpenReview(trx)}
+                                                    className="flex-1 py-1.5 bg-zinc-800 text-white text-xs font-bold rounded-lg border border-white/10 hover:bg-zinc-700"
+                                                >
+                                                    Review
+                                                </button>
                                             </div>
                                         </div>
                                     ))
@@ -676,14 +713,19 @@ export default function AdminFinancePage() {
                                                 </tr>
                                             ) : (
                                                 withdrawals.map((trx) => (
-                                                    <tr key={trx._id} onClick={() => handleOpenReview(trx)} className="hover:bg-white/5 transition-colors group cursor-pointer">
+                                                    <tr key={trx._id} className="hover:bg-white/5 transition-colors group">
                                                         <td className="px-6 py-4">
                                                             <div className="flex items-center gap-3">
                                                                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500/20 to-red-500/20 flex items-center justify-center text-xs font-bold text-orange-400 border border-white/5 uppercase shrink-0">
                                                                     {trx.user.name.slice(0, 2)}
                                                                 </div>
                                                                 <div>
-                                                                    <div className="text-foreground font-semibold text-sm">{trx.user.name}</div>
+                                                                    <button
+                                                                        onClick={() => handleOpenLedger(trx.user._id, trx.user.name)}
+                                                                        className="text-foreground font-semibold text-sm hover:text-blue-400 hover:underline text-left"
+                                                                    >
+                                                                        {trx.user.name}
+                                                                    </button>
                                                                     <div className="text-[11px] text-muted-foreground">{trx.user.email}</div>
                                                                 </div>
                                                             </div>
@@ -710,11 +752,20 @@ export default function AdminFinancePage() {
                                                             {new Date(trx.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                                                         </td>
                                                         <td className="px-6 py-4 text-right">
-                                                            <button
-                                                                className="bg-zinc-800 hover:bg-zinc-700 text-white border border-white/10 px-5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
-                                                            >
-                                                                Details
-                                                            </button>
+                                                            <div className="flex items-center justify-end gap-2">
+                                                                <button
+                                                                    onClick={() => handleOpenLedger(trx.user._id, trx.user.name)}
+                                                                    className="bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-600/20 px-3 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
+                                                                >
+                                                                    Inspect
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleOpenReview(trx)}
+                                                                    className="bg-zinc-800 hover:bg-zinc-700 text-white border border-white/10 px-5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
+                                                                >
+                                                                    Details
+                                                                </button>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 ))
@@ -793,6 +844,14 @@ export default function AdminFinancePage() {
                         </div>
                     )}
                 </div>
+
+                {/* Ledger Modal */}
+                <UserLedgerModal
+                    isOpen={ledgerState.isOpen}
+                    onClose={() => setLedgerState(prev => ({ ...prev, isOpen: false }))}
+                    userId={ledgerState.userId}
+                    userName={ledgerState.userName}
+                />
 
                 {/* REVIEW MODAL */}
                 {selectedTrx && (
@@ -955,179 +1014,185 @@ export default function AdminFinancePage() {
                                     {isProcessing ? 'Processing...' : 'Approve'}
                                 </button>
                             </div>
-                        </div>
-                    </div>
+                        </div >
+                    </div >
                 )}
 
                 {/* STEP 1: SAFETY CHECK MODAL (Only for Deposits) */}
-                {showSafetyCheck && selectedTrx?.type === 'deposit' && (
-                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-                        <div className="bg-card border border-border rounded-2xl w-full max-w-sm p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-                            <div className="flex flex-col items-center text-center space-y-4">
-                                <div className="w-16 h-16 rounded-full bg-yellow-500/10 flex items-center justify-center mb-2">
-                                    <AlertCircle className="w-8 h-8 text-yellow-500" />
+                {
+                    showSafetyCheck && selectedTrx?.type === 'deposit' && (
+                        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+                            <div className="bg-card border border-border rounded-2xl w-full max-w-sm p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+                                <div className="flex flex-col items-center text-center space-y-4">
+                                    <div className="w-16 h-16 rounded-full bg-yellow-500/10 flex items-center justify-center mb-2">
+                                        <AlertCircle className="w-8 h-8 text-yellow-500" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-foreground">Safety Check</h3>
+                                    <p className="text-muted-foreground text-sm leading-relaxed">
+                                        Have you checked your bank account? <br />
+                                        <span className="text-foreground font-semibold">Has the money definitely arrived?</span>
+                                    </p>
+                                    <div className="grid grid-cols-2 gap-3 w-full pt-2">
+                                        <button
+                                            onClick={() => setShowSafetyCheck(false)}
+                                            className="py-3 rounded-xl border border-border bg-muted/20 text-muted-foreground font-semibold hover:bg-muted/40 transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setShowSafetyCheck(false);
+                                                setShowFinalReview(true);
+                                            }}
+                                            className="py-3 rounded-xl bg-yellow-500 text-black font-bold hover:bg-yellow-400 transition-colors shadow-lg shadow-yellow-500/20"
+                                        >
+                                            Yes, Arrived
+                                        </button>
+                                    </div>
                                 </div>
-                                <h3 className="text-xl font-bold text-foreground">Safety Check</h3>
-                                <p className="text-muted-foreground text-sm leading-relaxed">
-                                    Have you checked your bank account? <br />
-                                    <span className="text-foreground font-semibold">Has the money definitely arrived?</span>
-                                </p>
-                                <div className="grid grid-cols-2 gap-3 w-full pt-2">
+                            </div>
+                        </div>
+                    )
+                }
+
+                {/* STEP 2: FINAL AUDIT MODAL (Review Details) */}
+                {
+                    selectedTrx && showFinalReview && (
+                        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-200">
+                            <div className="bg-card border border-border rounded-2xl w-full max-w-md p-0 shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
+                                <div className="p-6 border-b border-border bg-muted/20 text-center">
+                                    <h2 className="text-lg font-bold text-foreground flex items-center justify-center gap-2">
+                                        <CheckCircle className="w-5 h-5 text-green-500" />
+                                        Final Review
+                                    </h2>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        {selectedTrx.type === 'deposit' ? 'Double check details before crediting' : 'Confirm transfer completion'}
+                                    </p>
+                                </div>
+
+                                <div className="p-6 space-y-6">
+                                    {/* Amount Highlight */}
+                                    <div className={`text-center rounded-xl p-4 border ${selectedTrx.type === 'deposit' ? 'bg-green-500/10 border-green-500/20' : 'bg-blue-500/10 border-blue-500/20'}`}>
+                                        <p className={`text-xs font-semibold mb-1 uppercase tracking-wider ${selectedTrx.type === 'deposit' ? 'text-green-500' : 'text-blue-500'}`}>
+                                            {selectedTrx.type === 'deposit' ? 'Amount To Add' : 'Amount To Send'}
+                                        </p>
+                                        <p className={`text-3xl font-black font-mono ${selectedTrx.type === 'deposit' ? 'text-green-500' : 'text-blue-500'}`}>
+                                            Rs {editAmount.toLocaleString()}
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center p-3 bg-muted/10 rounded-lg border border-border">
+                                            <span className="text-xs text-muted-foreground font-medium uppercase">User</span>
+                                            <span className="text-sm font-bold text-foreground">{selectedTrx.user.name}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center p-3 bg-muted/10 rounded-lg border border-border">
+                                            <span className="text-xs text-muted-foreground font-medium uppercase">
+                                                {selectedTrx.type === 'deposit' ? 'Sender Name' : 'Account Title'}
+                                            </span>
+                                            <span className="text-sm font-bold text-foreground">
+                                                {selectedTrx.type === 'deposit' ? (selectedTrx.details?.senderName || 'Unknown') : (selectedTrx.details?.accountTitle || 'Unknown')}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center p-3 bg-muted/10 rounded-lg border border-border">
+                                            <span className="text-xs text-muted-foreground font-medium uppercase">
+                                                {selectedTrx.type === 'deposit' ? 'Sender Number' : 'Account Number'}
+                                            </span>
+                                            <span className="text-sm font-mono font-bold text-foreground">
+                                                {selectedTrx.type === 'deposit' ? (selectedTrx.details?.senderNumber || 'Unknown') : (selectedTrx.details?.accountNumber || 'Unknown')}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className={`flex items-start gap-3 p-3 rounded-lg border ${selectedTrx.type === 'deposit' ? 'bg-red-500/5 border-red-500/10' : 'bg-blue-500/5 border-blue-500/10'}`}>
+                                        <AlertCircle className={`w-5 h-5 shrink-0 mt-0.5 ${selectedTrx.type === 'deposit' ? 'text-red-500' : 'text-blue-500'}`} />
+                                        <p className={`text-xs leading-relaxed ${selectedTrx.type === 'deposit' ? 'text-red-400' : 'text-blue-400'}`}>
+                                            {selectedTrx.type === 'deposit'
+                                                ? <span><strong>Warning:</strong> This cannot be undone. Coins will be instantly added to the user's wallet.</span>
+                                                : <span><strong>Confirmation:</strong> By approving, you confirm that you have MANUALLY transferred the funds to the user.</span>
+                                            }
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="p-6 border-t border-border bg-muted/10 grid grid-cols-2 gap-4">
                                     <button
-                                        onClick={() => setShowSafetyCheck(false)}
-                                        className="py-3 rounded-xl border border-border bg-muted/20 text-muted-foreground font-semibold hover:bg-muted/40 transition-colors"
+                                        onClick={() => setShowFinalReview(false)}
+                                        className="py-3 rounded-xl border border-border bg-muted/20 text-muted-foreground font-bold hover:bg-muted/40 transition-colors"
                                     >
                                         Cancel
                                     </button>
                                     <button
-                                        onClick={() => {
-                                            setShowSafetyCheck(false);
-                                            setShowFinalReview(true);
-                                        }}
-                                        className="py-3 rounded-xl bg-yellow-500 text-black font-bold hover:bg-yellow-400 transition-colors shadow-lg shadow-yellow-500/20"
+                                        onClick={() => handleAction('approved')}
+                                        disabled={isProcessing}
+                                        className="py-3 rounded-xl bg-green-500 text-white font-bold hover:bg-green-600 transition-colors shadow-lg shadow-green-500/20 flex items-center justify-center gap-2"
                                     >
-                                        Yes, Arrived
+                                        {isProcessing ? <RefreshCcw className="animate-spin w-4 h-4" /> : (selectedTrx.type === 'deposit' ? 'CONFIRM & ADD' : 'CONFIRM SENT')}
                                     </button>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                )}
-
-                {/* STEP 2: FINAL AUDIT MODAL (Review Details) */}
-                {selectedTrx && showFinalReview && (
-                    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-200">
-                        <div className="bg-card border border-border rounded-2xl w-full max-w-md p-0 shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
-                            <div className="p-6 border-b border-border bg-muted/20 text-center">
-                                <h2 className="text-lg font-bold text-foreground flex items-center justify-center gap-2">
-                                    <CheckCircle className="w-5 h-5 text-green-500" />
-                                    Final Review
-                                </h2>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                    {selectedTrx.type === 'deposit' ? 'Double check details before crediting' : 'Confirm transfer completion'}
-                                </p>
-                            </div>
-
-                            <div className="p-6 space-y-6">
-                                {/* Amount Highlight */}
-                                <div className={`text-center rounded-xl p-4 border ${selectedTrx.type === 'deposit' ? 'bg-green-500/10 border-green-500/20' : 'bg-blue-500/10 border-blue-500/20'}`}>
-                                    <p className={`text-xs font-semibold mb-1 uppercase tracking-wider ${selectedTrx.type === 'deposit' ? 'text-green-500' : 'text-blue-500'}`}>
-                                        {selectedTrx.type === 'deposit' ? 'Amount To Add' : 'Amount To Send'}
-                                    </p>
-                                    <p className={`text-3xl font-black font-mono ${selectedTrx.type === 'deposit' ? 'text-green-500' : 'text-blue-500'}`}>
-                                        Rs {editAmount.toLocaleString()}
-                                    </p>
-                                </div>
-
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-center p-3 bg-muted/10 rounded-lg border border-border">
-                                        <span className="text-xs text-muted-foreground font-medium uppercase">User</span>
-                                        <span className="text-sm font-bold text-foreground">{selectedTrx.user.name}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center p-3 bg-muted/10 rounded-lg border border-border">
-                                        <span className="text-xs text-muted-foreground font-medium uppercase">
-                                            {selectedTrx.type === 'deposit' ? 'Sender Name' : 'Account Title'}
-                                        </span>
-                                        <span className="text-sm font-bold text-foreground">
-                                            {selectedTrx.type === 'deposit' ? (selectedTrx.details?.senderName || 'Unknown') : (selectedTrx.details?.accountTitle || 'Unknown')}
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between items-center p-3 bg-muted/10 rounded-lg border border-border">
-                                        <span className="text-xs text-muted-foreground font-medium uppercase">
-                                            {selectedTrx.type === 'deposit' ? 'Sender Number' : 'Account Number'}
-                                        </span>
-                                        <span className="text-sm font-mono font-bold text-foreground">
-                                            {selectedTrx.type === 'deposit' ? (selectedTrx.details?.senderNumber || 'Unknown') : (selectedTrx.details?.accountNumber || 'Unknown')}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div className={`flex items-start gap-3 p-3 rounded-lg border ${selectedTrx.type === 'deposit' ? 'bg-red-500/5 border-red-500/10' : 'bg-blue-500/5 border-blue-500/10'}`}>
-                                    <AlertCircle className={`w-5 h-5 shrink-0 mt-0.5 ${selectedTrx.type === 'deposit' ? 'text-red-500' : 'text-blue-500'}`} />
-                                    <p className={`text-xs leading-relaxed ${selectedTrx.type === 'deposit' ? 'text-red-400' : 'text-blue-400'}`}>
-                                        {selectedTrx.type === 'deposit'
-                                            ? <span><strong>Warning:</strong> This cannot be undone. Coins will be instantly added to the user's wallet.</span>
-                                            : <span><strong>Confirmation:</strong> By approving, you confirm that you have MANUALLY transferred the funds to the user.</span>
-                                        }
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="p-6 border-t border-border bg-muted/10 grid grid-cols-2 gap-4">
-                                <button
-                                    onClick={() => setShowFinalReview(false)}
-                                    className="py-3 rounded-xl border border-border bg-muted/20 text-muted-foreground font-bold hover:bg-muted/40 transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={() => handleAction('approved')}
-                                    disabled={isProcessing}
-                                    className="py-3 rounded-xl bg-green-500 text-white font-bold hover:bg-green-600 transition-colors shadow-lg shadow-green-500/20 flex items-center justify-center gap-2"
-                                >
-                                    {isProcessing ? <RefreshCcw className="animate-spin w-4 h-4" /> : (selectedTrx.type === 'deposit' ? 'CONFIRM & ADD' : 'CONFIRM SENT')}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                    )
+                }
 
                 {/* STEP 3: REJECTION REVIEW MODAL */}
-                {selectedTrx && showRejectReview && (
-                    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-200">
-                        <div className="bg-card border border-border rounded-2xl w-full max-w-md p-0 shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
-                            <div className="p-6 border-b border-border bg-muted/20 text-center">
-                                <h2 className="text-lg font-bold text-foreground flex items-center justify-center gap-2">
-                                    <XCircle className="w-5 h-5 text-red-500" />
-                                    Confirm Rejection
-                                </h2>
-                                <p className="text-xs text-muted-foreground mt-1">Double check details before rejecting</p>
-                            </div>
+                {
+                    selectedTrx && showRejectReview && (
+                        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-200">
+                            <div className="bg-card border border-border rounded-2xl w-full max-w-md p-0 shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
+                                <div className="p-6 border-b border-border bg-muted/20 text-center">
+                                    <h2 className="text-lg font-bold text-foreground flex items-center justify-center gap-2">
+                                        <XCircle className="w-5 h-5 text-red-500" />
+                                        Confirm Rejection
+                                    </h2>
+                                    <p className="text-xs text-muted-foreground mt-1">Double check details before rejecting</p>
+                                </div>
 
-                            <div className="p-6 space-y-6">
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-center p-3 bg-muted/10 rounded-lg border border-border">
-                                        <span className="text-xs text-muted-foreground font-medium uppercase">User</span>
-                                        <span className="text-sm font-bold text-foreground">{selectedTrx.user.name}</span>
+                                <div className="p-6 space-y-6">
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center p-3 bg-muted/10 rounded-lg border border-border">
+                                            <span className="text-xs text-muted-foreground font-medium uppercase">User</span>
+                                            <span className="text-sm font-bold text-foreground">{selectedTrx.user.name}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center p-3 bg-muted/10 rounded-lg border border-border">
+                                            <span className="text-xs text-muted-foreground font-medium uppercase">Amount</span>
+                                            <span className="text-sm font-bold text-foreground">Rs {selectedTrx.amount.toLocaleString()}</span>
+                                        </div>
+                                        <div className="p-3 bg-red-500/5 border border-red-500/10 rounded-lg">
+                                            <span className="text-xs text-red-500 font-medium uppercase block mb-1">Rejection Reason</span>
+                                            <p className="text-sm font-medium text-foreground">{rejectionReason || 'No reason provided'}</p>
+                                        </div>
                                     </div>
-                                    <div className="flex justify-between items-center p-3 bg-muted/10 rounded-lg border border-border">
-                                        <span className="text-xs text-muted-foreground font-medium uppercase">Amount</span>
-                                        <span className="text-sm font-bold text-foreground">Rs {selectedTrx.amount.toLocaleString()}</span>
-                                    </div>
-                                    <div className="p-3 bg-red-500/5 border border-red-500/10 rounded-lg">
-                                        <span className="text-xs text-red-500 font-medium uppercase block mb-1">Rejection Reason</span>
-                                        <p className="text-sm font-medium text-foreground">{rejectionReason || 'No reason provided'}</p>
+
+                                    <div className="flex items-start gap-3 p-3 bg-red-500/5 border border-red-500/10 rounded-lg">
+                                        <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                                        <p className="text-xs text-red-400 leading-relaxed">
+                                            <strong>Warning:</strong> This will reject the transaction and notify the user.
+                                        </p>
                                     </div>
                                 </div>
 
-                                <div className="flex items-start gap-3 p-3 bg-red-500/5 border border-red-500/10 rounded-lg">
-                                    <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                                    <p className="text-xs text-red-400 leading-relaxed">
-                                        <strong>Warning:</strong> This will reject the transaction and notify the user.
-                                    </p>
+                                <div className="p-6 border-t border-border bg-muted/10 grid grid-cols-2 gap-4">
+                                    <button
+                                        onClick={() => setShowRejectReview(false)}
+                                        className="py-3 rounded-xl border border-border bg-muted/20 text-muted-foreground font-bold hover:bg-muted/40 transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={() => processTransaction('rejected')}
+                                        disabled={isProcessing}
+                                        className="py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20 flex items-center justify-center gap-2"
+                                    >
+                                        {isProcessing ? <RefreshCcw className="animate-spin w-4 h-4" /> : 'CONFIRM REJECT'}
+                                    </button>
                                 </div>
-                            </div>
-
-                            <div className="p-6 border-t border-border bg-muted/10 grid grid-cols-2 gap-4">
-                                <button
-                                    onClick={() => setShowRejectReview(false)}
-                                    className="py-3 rounded-xl border border-border bg-muted/20 text-muted-foreground font-bold hover:bg-muted/40 transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={() => processTransaction('rejected')}
-                                    disabled={isProcessing}
-                                    className="py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20 flex items-center justify-center gap-2"
-                                >
-                                    {isProcessing ? <RefreshCcw className="animate-spin w-4 h-4" /> : 'CONFIRM REJECT'}
-                                </button>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )
+                }
 
-            </div>
+            </div >
 
             <ImageZoomModal
                 isOpen={!!zoomImage}
@@ -1135,6 +1200,6 @@ export default function AdminFinancePage() {
                 src={zoomImage?.src || ""}
                 alt={zoomImage?.alt || "Proof Image"}
             />
-        </div>
+        </div >
     );
 }

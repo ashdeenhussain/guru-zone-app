@@ -38,7 +38,7 @@ async function getDailyUsage(userId: string) {
     ]);
 
     const total = result[0]?.total || 0;
-    console.log(`Daily usage calculated: ${total}`);
+
     return total;
 }
 

@@ -18,7 +18,8 @@ import {
     Disc,
     X,
     LifeBuoy,
-    Shield
+    Shield,
+    ArrowUpRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSession } from "next-auth/react";
@@ -48,6 +49,8 @@ export default function Sidebar({ onClose }: AdminSidebarProps) {
         { name: 'Tournaments', href: '/admin/tournaments', icon: Trophy, permission: 'manage_tournaments' },
         { name: 'Users', href: '/admin/users', icon: Users, permission: 'manage_support' },
         { name: 'Finance', href: '/admin/finance', icon: Wallet, permission: 'manage_finance' },
+        { name: 'Transactions', href: '/admin/transactions', icon: ArrowUpRight, permission: 'manage_finance' },
+        { name: 'Audit Logs', href: '/admin/audit-logs', icon: Shield, permission: 'manage_system' },
     ];
 
     return (

@@ -24,8 +24,7 @@ export async function GET() {
 
         const tournaments = await Tournament.find(query).sort({ startTime: 1 });
 
-        console.log(`[API] Fetching tournaments. Query:`, JSON.stringify(query));
-        console.log(`[API] Found ${tournaments.length} tournaments.`);
+
 
         return NextResponse.json({ success: true, data: tournaments });
     } catch (error) {

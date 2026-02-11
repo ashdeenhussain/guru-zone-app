@@ -1,61 +1,91 @@
-
 import { NextResponse } from 'next/server';
-import connectToDatabase from '@/lib/db';
-import Transaction from '@/models/Transaction';
-import User from '@/models/User';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import Transaction from '@/models/Transaction';
+import User from '@/models/User';
+import connectDB from '@/lib/db';
 
-export async function PATCH(request: Request) {
+export async function GET(req: Request) {
     try {
-        const session: any = await getServerSession(authOptions);
+        await connectDB();
+        const session = await getServerSession(authOptions);
+
         if (!session || session.user.role !== 'admin') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { transactionId, action, rejectionReason } = await request.json();
+        const { searchParams } = new URL(req.url);
+        const page = parseInt(searchParams.get('page') || '1');
+        const limit = parseInt(searchParams.get('limit') || '20');
+        const status = searchParams.get('status');
+        const type = searchParams.get('type');
+        const search = searchParams.get('search') || '';
+        const startDate = searchParams.get('startDate');
+        const endDate = searchParams.get('endDate');
 
-        if (!transactionId || !['approve', 'reject'].includes(action)) {
-            return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+        const skip = (page - 1) * limit;
+
+        const query: any = {};
+
+        if (status && status !== 'all') {
+            query.status = status;
         }
 
-        await connectToDatabase();
-
-        const transaction = await Transaction.findById(transactionId);
-        if (!transaction) {
-            return NextResponse.json({ error: 'Transaction not found' }, { status: 404 });
+        if (type && type !== 'all') {
+            query.type = type;
         }
 
-        if (transaction.status !== 'pending' && transaction.status !== 'Pending') {
-            return NextResponse.json({ error: 'Transaction is not pending' }, { status: 400 });
-        }
-
-        if (action === 'approve') {
-            transaction.status = 'approved';
-            await transaction.save();
-
-            // Optional: Notify user (if notification system exists)
-
-            return NextResponse.json({ success: true, message: 'Withdrawal Approved' });
-        }
-
-        if (action === 'reject') {
-            transaction.status = 'rejected';
-            transaction.rejectionReason = rejectionReason || 'Rejected by admin';
-            await transaction.save();
-
-            // Refund the user
-            const user = await User.findById(transaction.user);
-            if (user) {
-                user.walletBalance += transaction.amount;
-                await user.save();
+        if (startDate || endDate) {
+            query.createdAt = {};
+            if (startDate) query.createdAt.$gte = new Date(startDate);
+            if (endDate) {
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999);
+                query.createdAt.$lte = end;
             }
-
-            return NextResponse.json({ success: true, message: 'Withdrawal Rejected & Refunded' });
         }
 
-    } catch (error) {
-        console.error('Error updating transaction:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        // Search logic (User Name, Email, or Trx ID)
+        if (search) {
+            // First find users matching the search term
+            const users = await User.find({
+                $or: [
+                    { name: { $regex: search, $options: 'i' } },
+                    { email: { $regex: search, $options: 'i' } }
+                ]
+            }).select('_id');
+
+            const userIds = users.map(u => u._id);
+
+            query.$or = [
+                { user: { $in: userIds } },
+                { trxID: { $regex: search, $options: 'i' } },
+                { _id: { $regex: search, $options: 'i' } } // allow searching by mongo ID
+            ];
+        }
+
+        const transactionsPromise = Transaction.find(query)
+            .populate('user', 'name email inGameName')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        const totalPromise = Transaction.countDocuments(query);
+
+        const [transactions, total] = await Promise.all([transactionsPromise, totalPromise]);
+
+        return NextResponse.json({
+            transactions,
+            pagination: {
+                total,
+                page,
+                limit,
+                pages: Math.ceil(total / limit)
+            }
+        });
+
+    } catch (error: any) {
+        console.error('Error fetching transactions:', error);
+        return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
     }
 }

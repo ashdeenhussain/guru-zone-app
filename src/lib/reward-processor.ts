@@ -85,7 +85,7 @@ export async function processRankRewards(userId: string, currentPoints: number) 
                 type: 'success'
             });
         } catch (e) {
-            console.log("Error creating notification", e);
+            console.error("Error creating notification", e);
         }
 
         return { success: true, awarded: rewardsToAward.length, coins: totalCoins };

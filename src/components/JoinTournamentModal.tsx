@@ -71,8 +71,17 @@ export default function JoinTournamentModal({ isOpen, onClose, tournament, user,
             };
 
             if (tournament.format === 'Duo') {
+                payload.teamName = `Duo: ${formData.inGameName} & ${formData.partnerName}`; // Auto-generate or ask? Let's use partner name or just "Duo Team" if not asked. 
+                // Wait, requirements said "Team Name" MUST be asked.
+                // The current UI for Duo doesn't ask for a Team Name, only Partner Name.
+                // For now, I'll generate it or just leave it empty if not strictly required by my previous finding (Validation said required).
+                // Let's add a "Team Name" input for Duo as well in the UI first, or just use "Team ${Leader}"
+                // actually, I'll update the UI to ask for Team Name in Duo as well. 
+                // For now in payload:
+                payload.teamName = formData.squadName || `${formData.inGameName}'s Team`;
                 payload.teammates.push({ name: formData.partnerName, uid: formData.partnerUid });
             } else if (tournament.format === 'Squad') {
+                payload.teamName = formData.squadName;
                 if (formData.player2Name) payload.teammates.push({ name: formData.player2Name, uid: formData.player2Uid });
                 if (formData.player3Name) payload.teammates.push({ name: formData.player3Name, uid: formData.player3Uid });
                 if (formData.player4Name) payload.teammates.push({ name: formData.player4Name, uid: formData.player4Uid });
@@ -104,12 +113,12 @@ export default function JoinTournamentModal({ isOpen, onClose, tournament, user,
     return (
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.9 }}
-                        className="relative w-full max-w-lg bg-[#0F172A] border border-blue-500/30 rounded-2xl shadow-2xl overflow-hidden"
+                        className="relative w-full max-w-lg mx-auto bg-[#0F172A] border border-blue-500/30 rounded-2xl shadow-2xl overflow-hidden"
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between p-6 border-b border-white/10 bg-gradient-to-r from-blue-900/20 to-purple-900/20">
@@ -123,7 +132,7 @@ export default function JoinTournamentModal({ isOpen, onClose, tournament, user,
                         </div>
 
                         {/* Form */}
-                        <form onSubmit={handleSubmit} className="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                        <form onSubmit={handleSubmit} className="p-6 max-h-[75vh] sm:max-h-[70vh] overflow-y-auto custom-scrollbar">
                             {error && (
                                 <div className="mb-6 p-3 bg-red-500/10 border border-red-500/50 rounded-lg flex items-center gap-2 text-red-200 text-sm">
                                     <AlertCircle size={16} />
@@ -165,27 +174,41 @@ export default function JoinTournamentModal({ isOpen, onClose, tournament, user,
 
                                 {/* Duo Fields */}
                                 {tournament.format === 'Duo' && (
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wider">Teammate Details</label>
-                                        <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-3">
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wider">Team Name</label>
                                             <input
                                                 type="text"
-                                                name="partnerName"
-                                                placeholder="Partner Name"
+                                                name="squadName" // Reuse squadName state for simplicity
+                                                placeholder="Team Name"
                                                 required
-                                                value={formData.partnerName}
+                                                value={formData.squadName}
                                                 onChange={handleChange}
                                                 className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 transition-all"
                                             />
-                                            <input
-                                                type="text"
-                                                name="partnerUid"
-                                                placeholder="Partner UID"
-                                                required
-                                                value={formData.partnerUid}
-                                                onChange={handleChange}
-                                                className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 transition-all"
-                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wider">Teammate Details</label>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <input
+                                                    type="text"
+                                                    name="partnerName"
+                                                    placeholder="Partner Name"
+                                                    required
+                                                    value={formData.partnerName}
+                                                    onChange={handleChange}
+                                                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 transition-all"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    name="partnerUid"
+                                                    placeholder="Partner UID"
+                                                    required
+                                                    value={formData.partnerUid}
+                                                    onChange={handleChange}
+                                                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 transition-all"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 )}
@@ -208,7 +231,7 @@ export default function JoinTournamentModal({ isOpen, onClose, tournament, user,
 
                                         <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mt-2">Squad Members</label>
                                         {[2, 3, 4].map((num) => (
-                                            <div key={num} className="grid grid-cols-2 gap-3">
+                                            <div key={num} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 <input
                                                     type="text"
                                                     name={`player${num}Name`}

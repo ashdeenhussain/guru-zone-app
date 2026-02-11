@@ -32,6 +32,8 @@ interface Participant {
     username?: string;
     ign?: string;
     uid?: string;
+    teamName?: string;
+    teammates?: { name: string; uid: string }[];
 }
 
 interface Tournament {
@@ -1155,8 +1157,9 @@ function ManageTournamentView({ tournament, onBack, onUpdate }: { tournament: To
                                             <table className="w-full text-sm text-left">
                                                 <thead className="text-xs text-muted-foreground uppercase bg-muted/50 sticky top-0 z-10 backdrop-blur-md">
                                                     <tr>
-                                                        <th className="px-4 py-3">User</th>
+                                                        <th className="px-4 py-3">User / Team</th>
                                                         <th className="px-4 py-3">Details</th>
+                                                        <th className="px-4 py-3">Teammates</th>
                                                         <th className="px-4 py-3 text-right">Action</th>
                                                     </tr>
                                                 </thead>
@@ -1178,6 +1181,11 @@ function ManageTournamentView({ tournament, onBack, onUpdate }: { tournament: To
                                                                             <div className="text-[10px] text-muted-foreground truncate max-w-[120px]" title={(p.userId as any)?.email}>
                                                                                 {(p.userId as any)?.email || 'No Email'}
                                                                             </div>
+                                                                            {p.teamName && (
+                                                                                <div className="text-[10px] font-bold text-blue-400 mt-0.5">
+                                                                                    Team: {p.teamName}
+                                                                                </div>
+                                                                            )}
                                                                         </div>
                                                                     </div>
                                                                 </td>
@@ -1186,10 +1194,25 @@ function ManageTournamentView({ tournament, onBack, onUpdate }: { tournament: To
                                                                         <div className="text-xs font-mono bg-muted/50 px-1.5 py-0.5 rounded w-fit text-foreground/80" title="In-Game Name">
                                                                             {p.ign || p.inGameName || '-'}
                                                                         </div>
-                                                                        <div className="text-[10px] font-mono text-muted-foreground">Game ID: {p.uid || (p.userId as any)?.uid || 'N/A'}</div>
+                                                                        <div className="text-[10px] font-mono text-muted-foreground">ID: {p.uid || (p.userId as any)?.uid || 'N/A'}</div>
                                                                     </div>
                                                                 </td>
+                                                                <td className="px-4 py-3">
+                                                                    {p.teammates && p.teammates.length > 0 ? (
+                                                                        <div className="flex flex-col gap-1">
+                                                                            {p.teammates.map((tm, idx) => (
+                                                                                <div key={idx} className="text-[10px] bg-muted/30 px-2 py-1 rounded border border-border/50 flex justify-between gap-2">
+                                                                                    <span className="font-bold text-foreground">{tm.name}</span>
+                                                                                    <span className="font-mono text-muted-foreground">{tm.uid}</span>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    ) : (
+                                                                        <span className="text-[10px] text-muted-foreground italic">Solo / No Teammates</span>
+                                                                    )}
+                                                                </td>
                                                                 <td className="px-4 py-3 text-right">
+                                                                    {/* Actions (Winner Selection) */}
                                                                     <div className="flex justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                                                                         {['rank1', 'rank2', 'rank3'].map((r, idx) => {
                                                                             const userIdStr = (p.userId as any)?._id || p.userId;
@@ -1215,7 +1238,7 @@ function ManageTournamentView({ tournament, onBack, onUpdate }: { tournament: To
                                                         ))
                                                     ) : (
                                                         <tr>
-                                                            <td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">
+                                                            <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
                                                                 {searchTerm ? 'No matches found.' : 'No participants joined yet.'}
                                                             </td>
                                                         </tr>

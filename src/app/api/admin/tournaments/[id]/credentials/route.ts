@@ -37,7 +37,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
         }
 
         // Logic to notify participants would go here
-        console.log(`[Notification] Tournament ${tournament.title} is now LIVE! Credentials set for release at ${finalReleaseTime.toISOString()}.`);
+
 
         return NextResponse.json({ success: true, tournament });
     } catch (error: any) {

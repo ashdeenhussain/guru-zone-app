@@ -22,6 +22,8 @@ import {
     Trophy,
     RefreshCcw
 } from 'lucide-react';
+import Link from 'next/link';
+import TransactionHistoryModal from '@/components/admin/TransactionHistoryModal';
 
 interface User {
     _id: string;
@@ -37,19 +39,32 @@ interface User {
     lastLogin?: string;
     permissions?: string[];
     provider?: string;
+    createdAt: string;
 }
 
 interface UserStats {
     totalUsers: number;
     activeUsers: number;
+    bannedUsers: number;
+    inactiveUsers: number;
+    usersWithCoins: number;
+    totalSystemBalance: number;
 }
 
 export default function UserManagementPage() {
     const [users, setUsers] = useState<User[]>([]);
-    const [stats, setStats] = useState<UserStats>({ totalUsers: 0, activeUsers: 0 });
+    const [stats, setStats] = useState<UserStats>({
+        totalUsers: 0,
+        activeUsers: 0,
+        bannedUsers: 0,
+        inactiveUsers: 0,
+        usersWithCoins: 0,
+        totalSystemBalance: 0
+    });
     const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState('');
-    const [filter, setFilter] = useState('all'); // 'all', 'active', 'inactive', 'banned'
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [filter, setFilter] = useState('all'); // 'all', 'active', 'inactive', 'banned', 'has_coins'
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
 
@@ -57,9 +72,24 @@ export default function UserManagementPage() {
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isBanModalOpen, setIsBanModalOpen] = useState(false);
+    const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false); // Fix: Moved up
+    const [historyModalState, setHistoryModalState] = useState<{ isOpen: boolean; userId: string; userName: string }>({
+        isOpen: false,
+        userId: '',
+        userName: ''
+    });
 
-    // Fetch Data
-    const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false);
+    // Debounce Search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            // Only update if search actually changed to avoid unnecessary resets
+            if (search !== debouncedSearch) {
+                setDebouncedSearch(search);
+                setPage(1);
+            }
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [search, debouncedSearch]);
 
     // Fetch Data
     const fetchUsers = useCallback(async () => {
@@ -68,7 +98,7 @@ export default function UserManagementPage() {
             const query = new URLSearchParams({
                 page: page.toString(),
                 limit: '10',
-                search,
+                search: debouncedSearch,
                 filter
             });
             const res = await fetch(`/api/admin/users?${query}`);
@@ -77,7 +107,7 @@ export default function UserManagementPage() {
             if (res.ok) {
                 setUsers(data.users);
                 setStats(data.stats);
-                setTotalPages(data.pagination.pages);
+                setTotalPages(data.pagination.pages || 1);
             } else {
                 console.error("Failed to fetch users:", data.error);
             }
@@ -86,21 +116,18 @@ export default function UserManagementPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [page, search, filter]);
+    }, [page, debouncedSearch, filter]);
 
-    // Reset page on filter change
+    // Fetch on dependency change
     useEffect(() => {
+        fetchUsers();
+    }, [fetchUsers]);
+
+    const handleFilterChange = (newFilter: string) => {
+        if (newFilter === filter) return;
+        setFilter(newFilter);
         setPage(1);
-    }, [filter]);
-
-    // Debounce Search
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setPage(1); // Reset to page 1 on search
-            fetchUsers();
-        }, 500);
-        return () => clearTimeout(timer);
-    }, [search, fetchUsers]);
+    };
 
     // Actions
     const handleEditUser = async (e: React.FormEvent) => {
@@ -112,8 +139,9 @@ export default function UserManagementPage() {
         const formData = {
             name: (form.elements.namedItem('name') as HTMLInputElement).value,
             inGameName: (form.elements.namedItem('inGameName') as HTMLInputElement).value,
+
             freeFireUid: (form.elements.namedItem('freeFireUid') as HTMLInputElement).value,
-            walletBalance: Number((form.elements.namedItem('walletBalance') as HTMLInputElement).value),
+            // walletBalance is now managed separately via /admin/users/[id]
         };
 
         try {
@@ -190,6 +218,10 @@ export default function UserManagementPage() {
         }
     };
 
+    const handleOpenHistory = (userId: string, userName: string) => {
+        setHistoryModalState({ isOpen: true, userId, userName });
+    };
+
     return (
         <div className="space-y-8 pt-24 pb-20 lg:pt-0 lg:pb-0">
             {/* Header & Title */}
@@ -227,21 +259,73 @@ export default function UserManagementPage() {
             <div className="h-px w-full bg-border/50" />
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 <StatsCard
                     title="Total Users"
                     value={stats.totalUsers}
-                    icon={<UserIcon className="w-6 h-6 text-blue-400" />}
+                    icon={<Users className="w-5 h-5 text-blue-400" />}
                     color="from-blue-500/20 to-blue-600/5"
                     borderColor="border-blue-500/20"
+                    onClick={() => handleFilterChange('all')}
+                    isActive={filter === 'all'}
                 />
                 <StatsCard
-                    title="Active Users (7d)"
+                    title="Active (7d)"
                     value={stats.activeUsers}
-                    icon={<CheckCircle className="w-6 h-6 text-green-400" />}
+                    icon={<CheckCircle className="w-5 h-5 text-green-400" />}
                     color="from-green-500/20 to-green-600/5"
                     borderColor="border-green-500/20"
+                    onClick={() => handleFilterChange('active')}
+                    isActive={filter === 'active'}
                 />
+                <StatsCard
+                    title="Inactive"
+                    value={stats.inactiveUsers}
+                    icon={<UserIcon className="w-5 h-5 text-gray-400" />}
+                    color="from-gray-500/20 to-gray-600/5"
+                    borderColor="border-gray-500/20"
+                    onClick={() => handleFilterChange('inactive')}
+                    isActive={filter === 'inactive'}
+                />
+                <StatsCard
+                    title="Banned"
+                    value={stats.bannedUsers}
+                    icon={<Ban className="w-5 h-5 text-red-400" />}
+                    color="from-red-500/20 to-red-600/5"
+                    borderColor="border-red-500/20"
+                    onClick={() => handleFilterChange('banned')}
+                    isActive={filter === 'banned'}
+                />
+                <StatsCard
+                    title="With Coins"
+                    value={stats.usersWithCoins}
+                    icon={<CreditCard className="w-5 h-5 text-yellow-500" />}
+                    color="from-yellow-500/20 to-orange-600/5"
+                    borderColor="border-yellow-500/20"
+                    onClick={() => handleFilterChange('has_coins')}
+                    isActive={filter === 'has_coins'}
+                />
+            </div>
+
+            {/* Total System Balance - Separate or smaller display if needed, keeping it as a banner or extra card? 
+                User focused on counts. I will keep it as a full width banner below stats or just above list.
+                Actually, the user request "add coin wala also" implies counting users with coins. 
+                Existing "Coins in Circulation" is useful. I'll add it as a separate full-width card or just keep it?
+                The design might get cluttered. I will make a separate row for financial summary if needed, but for now
+                I'll add it as a standalone card below the grid or integrated. 
+                Let's put it as a wide card below the user counts or just remove it if it conflicts? 
+                No, removing is bad. I'll add "Coins in Circulation" as a separate info block.
+            */}
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                <div className="relative overflow-hidden p-6 rounded-2xl border border-yellow-500/20 bg-gradient-to-br from-yellow-500/10 to-orange-600/5 backdrop-blur-sm shadow-sm flex items-center justify-between">
+                    <div>
+                        <h3 className="text-muted-foreground font-medium mb-1">Total Coins in Circulation</h3>
+                        <div className="text-3xl font-bold tracking-tight text-yellow-500">PKR {stats.totalSystemBalance.toLocaleString()}</div>
+                    </div>
+                    <div className="p-3 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
+                        <CreditCard className="w-8 h-8 text-yellow-500" />
+                    </div>
+                </div>
             </div>
 
             {/* Controls */}
@@ -251,7 +335,7 @@ export default function UserManagementPage() {
                     <input
                         type="text"
                         placeholder="Search by name, email, UID..."
-                        className="w-full bg-muted/40 border-none rounded-2xl pl-11 pr-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-yellow-500/20 transition-all placeholder:text-muted-foreground/50 font-medium"
+                        className="w-full bg-muted/40 border-none rounded-2xl pl-11 pr-4 py-3 text-sm text-foreground focus:outline-none focus:border-primary transition-all placeholder:text-muted-foreground/50 font-medium"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
@@ -263,11 +347,12 @@ export default function UserManagementPage() {
                         { id: 'all', label: 'All Users' },
                         { id: 'active', label: 'Active' },
                         { id: 'inactive', label: 'Inactive (>7d)' },
-                        { id: 'banned', label: 'Banned' }
+                        { id: 'banned', label: 'Banned' },
+                        { id: 'has_coins', label: 'Has Coins' }
                     ].map(tab => (
                         <button
                             key={tab.id}
-                            onClick={() => setFilter(tab.id)}
+                            onClick={() => handleFilterChange(tab.id)}
                             className={`
                                 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap
                                 ${filter === tab.id
@@ -374,6 +459,7 @@ export default function UserManagementPage() {
                                 <th className="p-5 font-bold">IGN / UID</th>
                                 <th className="p-5 font-bold">Wallet</th>
                                 <th className="p-5 font-bold">Status</th>
+                                <th className="p-5 font-bold">Joined</th>
                                 <th className="p-5 font-bold text-right">Actions</th>
                             </tr>
                         </thead>
@@ -393,19 +479,19 @@ export default function UserManagementPage() {
                             ) : users.map(user => (
                                 <tr key={user._id} className="hover:bg-white/5 transition-colors group">
                                     <td className="p-5">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center text-xs font-bold uppercase text-foreground shadow-inner border border-white/10">
+                                        <Link href={`/admin/users/${user._id}`} className="flex items-center gap-3 group/link">
+                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center text-xs font-bold uppercase text-foreground shadow-inner border border-white/10 group-hover/link:scale-110 transition-transform">
                                                 {user.name.charAt(0)}
                                             </div>
                                             <div>
-                                                <div className="font-bold flex items-center gap-2 text-foreground text-sm">
+                                                <div className="font-bold flex items-center gap-2 text-foreground text-sm group-hover/link:text-primary transition-colors">
                                                     {user.name}
                                                     {user.role === 'admin' && <span className="bg-purple-500/10 text-purple-500 text-[10px] px-2 py-0.5 rounded border border-purple-500/20 font-bold">ADMIN</span>}
                                                     {user.role !== 'admin' && user.permissions && user.permissions.length > 0 && <span className="bg-blue-500/10 text-blue-500 text-[10px] px-2 py-0.5 rounded border border-blue-500/20 font-bold">STAFF</span>}
                                                 </div>
                                                 <div className="text-xs text-muted-foreground opacity-70">{user.email}</div>
                                             </div>
-                                        </div>
+                                        </Link>
                                     </td>
                                     <td className="p-5">
                                         <div className="text-sm">
@@ -434,6 +520,18 @@ export default function UserManagementPage() {
                                                     <Mail className="w-4 h-4" />
                                                 )}
                                             </div>
+                                            <div className="flex flex-col justify-center mr-4">
+                                                <span className="text-[10px] text-muted-foreground font-mono">
+                                                    {new Date(user.createdAt).toLocaleDateString()}
+                                                </span>
+                                            </div>
+                                            <button
+                                                onClick={() => handleOpenHistory(user._id, user.name)}
+                                                className="p-2 hover:bg-yellow-500/10 text-muted-foreground hover:text-yellow-500 rounded-xl transition-colors"
+                                                title="Inspect Wallet"
+                                            >
+                                                <CreditCard className="w-4 h-4" />
+                                            </button>
                                             <button
                                                 onClick={() => { setSelectedUser(user); setIsEditModalOpen(true); }}
                                                 className="p-2 hover:bg-blue-500/10 text-muted-foreground hover:text-blue-500 rounded-xl transition-colors"
@@ -512,7 +610,24 @@ export default function UserManagementPage() {
 
                             <div className="col-span-2">
                                 <label className="block text-xs font-medium text-muted-foreground mb-1">Wallet Balance (PKR)</label>
-                                <input type="number" name="walletBalance" defaultValue={selectedUser.walletBalance} min="0" className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:outline-none focus:border-primary" />
+                                <div className="flex gap-2">
+                                    <input
+                                        type="number"
+                                        defaultValue={selectedUser.walletBalance}
+                                        readOnly
+                                        disabled
+                                        className="w-full bg-muted border border-input rounded-lg px-3 py-2 text-muted-foreground focus:outline-none cursor-not-allowed"
+                                    />
+                                    <Link
+                                        href={`/admin/users/${selectedUser._id}`}
+                                        className="px-3 py-2 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-600 rounded-lg text-xs font-bold transition-all border border-yellow-500/20 whitespace-nowrap flex items-center"
+                                    >
+                                        Manage
+                                    </Link>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground mt-1">
+                                    To adjust balance safely, please use the <span className="text-yellow-600 font-bold">Manage</span> button.
+                                </p>
                             </div>
                         </div>
 
@@ -638,25 +753,58 @@ export default function UserManagementPage() {
                     </form>
                 )}
             </Modal>
+            {/* Transaction History Modal */}
+            <TransactionHistoryModal
+                isOpen={historyModalState.isOpen}
+                onClose={() => setHistoryModalState({ ...historyModalState, isOpen: false })}
+                userId={historyModalState.userId}
+                userName={historyModalState.userName}
+            />
         </div >
     );
 }
 
 // Sub-components
 
-function StatsCard({ title, value, icon, color, borderColor }: { title: string, value: number, icon: React.ReactNode, color: string, borderColor: string }) {
+function StatsCard({
+    title,
+    value,
+    icon,
+    color,
+    borderColor,
+    onClick,
+    isActive
+}: {
+    title: string,
+    value: number,
+    icon: React.ReactNode,
+    color: string,
+    borderColor: string,
+    onClick?: () => void,
+    isActive?: boolean
+}) {
     return (
-        <div className={`relative overflow-hidden p-6 rounded-2xl border ${borderColor} bg-gradient-to-br ${color} backdrop-blur-sm shadow-sm`}>
+        <button
+            onClick={onClick}
+            className={`
+                relative overflow-hidden p-4 rounded-2xl border transition-all duration-200 text-left w-full
+                ${isActive
+                    ? `ring-2 ring-primary ring-offset-2 ring-offset-background ${borderColor} bg-gradient-to-br ${color}`
+                    : `${borderColor} bg-gradient-to-br ${color} hover:scale-[1.02] hover:shadow-md cursor-pointer`
+                }
+                backdrop-blur-sm shadow-sm
+            `}
+        >
             <div className="flex justify-between items-start">
                 <div>
-                    <h3 className="text-muted-foreground font-medium mb-1">{title}</h3>
-                    <div className="text-4xl font-bold tracking-tight text-foreground">{value.toLocaleString()}</div>
+                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1 opacity-80">{title}</h3>
+                    <div className="text-2xl font-black tracking-tight text-foreground">{value.toLocaleString()}</div>
                 </div>
-                <div className="p-3 bg-background/30 rounded-xl border border-background/20 backdrop-blur-md">
+                <div className={`p-2.5 rounded-xl border backdrop-blur-md ${isActive ? 'bg-background/40 border-background/30' : 'bg-background/20 border-background/10'}`}>
                     {icon}
                 </div>
             </div>
-        </div>
+        </button>
     );
 }
 

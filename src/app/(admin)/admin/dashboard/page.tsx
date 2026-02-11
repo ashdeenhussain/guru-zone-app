@@ -217,7 +217,7 @@ export default async function AdminDashboard() {
                                 title="Withdrawals"
                                 count={stats.pendingWithdrawals}
                                 label="Pending"
-                                href="/admin/finance/withdrawals"
+                                href="/admin/finance?tab=withdrawals"
                                 urgent={stats.pendingWithdrawals > 0}
                                 icon={CreditCard}
                             />

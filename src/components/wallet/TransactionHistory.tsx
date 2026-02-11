@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowDownLeft, ArrowUpRight, Clock, CheckCircle, XCircle, AlertCircle, X, ExternalLink, Copy } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Clock, CheckCircle, XCircle, AlertCircle, X, ExternalLink, Copy, ShieldCheck } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
@@ -16,6 +16,11 @@ interface Transaction {
     rejectionReason?: string;
     method?: string;
     trxID?: string;
+    details?: {
+        adjustmentType?: 'CREDIT' | 'DEBIT';
+        adjustedBy?: string;
+        [key: string]: any;
+    };
 }
 
 interface TransactionHistoryProps {
@@ -42,21 +47,32 @@ export default function TransactionHistory({ transactions, loading }: Transactio
         );
     }
 
+    // Helper to determine if a transaction is a "credit" (money in)
+    const isCreditTransaction = (trx: Transaction) => {
+        const type = trx.type.toLowerCase();
+        if (type === 'deposit' || type === 'prize_winnings' || type === 'refund') return true;
+        if (type === 'admin_adjustment') {
+            return trx.details?.adjustmentType === 'CREDIT';
+        }
+        return false;
+    };
+
     const filteredTransactions = transactions.filter((trx) => {
         const type = trx.type.toLowerCase();
+        const isCredit = isCreditTransaction(trx);
 
         switch (activeFilter) {
             case "all":
                 return true;
             case "deposits":
-                return type === "deposit";
+                return type === "deposit" || (type === "admin_adjustment" && isCredit);
             case "withdrawals":
-                return type === "withdrawal";
+                return type === "withdrawal" || (type === "admin_adjustment" && !isCredit);
             case "games":
                 return type === "entry_fee" || type === "prize_winnings" || type === "refund";
             case "other":
                 // Catch spins, shop purchases, and anything else
-                return type === "spin_win" || type === "shop_purchase" || (!["deposit", "withdrawal", "entry_fee", "prize_winnings", "refund"].includes(type));
+                return type === "spin_win" || type === "shop_purchase";
             default:
                 return true;
         }
@@ -86,6 +102,17 @@ export default function TransactionHistory({ transactions, loading }: Transactio
         }
     };
 
+    const getTypeIcon = (trx: Transaction) => {
+        const isCredit = isCreditTransaction(trx);
+        if (trx.type === 'ADMIN_ADJUSTMENT') return <ShieldCheck size={20} />;
+        return isCredit ? <ArrowDownLeft size={20} /> : <ArrowUpRight size={20} />;
+    };
+
+    const formatType = (type: string) => {
+        if (type === 'ADMIN_ADJUSTMENT') return 'Wallet Adjustment';
+        return type.replace(/_/g, " ");
+    };
+
     return (
         <div className="space-y-4">
             {/* Filters */}
@@ -113,11 +140,8 @@ export default function TransactionHistory({ transactions, loading }: Transactio
                     </div>
                 ) : (
                     filteredTransactions.map((trx) => {
-                        const isDeposit = trx.type === "deposit" || trx.type === "prize_winnings";
+                        const isCredit = isCreditTransaction(trx);
                         const status = trx.status.toLowerCase();
-                        const isPending = status === "pending";
-                        const isFailed = status === "rejected" || status === "failed";
-                        const isCompleted = status === "approved" || status === "completed";
 
                         return (
                             <div
@@ -127,14 +151,14 @@ export default function TransactionHistory({ transactions, loading }: Transactio
                             >
                                 <div className="flex items-center gap-4">
                                     <div
-                                        className={`flex h-10 w-10 items-center justify-center rounded-full ${isDeposit ? "bg-green-500/20 text-green-500" : "bg-red-500/20 text-red-500"
+                                        className={`flex h-10 w-10 items-center justify-center rounded-full ${isCredit ? "bg-green-500/20 text-green-500" : "bg-red-500/20 text-red-500"
                                             }`}
                                     >
-                                        {isDeposit ? <ArrowDownLeft size={20} /> : <ArrowUpRight size={20} />}
+                                        {getTypeIcon(trx)}
                                     </div>
                                     <div>
                                         <p className="font-medium text-foreground capitalize">
-                                            {trx.type.replace("_", " ")}
+                                            {formatType(trx.type)}
                                         </p>
                                         <p className="text-xs text-muted-foreground">
                                             {format(new Date(trx.createdAt), "MMM d, yyyy • h:mm a")}
@@ -144,11 +168,10 @@ export default function TransactionHistory({ transactions, loading }: Transactio
 
                                 <div className="text-right">
                                     <p
-                                        className={`font-bold ${isDeposit ? "text-green-500" : "text-red-500"
+                                        className={`font-bold ${isCredit ? "text-green-500" : "text-red-500"
                                             }`}
                                     >
-                                        {isDeposit ? "+" : "-"}
-                                        {trx.amount}
+                                        {isCredit ? "+" : "-"}{trx.amount}
                                     </p>
                                     <div className="flex justify-end mt-1">
                                         <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold", getStatusColor(status))}>
@@ -188,9 +211,9 @@ export default function TransactionHistory({ transactions, loading }: Transactio
 
                                 <span className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-2">Transaction Details</span>
                                 <h2 className={cn("text-4xl font-black mb-2",
-                                    (selectedTrx.type === "deposit" || selectedTrx.type === "prize_winnings") ? "text-green-500" : "text-red-500"
+                                    isCreditTransaction(selectedTrx) ? "text-green-500" : "text-red-500"
                                 )}>
-                                    {(selectedTrx.type === "deposit" || selectedTrx.type === "prize_winnings") ? "+" : "-"}{selectedTrx.amount}
+                                    {isCreditTransaction(selectedTrx) ? "+" : "-"}{selectedTrx.amount}
                                 </h2>
 
                                 <span className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold border", getStatusColor(selectedTrx.status))}>
@@ -204,7 +227,12 @@ export default function TransactionHistory({ transactions, loading }: Transactio
                                 <div className="space-y-1">
                                     <label className="text-xs text-muted-foreground font-medium uppercase">Type</label>
                                     <div className="font-medium text-foreground capitalize flex items-center gap-2">
-                                        {selectedTrx.type.replace("_", " ")}
+                                        {formatType(selectedTrx.type)}
+                                        {selectedTrx.details?.adjustmentType && (
+                                            <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-md">
+                                                {selectedTrx.details.adjustmentType}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
 

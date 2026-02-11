@@ -20,7 +20,7 @@ export async function POST(req: Request) {
 
         const userId = (authSession.user as any).id;
         const body = await req.json();
-        const { tournamentId, inGameName, uid, teammates } = body;
+        const { tournamentId, inGameName, uid, teammates, teamName } = body;
 
         if (!tournamentId || !inGameName || !uid) {
             return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
@@ -38,6 +38,12 @@ export async function POST(req: Request) {
         if (!tournament) {
             await session.abortTransaction();
             return NextResponse.json({ message: 'Tournament not found' }, { status: 404 });
+        }
+
+        // Validate Team Name for Duo/Squad
+        if (tournament.format !== 'Solo' && !teamName) {
+            await session.abortTransaction();
+            return NextResponse.json({ message: 'Team Name is required for Duo/Squad' }, { status: 400 });
         }
 
         if (tournament.status !== 'Open') {
@@ -92,6 +98,7 @@ export async function POST(req: Request) {
             userId: user._id,
             inGameName,
             uid,
+            teamName: teamName || '',
             teammates: teammates || []
         };
 
