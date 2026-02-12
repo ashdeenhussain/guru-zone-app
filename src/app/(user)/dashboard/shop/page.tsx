@@ -5,6 +5,7 @@ import SpinItem from "@/models/SpinItem";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import ShopContent from "./ShopContent";
+import ShopMaintenanceWrapper from "@/components/shop/ShopMaintenanceWrapper";
 import { redirect } from "next/navigation";
 
 export const dynamic = 'force-dynamic';
@@ -58,20 +59,22 @@ export default async function ShopPage() {
 
     return (
         <div>
-            <ShopContent
-                products={serializedProducts}
-                spinItems={serializedSpinItems}
-                userBalance={user.walletBalance || 0}
-                userProfile={{
-                    inGameName: user.inGameName,
-                    uid: user.freeFireUid
-                }}
-                loyaltyData={{
-                    progress: user.loyaltyProgress || 0,
-                    spinsAvailable: user.spinsAvailable || 0
-                }}
-                bannerImages={shopBanners}
-            />
+            <ShopMaintenanceWrapper isActive={true}>
+                <ShopContent
+                    products={serializedProducts}
+                    spinItems={serializedSpinItems}
+                    userBalance={user.walletBalance || 0}
+                    userProfile={{
+                        inGameName: user.inGameName,
+                        uid: user.freeFireUid
+                    }}
+                    loyaltyData={{
+                        progress: user.loyaltyProgress || 0,
+                        spinsAvailable: user.spinsAvailable || 0
+                    }}
+                    bannerImages={shopBanners}
+                />
+            </ShopMaintenanceWrapper>
         </div>
     );
 }
