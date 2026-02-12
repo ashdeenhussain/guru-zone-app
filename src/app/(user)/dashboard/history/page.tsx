@@ -9,7 +9,6 @@ import {
     Users,
     MapPin,
     Target,
-    Clock,
     Filter,
     ChevronRight,
     Sword
@@ -78,9 +77,9 @@ export default function TournamentHistoryPage() {
     return (
         <div className="min-h-screen bg-background text-foreground pb-24 lg:pb-8">
             <div className="max-w-5xl mx-auto space-y-6 p-4 md:p-6">
-                {/* Header */}
+                {/* Header - Updated Title */}
                 <PageHeader
-                    title="My Battlefield"
+                    title="Tournament History"
                     description="Your Tournament History & Records"
                     icon={Sword}
                 />
@@ -197,7 +196,7 @@ export default function TournamentHistoryPage() {
                                                     </div>
                                                 </div>
 
-                                                {/* Details Grid */}
+                                                {/* Details Grid - Updated Currency to Coins */}
                                                 <div className="grid grid-cols-2 gap-2 text-sm bg-muted/20 p-3 rounded-xl border border-border/50 mb-3">
                                                     <div className="flex items-center gap-2 text-muted-foreground">
                                                         <MapPin className="w-4 h-4 text-primary/70" />
@@ -209,12 +208,12 @@ export default function TournamentHistoryPage() {
                                                     </div>
                                                     <div className="flex items-center gap-2 text-muted-foreground">
                                                         <Trophy className="w-4 h-4 text-yellow-500" />
-                                                        <span className="text-foreground font-medium">PKR {tournament.prizePool}</span>
+                                                        <span className="text-foreground font-medium">{tournament.prizePool} Coins</span>
                                                     </div>
                                                     <div className="flex items-center gap-2 text-muted-foreground">
                                                         <Target className="w-4 h-4 text-blue-500" />
                                                         <span className={tournament.entryFee === 0 ? 'text-green-500 font-bold' : 'text-foreground'}>
-                                                            {tournament.entryFee === 0 ? 'FREE' : `PKR ${tournament.entryFee}`}
+                                                            {tournament.entryFee === 0 ? 'FREE' : `${tournament.entryFee} Coins`}
                                                         </span>
                                                     </div>
                                                 </div>

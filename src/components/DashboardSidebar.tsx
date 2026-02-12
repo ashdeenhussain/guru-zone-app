@@ -42,7 +42,7 @@ export default function DashboardSidebar() {
         { icon: Crown, label: "Leaderboard", href: "/dashboard/leaderboard" },
         { icon: Wallet, label: "Wallet", href: "/dashboard/wallet" },
         { icon: ArrowUpRight, label: "Withdraw", href: "/dashboard/wallet/withdraw" },
-        { icon: ScrollText, label: "History", href: "/dashboard/transactions" },
+        { icon: ScrollText, label: "History", href: "/dashboard/history" },
         { icon: MessageCircle, label: "Support", href: "/dashboard/support" },
         { icon: User, label: "Profile", href: "/dashboard/profile" },
         { icon: Settings, label: "Settings", href: "/dashboard/settings" },

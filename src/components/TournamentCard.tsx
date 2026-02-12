@@ -107,14 +107,14 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
                 <div className="flex justify-between items-center mb-4 bg-muted/30 border border-border p-3 rounded-xl relative z-10 backdrop-blur-sm">
                     <span className="text-sm text-muted-foreground">Prize Pool</span>
                     <div className="text-xl font-bold text-primary relative group/prize cursor-help drop-shadow-[0_2px_4px_rgba(234,179,8,0.2)]">
-                        PKR {tournament.prizePool}
+                        {tournament.prizePool} Coins
                         {/* Tooltip */}
                         <div className="absolute right-0 top-full mt-2 w-48 p-3 bg-card backdrop-blur-xl border border-border rounded-xl hidden group-hover/prize:block z-20 shadow-2xl">
                             <div className="text-xs text-muted-foreground space-y-1">
                                 <div className="flex justify-between border-b border-border pb-1 mb-1 font-semibold text-foreground"><span>Distribution</span></div>
-                                <div className="flex justify-between"><span>🥇 1st:</span> <span className="text-primary">PKR {tournament.prizeDistribution.first}</span></div>
-                                <div className="flex justify-between"><span>🥈 2nd:</span> <span className="text-muted-foreground">PKR {tournament.prizeDistribution.second}</span></div>
-                                <div className="flex justify-between"><span>🥉 3rd:</span> <span className="text-muted-foreground">PKR {tournament.prizeDistribution.third}</span></div>
+                                <div className="flex justify-between"><span>🥇 1st:</span> <span className="text-primary">{tournament.prizeDistribution.first} Coins</span></div>
+                                <div className="flex justify-between"><span>🥈 2nd:</span> <span className="text-muted-foreground">{tournament.prizeDistribution.second} Coins</span></div>
+                                <div className="flex justify-between"><span>🥉 3rd:</span> <span className="text-muted-foreground">{tournament.prizeDistribution.third} Coins</span></div>
                             </div>
                         </div>
                     </div>
@@ -154,7 +154,7 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
                     <div className="flex flex-col">
                         <span className="text-xs text-muted-foreground uppercase tracking-wider">Entry Fee</span>
                         <span className="text-lg font-bold text-primary">
-                            {tournament.entryFee === 0 ? 'FREE' : `PKR ${tournament.entryFee}`}
+                            {tournament.entryFee === 0 ? 'FREE' : `${tournament.entryFee} Coins`}
                         </span>
                     </div>
                     <div
