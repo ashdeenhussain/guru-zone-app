@@ -20,7 +20,8 @@ import {
     Moon,
     Sunset,
     ShoppingBag,
-    Bell
+    Bell,
+    ScrollText
 } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { useState } from "react";
@@ -41,7 +42,7 @@ export default function DashboardSidebar() {
         { icon: Crown, label: "Leaderboard", href: "/dashboard/leaderboard" },
         { icon: Wallet, label: "Wallet", href: "/dashboard/wallet" },
         { icon: ArrowUpRight, label: "Withdraw", href: "/dashboard/wallet/withdraw" },
-        { icon: History, label: "Transactions", href: "/dashboard/transactions" },
+        { icon: ScrollText, label: "History", href: "/dashboard/transactions" },
         { icon: MessageCircle, label: "Support", href: "/dashboard/support" },
         { icon: User, label: "Profile", href: "/dashboard/profile" },
         { icon: Settings, label: "Settings", href: "/dashboard/settings" },

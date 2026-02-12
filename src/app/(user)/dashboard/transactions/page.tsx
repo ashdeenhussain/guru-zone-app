@@ -3,228 +3,234 @@
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import {
-    ArrowUp,
-    ArrowDown,
-    Clock,
-    Filter,
     Trophy,
     Gamepad2,
-    CheckCircle2,
-    XCircle,
-    AlertCircle
+    Calendar,
+    Users,
+    MapPin,
+    Target,
+    Clock,
+    Filter,
+    ChevronRight,
+    Sword
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import PageHeader from "@/components/PageHeader";
+import Link from "next/link";
 
-interface Transaction {
+interface Tournament {
     _id: string;
-    type: 'deposit' | 'withdrawal' | 'entry_fee' | 'prize_winnings';
-    amount: number;
-    status: 'pending' | 'approved' | 'rejected';
-    createdAt: string;
-    method?: string;
-    trxID?: string;
-    description?: string;
+    title: string;
+    format: string; // Solo, Duo, Squad
+    gameType: string; // BR, CS
+    entryFee: number;
+    prizePool: number;
+    startTime: string;
+    status: 'Open' | 'Live' | 'Completed' | 'Cancelled';
+    map: string;
+    joinedCount: number;
+    maxSlots: number;
 }
 
-export default function TransactionHistoryPage() {
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
+export default function TournamentHistoryPage() {
+    const [tournaments, setTournaments] = useState<Tournament[]>([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState<'all' | 'deposit' | 'withdrawal'>('all');
+
+    // Filters
+    const [gameTypeFilter, setGameTypeFilter] = useState<'All' | 'BR' | 'CS'>('All');
+    const [formatFilter, setFormatFilter] = useState<'All' | 'Solo' | 'Duo' | 'Squad'>('All');
 
     useEffect(() => {
-        fetchTransactions();
+        fetchTournaments();
     }, []);
 
-    const fetchTransactions = async () => {
+    const fetchTournaments = async () => {
         try {
-            const res = await fetch("/api/finance/history");
+            const res = await fetch("/api/user/tournaments");
             const data = await res.json();
-            if (res.ok) {
-                setTransactions(data.transactions || []);
+            if (data.success) {
+                setTournaments(data.joined || []);
             }
         } catch (error) {
-            console.error("Failed to fetch transactions", error);
+            console.error("Failed to fetch tournaments", error);
         } finally {
             setLoading(false);
         }
     };
 
-    const filteredTransactions = transactions.filter(t => {
-        if (filter === 'all') return true;
-        if (filter === 'deposit') return t.type === 'deposit';
-        if (filter === 'withdrawal') return t.type === 'withdrawal';
+    const filteredTournaments = tournaments.filter(t => {
+        if (gameTypeFilter !== 'All' && t.gameType !== gameTypeFilter) return false;
+        if (formatFilter !== 'All' && t.format !== formatFilter) return false;
         return true;
     });
 
-    const getIcon = (type: string) => {
-        switch (type) {
-            case 'deposit': return <ArrowUp className="w-5 h-5 text-green-500" />;
-            case 'withdrawal': return <ArrowDown className="w-5 h-5 text-red-500" />;
-            case 'entry_fee': return <Gamepad2 className="w-5 h-5 text-yellow-500" />;
-            case 'prize_winnings': return <Trophy className="w-5 h-5 text-primary" />;
-            default: return <Clock className="w-5 h-5 text-muted-foreground" />;
+    // Helper to get status distinct styles
+    const getStatusStyle = (status: string) => {
+        switch (status) {
+            case 'Open': return "bg-emerald-500/10 text-emerald-500 border-emerald-500/20";
+            case 'Live': return "bg-red-500/10 text-red-500 border-red-500/20 animate-pulse";
+            case 'Completed': return "bg-blue-500/10 text-blue-500 border-blue-500/20";
+            case 'Cancelled': return "bg-gray-500/10 text-gray-400 border-gray-500/20";
+            default: return "bg-gray-500/10 text-gray-400 border-gray-500/20";
         }
     };
-
-    const getTitle = (type: string) => {
-        switch (type) {
-            case 'deposit': return "Deposit";
-            case 'withdrawal': return "Withdrawal";
-            case 'entry_fee': return "Tournament Entry";
-            case 'prize_winnings': return "Prize Won";
-            default: return "Transaction";
-        }
-    };
-
-    const isCredit = (type: string) => ['deposit', 'prize_winnings'].includes(type);
 
     return (
-        <div className="min-h-screen bg-background text-foreground p-4 md:p-8 pb-24 lg:pb-8">
-            <div className="max-w-6xl mx-auto space-y-8">
-                {/* Page Title Header */}
+        <div className="min-h-screen bg-background text-foreground pb-24 lg:pb-8">
+            <div className="max-w-5xl mx-auto space-y-6 p-4 md:p-6">
+                {/* Header */}
                 <PageHeader
-                    title="History"
-                    description="Transactions & Activities"
-                    icon={Clock}
-                    className="-mx-4 md:-mx-8 lg:rounded-xl"
+                    title="My Battlefield"
+                    description="Your Tournament History & Records"
+                    icon={Sword}
                 />
 
-                {/* Filter Tabs */}
-                <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
-                    {(['all', 'deposit', 'withdrawal'] as const).map((f) => (
-                        <button
-                            key={f}
-                            onClick={() => setFilter(f)}
-                            className={`
-                                px-4 py-2 rounded-full text-sm font-medium capitalize transition-all
-                                ${filter === f
-                                    ? "bg-primary text-primary-foreground font-bold"
-                                    : "bg-muted text-muted-foreground hover:bg-muted/80"
-                                }
-                            `}
-                        >
-                            {f}
-                        </button>
-                    ))}
+                {/* Filters Section */}
+                <div className="bg-card border border-border rounded-2xl p-4 md:p-6 shadow-sm space-y-4">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Filter className="w-5 h-5 text-primary" />
+                        <h2 className="text-lg font-bold">Filters</h2>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row gap-4">
+                        {/* Game Type Filter */}
+                        <div className="space-y-2 flex-1">
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Game Type</label>
+                            <div className="flex bg-muted/30 p-1 rounded-xl border border-border/50">
+                                {(['All', 'BR', 'CS'] as const).map((type) => (
+                                    <button
+                                        key={type}
+                                        onClick={() => setGameTypeFilter(type)}
+                                        className={`flex-1 py-2 px-3 rounded-lg text-sm font-bold transition-all ${gameTypeFilter === type
+                                                ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
+                                                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                                            }`}
+                                    >
+                                        {type}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Format Filter */}
+                        <div className="space-y-2 flex-1">
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Format</label>
+                            <div className="flex bg-muted/30 p-1 rounded-xl border border-border/50 overflow-x-auto">
+                                {(['All', 'Solo', 'Duo', 'Squad'] as const).map((fmt) => (
+                                    <button
+                                        key={fmt}
+                                        onClick={() => setFormatFilter(fmt)}
+                                        className={`flex-1 py-2 px-3 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${formatFilter === fmt
+                                                ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
+                                                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                                            }`}
+                                    >
+                                        {fmt}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Content */}
-                {loading ? (
-                    <div className="flex justify-center py-20">
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+                {/* Tournaments List */}
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center px-1">
+                        <h3 className="font-bold text-lg flex items-center gap-2">
+                            <Gamepad2 className="text-primary w-5 h-5" />
+                            Joined Tournaments
+                            <span className="bg-muted px-2 py-0.5 rounded-full text-xs text-muted-foreground border border-border">
+                                {filteredTournaments.length}
+                            </span>
+                        </h3>
                     </div>
-                ) : filteredTransactions.length === 0 ? (
-                    <div className="text-center py-20 bg-card rounded-2xl border border-border">
-                        <Clock className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                        <h3 className="text-xl font-bold text-foreground">No transaction history yet</h3>
-                        <p className="text-muted-foreground">Your recent financial activities will appear here.</p>
-                    </div>
-                ) : (
-                    <>
-                        {/* Mobile List (Cards) */}
-                        <div className="md:hidden space-y-4">
-                            {filteredTransactions.map((t) => (
-                                <motion.div
-                                    key={t._id}
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="bg-card border border-border rounded-2xl p-4 space-y-4"
-                                >
-                                    <div className="flex justify-between items-start">
-                                        <div className="flex gap-3">
-                                            <div className="p-2 rounded-xl bg-muted border border-border">
-                                                {getIcon(t.type)}
-                                            </div>
-                                            <div>
-                                                <h3 className="font-bold text-foreground">{getTitle(t.type)}</h3>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {format(new Date(t.createdAt), "MM/dd/yyyy, h:mm a")}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className={`text-right font-bold ${isCredit(t.type) ? 'text-green-500' : 'text-red-500'}`}>
-                                            {isCredit(t.type) ? '+' : '-'}{t.amount} coins
-                                        </div>
-                                    </div>
-                                    <div className="pt-3 border-t border-border flex justify-between items-center text-sm">
-                                        <span className="text-muted-foreground">{t.method || 'System'}</span>
-                                        <StatusBadge status={t.status} />
-                                    </div>
-                                </motion.div>
-                            ))}
-                        </div>
 
-                        {/* Desktop Table */}
-                        <div className="hidden md:block bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-                            <table className="w-full">
-                                <thead className="bg-muted/50 text-muted-foreground text-left text-sm uppercase">
-                                    <tr>
-                                        <th className="p-4 pl-6">Type</th>
-                                        <th className="p-4">Date</th>
-                                        <th className="p-4">Method</th>
-                                        <th className="p-4 text-right">Amount</th>
-                                        <th className="p-4 text-right pr-6">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-white/10">
-                                    {filteredTransactions.map((t) => (
-                                        <tr key={t._id} className="hover:bg-muted/30 transition-colors border-b border-border/50 last:border-0">
-                                            <td className="p-4 pl-6">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-2 rounded-xl bg-muted border border-border">
-                                                        {getIcon(t.type)}
-                                                    </div>
-                                                    <span className="font-medium text-foreground">{getTitle(t.type)}</span>
-                                                </div>
-                                            </td>
-                                            <td className="p-4 text-muted-foreground text-sm">
-                                                {format(new Date(t.createdAt), "MM/dd/yyyy, h:mm:ss a")}
-                                            </td>
-                                            <td className="p-4 text-muted-foreground text-sm">
-                                                {t.method || 'System'}
-                                            </td>
-                                            <td className={`p-4 text-right font-bold ${isCredit(t.type) ? 'text-green-500' : 'text-red-500'}`}>
-                                                {isCredit(t.type) ? '+' : '-'}{t.amount} coins
-                                            </td>
-                                            <td className="p-4 text-right pr-6">
-                                                <div className="flex justify-end">
-                                                    <StatusBadge status={t.status} />
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                    {loading ? (
+                        <div className="flex justify-center py-20">
+                            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
                         </div>
-                    </>
-                )}
+                    ) : filteredTournaments.length === 0 ? (
+                        <div className="text-center py-20 bg-card/50 rounded-2xl border border-border/50 border-dashed">
+                            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4 text-muted-foreground/50">
+                                <Trophy size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold text-foreground">No matches found</h3>
+                            <p className="text-muted-foreground">You haven't joined any tournaments matching these filters.</p>
+                            <Link href="/dashboard/tournaments" className="inline-block mt-4 text-primary hover:underline font-medium">
+                                Browse Available Tournaments
+                            </Link>
+                        </div>
+                    ) : (
+                        <AnimatePresence mode="popLayout">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                                {filteredTournaments.map((tournament) => (
+                                    <motion.div
+                                        layout
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.95 }}
+                                        transition={{ duration: 0.2 }}
+                                        key={tournament._id}
+                                        className="group"
+                                    >
+                                        <Link href={`/tournaments/${tournament._id}`}>
+                                            <div className="bg-card hover:bg-muted/10 border border-border rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-primary/30 transition-all relative overflow-hidden h-full flex flex-col">
+                                                {/* Status Badge */}
+                                                <div className="flex justify-between items-start mb-4">
+                                                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${getStatusStyle(tournament.status)}`}>
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                                                        {tournament.status}
+                                                    </span>
+                                                    <span className="text-xs font-mono text-muted-foreground bg-muted/50 px-2 py-1 rounded-md border border-border/50">
+                                                        {tournament.gameType} • {tournament.format}
+                                                    </span>
+                                                </div>
+
+                                                {/* Title & Prize */}
+                                                <div className="mb-4 flex-1">
+                                                    <h3 className="font-bold text-lg group-hover:text-primary transition-colors line-clamp-1 mb-1">
+                                                        {tournament.title}
+                                                    </h3>
+                                                    <div className="flex items-center text-sm text-muted-foreground gap-1">
+                                                        <Calendar className="w-3.5 h-3.5" />
+                                                        {format(new Date(tournament.startTime), "MMM d, yyyy • h:mm a")}
+                                                    </div>
+                                                </div>
+
+                                                {/* Details Grid */}
+                                                <div className="grid grid-cols-2 gap-2 text-sm bg-muted/20 p-3 rounded-xl border border-border/50 mb-3">
+                                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                                        <MapPin className="w-4 h-4 text-primary/70" />
+                                                        <span className="truncate">{tournament.map}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                                        <Users className="w-4 h-4 text-primary/70" />
+                                                        <span>{tournament.joinedCount}/{tournament.maxSlots}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                                        <Trophy className="w-4 h-4 text-yellow-500" />
+                                                        <span className="text-foreground font-medium">PKR {tournament.prizePool}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                                        <Target className="w-4 h-4 text-blue-500" />
+                                                        <span className={tournament.entryFee === 0 ? 'text-green-500 font-bold' : 'text-foreground'}>
+                                                            {tournament.entryFee === 0 ? 'FREE' : `PKR ${tournament.entryFee}`}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center justify-end text-primary text-sm font-bold group-hover:gap-2 transition-all duration-300">
+                                                    View Details <ChevronRight size={16} />
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </AnimatePresence>
+                    )}
+                </div>
             </div>
         </div>
-    );
-}
-
-function StatusBadge({ status }: { status: string }) {
-    const styles = {
-        approved: "bg-green-500/10 text-green-500 border-green-500/20",
-        pending: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
-        rejected: "bg-red-500/10 text-red-500 border-red-500/20",
-    };
-
-    // Normalize status to lowercase to match keys
-    const normalizedStatus = status.toLowerCase();
-    const activeStyle = styles[normalizedStatus as keyof typeof styles] || styles.pending;
-
-    // Icon
-    let Icon = AlertCircle;
-    if (normalizedStatus === 'approved') Icon = CheckCircle2;
-    if (normalizedStatus === 'rejected') Icon = XCircle;
-    if (normalizedStatus === 'pending') Icon = Clock;
-
-    return (
-        <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${activeStyle}`}>
-            <Icon className="w-3.5 h-3.5" />
-            <span className="capitalize">{normalizedStatus}</span>
-        </span>
     );
 }

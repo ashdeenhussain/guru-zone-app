@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { RefreshCw, Plus, ArrowUpRight, Wallet, History } from "lucide-react";
+import { RefreshCw, Plus, ArrowUpRight, Wallet, History, ScrollText } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import BuyCoinsModal from "@/components/wallet/BuyCoinsModal";
@@ -120,8 +120,8 @@ export default function WalletPage() {
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <History size={20} className="text-primary" />
-                            <h3 className="text-lg font-bold text-foreground">Transaction History</h3>
+                            <ScrollText size={20} className="text-primary" />
+                            <h3 className="text-lg font-bold text-foreground">History</h3>
                         </div>
                     </div>
 

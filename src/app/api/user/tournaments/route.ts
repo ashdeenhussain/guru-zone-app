@@ -15,7 +15,12 @@ export async function GET() {
 
         await connectToDatabase();
 
-        const user = await User.findOne({ email: session.user.email }, { tournamentsPlayed: 1 });
+        const user = await User.findOne({ email: session.user.email })
+            .populate({
+                path: 'tournamentsPlayed',
+                options: { sort: { startTime: -1 } }
+            })
+            .lean();
 
         if (!user) {
             return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
