@@ -9,7 +9,9 @@ import {
     Wallet,
     Menu,
     X,
-    Bell
+    Bell,
+    Swords,
+    ScrollText
 } from "lucide-react";
 import { useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -19,7 +21,6 @@ import {
     User,
     LogOut,
     ArrowUpRight,
-    History,
     MessageCircle,
     Settings,
 } from "lucide-react";
@@ -34,6 +35,7 @@ export default function MobileNavigation() {
         { icon: LayoutDashboard, label: "Home", href: "/dashboard" },
         { icon: Trophy, label: "Tournaments", href: "/dashboard/tournaments" },
         // Middle Space for Menu
+        { icon: Swords, label: "Battle Zone", href: "/battle-zone" },
         { icon: ShoppingBag, label: "Shop", href: "/dashboard/shop" },
         { icon: Wallet, label: "Wallet", href: "/dashboard/wallet" },
     ];
@@ -194,16 +196,16 @@ export default function MobileNavigation() {
                                 </Link>
 
                                 <Link
-                                    href="/dashboard/transactions"
+                                    href="/dashboard/history"
                                     onClick={() => setIsMenuOpen(false)}
                                     className="flex items-center gap-4 p-4 rounded-2xl bg-card border border-border/50 hover:bg-muted/50 active:scale-[0.98] transition-all"
                                 >
                                     <div className="p-3 bg-purple-500/10 text-purple-500 rounded-xl">
-                                        <History size={24} />
+                                        <ScrollText size={24} />
                                     </div>
                                     <div className="flex-1">
                                         <h4 className="font-bold text-foreground">History</h4>
-                                        <p className="text-xs text-muted-foreground">View past transactions</p>
+                                        <p className="text-xs text-muted-foreground">View tournament history</p>
                                     </div>
                                     <ArrowUpRight size={18} className="text-muted-foreground/50" />
                                 </Link>

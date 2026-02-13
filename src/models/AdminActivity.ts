@@ -24,6 +24,7 @@ const AdminActivitySchema = new Schema(
                 'REJECT_WITHDRAWAL',
                 'CREATE_TOURNAMENT',
                 'UPDATE_TOURNAMENT',
+                'CANCEL_TOURNAMENT',
                 'REPLY_TICKET',
                 'CLOSE_TICKET',
                 'UPDATE_STORE_ITEM',

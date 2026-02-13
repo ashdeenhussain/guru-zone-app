@@ -133,7 +133,7 @@ export default function Navbar() {
                                         <span className="font-bold">Dashboard</span>
                                     </Link>
                                     <Link
-                                        href="/profile"
+                                        href="/dashboard/profile"
                                         className="flex items-center space-x-3 p-2 text-foreground/80 hover:text-primary transition-colors"
                                         onClick={() => setIsOpen(false)}
                                     >
@@ -180,16 +180,9 @@ export default function Navbar() {
                                 <Trophy size={20} />
                                 <span className="font-bold">Leaderboard</span>
                             </Link>
+
                             <Link
-                                href="/stats"
-                                className="flex items-center space-x-3 p-2 text-foreground/80 hover:text-primary transition-colors"
-                                onClick={() => setIsOpen(false)}
-                            >
-                                <BarChart3 size={20} />
-                                <span>Stats</span>
-                            </Link>
-                            <Link
-                                href="/wallet"
+                                href="/dashboard/wallet"
                                 className="flex items-center space-x-3 p-2 text-foreground/80 hover:text-primary transition-colors"
                                 onClick={() => setIsOpen(false)}
                             >
@@ -197,7 +190,7 @@ export default function Navbar() {
                                 <span>Wallet</span>
                             </Link>
                             <Link
-                                href="/history"
+                                href="/dashboard/history"
                                 className="flex items-center space-x-3 p-2 text-foreground/80 hover:text-primary transition-colors"
                                 onClick={() => setIsOpen(false)}
                             >
@@ -205,7 +198,7 @@ export default function Navbar() {
                                 <span>History</span>
                             </Link>
                             <Link
-                                href="/support"
+                                href="/dashboard/support"
                                 className="flex items-center space-x-3 p-2 text-foreground/80 hover:text-primary transition-colors"
                                 onClick={() => setIsOpen(false)}
                             >

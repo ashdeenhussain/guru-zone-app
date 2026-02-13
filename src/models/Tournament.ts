@@ -6,19 +6,29 @@ const TournamentSchema = new Schema(
             type: String,
             required: [true, 'Please provide a tournament title'],
         },
+        createdBy: {
+            type: Schema.Types.ObjectId,
+            ref: 'User',
+            default: null, // Null means created by Admin
+        },
         banner: {
             type: String,
             required: false,
         },
         format: {
             type: String,
-            enum: ['Solo', 'Duo', 'Squad'],
+            enum: ['1v1', '2v2', '4v4', 'Solo', 'Duo', 'Squad'],
+            default: 'Solo',
             required: true,
         },
         gameType: {
             type: String,
             enum: ['BR', 'CS'], // Battle Royale, Clash Squad
             required: true,
+        },
+        teamSize: {
+            type: Number,
+            default: 1, // 1=Solo, 2=Duo, 4=Squad
         },
         map: {
             type: String,

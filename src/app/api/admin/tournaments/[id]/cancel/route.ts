@@ -41,7 +41,32 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
             // ... (keep existing refund logic) ...
             // Using for...of loop to handle async operations sequentially within transaction
             for (const participant of tournament.participants) {
-                // ...
+                const user = await User.findById(participant.userId).session(session);
+                if (user) {
+                    // Create Transaction Record first
+                    const [transaction] = await Transaction.create([{
+                        user: user._id,
+                        amount: tournament.entryFee,
+                        type: 'refund',
+                        description: `Refund for tournament cancellation: ${tournament.title}`,
+                        referenceId: tournament._id,
+                        status: 'completed'
+                    }], { session });
+
+                    // Update User Balance & Link Transaction
+                    user.walletBalance += tournament.entryFee;
+                    user.transactions.push(transaction._id);
+                    await user.save({ session });
+
+                    // Send Notification
+                    await Notification.create([{
+                        userId: user._id,
+                        type: 'Tournament',
+                        title: 'Tournament Cancelled',
+                        message: `Tournament "${tournament.title}" has been cancelled. ${tournament.entryFee} coins have been refunded to your wallet.`,
+                        data: { tournamentId: tournament._id }
+                    }], { session });
+                }
             }
         }
 
