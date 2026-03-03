@@ -15,9 +15,26 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'res.cloudinary.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'photos.app.goo.gl',
+      },
+      {
+        protocol: 'https',
+        hostname: 'drive.google.com',
       }
     ],
   },
+  webpack: (config, { dev }) => {
+    if (dev) {
+      config.watchOptions = {
+        ignored: ['**/server.log', '**/test-results/**', '**/test-results-e2e/**', '**/.test-results/**'],
+      };
+    }
+    return config;
+  },
+  turbopack: {},
 };
 
 export default nextConfig;
