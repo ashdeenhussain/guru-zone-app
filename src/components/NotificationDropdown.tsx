@@ -4,17 +4,7 @@ import { useEffect, useState } from "react";
 import { X, Check, Bell, Trophy, ShoppingBag, Info, AlertTriangle, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { formatDistanceToNow } from "date-fns";
-
-interface Notification {
-    _id: string;
-    title: string;
-    message: string;
-    isRead: boolean;
-    type: 'info' | 'success' | 'warning' | 'error';
-    link?: string;
-    createdAt: string;
-}
+import { NotificationItem, Notification } from "./NotificationItem";
 
 interface NotificationDropdownProps {
     isOpen: boolean;
@@ -94,14 +84,7 @@ export default function NotificationDropdown({ isOpen, onClose, onUnreadCountCha
         }
     };
 
-    const getIcon = (type: string) => {
-        switch (type) {
-            case 'success': return <Check size={16} className="text-green-500" />;
-            case 'warning': return <AlertTriangle size={16} className="text-yellow-500" />;
-            case 'error': return <AlertCircle size={16} className="text-red-500" />;
-            default: return <Info size={16} className="text-blue-500" />;
-        }
-    };
+
 
     const handleNotificationClick = async (notification: Notification) => {
         if (!notification.isRead) {
@@ -178,33 +161,12 @@ export default function NotificationDropdown({ isOpen, onClose, onUnreadCountCha
                         ) : notifications.length > 0 ? (
                             <div className="flex flex-col">
                                 {notifications.map((notification) => (
-                                    <button
+                                    <NotificationItem
                                         key={notification._id}
+                                        notification={notification}
                                         onClick={() => handleNotificationClick(notification)}
-                                        className={`flex gap-3 p-4 text-left transition-colors border-b border-white/5 last:border-0 relative hover:bg-white/5
-                                            ${!notification.isRead ? 'bg-primary/5' : ''}
-                                        `}
-                                    >
-                                        <div className={`mt-1 p-2 rounded-full bg-white/5 h-fit`}>
-                                            {getIcon(notification.type)}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex justify-between items-start gap-2">
-                                                <p className={`text-sm font-semibold truncate ${!notification.isRead ? 'text-white' : 'text-gray-400'}`}>
-                                                    {notification.title}
-                                                </p>
-                                                {!notification.isRead && (
-                                                    <span className="h-2 w-2 rounded-full bg-primary flex-shrink-0 mt-1.5" />
-                                                )}
-                                            </div>
-                                            <p className="text-xs text-gray-400 mt-1 line-clamp-2">
-                                                {notification.message}
-                                            </p>
-                                            <p className="text-[10px] text-gray-500 mt-2">
-                                                {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-                                            </p>
-                                        </div>
-                                    </button>
+                                        variant="dark"
+                                    />
                                 ))}
                             </div>
                         ) : (

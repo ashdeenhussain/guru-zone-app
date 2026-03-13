@@ -5,16 +5,7 @@ import { Bell, Check, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-
-interface Notification {
-    _id: string;
-    title: string;
-    message: string;
-    isRead: boolean;
-    type: 'info' | 'success' | 'warning' | 'error';
-    link?: string;
-    createdAt: string;
-}
+import { NotificationItem, Notification } from "../NotificationItem";
 
 export default function NotificationDropdown() {
     const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -106,16 +97,33 @@ export default function NotificationDropdown() {
                             className="fixed left-4 right-4 top-20 md:fixed-none md:absolute md:right-0 md:left-auto md:top-full md:mt-2 md:w-96 max-h-[80vh] overflow-hidden bg-card/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl z-50 flex flex-col"
                         >
                             {/* Header */}
-                            <div className="p-4 border-b border-border flex items-center justify-between sticky top-0 bg-card/95 z-10">
-                                <h3 className="font-bold text-foreground">Notifications</h3>
-                                {unreadCount > 0 && (
+                            <div className="flex items-center justify-between p-4 border-b border-border bg-card/95 z-10 sticky top-0">
+                                <div className="flex items-center gap-2">
+                                    <Bell size={16} className="text-primary hidden sm:block" />
+                                    <h3 className="font-bold text-foreground">Notifications</h3>
+                                    {unreadCount > 0 && (
+                                        <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full">
+                                            {unreadCount}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {unreadCount > 0 && (
+                                        <button
+                                            onClick={markAllAsRead}
+                                            className="text-xs text-muted-foreground hover:text-primary transition-colors mr-2"
+                                        >
+                                            Mark all read
+                                        </button>
+                                    )}
                                     <button
-                                        onClick={markAllAsRead}
-                                        className="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
+                                        onClick={() => setIsOpen(false)}
+                                        className="p-1 hover:bg-muted/50 rounded-full text-muted-foreground hover:text-foreground transition-colors"
+                                        title="Close"
                                     >
-                                        Mark all read
+                                        <X size={18} />
                                     </button>
-                                )}
+                                </div>
                             </div>
 
                             {/* List */}
@@ -127,34 +135,12 @@ export default function NotificationDropdown() {
                                     </div>
                                 ) : (
                                     notifications.map((notification) => (
-                                        <div
+                                        <NotificationItem
                                             key={notification._id}
+                                            notification={notification}
                                             onClick={() => markAsRead(notification._id, notification.link)}
-                                            className={`
-                                                relative p-3 rounded-lg transition-all border border-transparent
-                                                ${notification.isRead ? 'bg-transparent' : 'bg-muted/30 border-l-2 border-l-primary'}
-                                            `}
-                                        >
-                                            <div className="flex gap-3">
-                                                <div className={`
-                                                    mt-1 w-2 h-2 shrink-0 rounded-full
-                                                    ${notification.type === 'success' ? 'bg-green-500' :
-                                                        notification.type === 'warning' ? 'bg-yellow-500' :
-                                                            notification.type === 'error' ? 'bg-red-500' : 'bg-blue-500'}
-                                                `} />
-                                                <div className="flex-1 overflow-hidden">
-                                                    <h4 className={`text-sm font-semibold truncate ${notification.isRead ? 'text-muted-foreground' : 'text-foreground'}`}>
-                                                        {notification.title}
-                                                    </h4>
-                                                    <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
-                                                        {notification.message}
-                                                    </p>
-                                                    <span className="text-[10px] text-muted-foreground/50 mt-2 block">
-                                                        {new Date(notification.createdAt).toLocaleDateString()} • {new Date(notification.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
+                                            variant="adaptive"
+                                        />
                                     ))
                                 )}
                             </div>
