@@ -43,10 +43,12 @@ export default async function ShopPage() {
     const allBanners = systemSettings?.bannerImages || [];
     const shopBanners = allBanners
         .filter((banner: any) => {
-            if (typeof banner === 'string') return true;
-            return banner.location === 'shop' || banner.location === 'both';
+            if (typeof banner === 'string') return !!banner.trim(); // Legacy: show everywhere
+            if (banner.activeStatus === false) return false;
+            return banner && (banner.storageUrl || banner.url) && (banner.location === 'shop' || banner.location === 'both');
         })
-        .map((banner: any) => typeof banner === 'string' ? banner : banner.url);
+        .map((banner: any) => typeof banner === 'string' ? banner : (banner.storageUrl || banner.url))
+        .filter(Boolean);
 
     const serializedProducts = JSON.parse(JSON.stringify(products));
     const serializedSpinItems = JSON.parse(JSON.stringify(spinItems));
@@ -59,7 +61,7 @@ export default async function ShopPage() {
 
     return (
         <div>
-            <ShopMaintenanceWrapper isActive={true}>
+            <ShopMaintenanceWrapper isActive={false}>
                 <ShopContent
                     products={serializedProducts}
                     spinItems={serializedSpinItems}
