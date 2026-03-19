@@ -41,6 +41,12 @@ export async function PATCH(
         if (action === 'approve') {
             order.status = 'Approved';
 
+            // Mark the purchase transaction as approved
+            await Transaction.findOneAndUpdate(
+                { referenceId: order._id, type: 'shop_purchase' },
+                { status: 'approved' }
+            );
+
             const user = await User.findById(order.userId);
             if (user) {
                 // Loyalty Logic: 1 Coin = 1 Point. 2500 Points = 1 Spin.
@@ -79,6 +85,12 @@ export async function PATCH(
 
             order.status = 'Rejected';
             order.adminComment = reason;
+
+            // Mark the purchase transaction as rejected
+            await Transaction.findOneAndUpdate(
+                { referenceId: order._id, type: 'shop_purchase' },
+                { status: 'rejected' }
+            );
 
             // 1. Refund Coins
             const user = await User.findById(order.userId);

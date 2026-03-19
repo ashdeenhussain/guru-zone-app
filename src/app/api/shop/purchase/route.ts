@@ -74,7 +74,8 @@ export async function POST(req: Request) {
             amount: -price,
             type: 'shop_purchase',
             description: `Purchased ${product.title}`,
-            status: 'approved' // Set to approved as the deduction already happened
+            status: 'pending', // Set to pending until admin approves the order
+            referenceId: newOrder._id
         });
 
         // 4. Create Notification for User
