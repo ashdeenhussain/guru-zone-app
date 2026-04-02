@@ -24,7 +24,7 @@ interface TournamentChatProps {
     onNewMessage?: () => void;
 }
 
-export default function TournamentChat({ tournamentId, isHost, isParticipant, isAdmin }: TournamentChatProps) {
+export default function TournamentChat({ tournamentId, isHost, isParticipant, isAdmin, onNewMessage }: TournamentChatProps) {
     const { data: session } = useSession();
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
