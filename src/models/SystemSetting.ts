@@ -16,12 +16,14 @@ const SystemSettingSchema = new Schema(
         },
         bannerImages: {
             type: [{
-                url: { type: String, required: true },
+                storageUrl: { type: String, required: false }, // New format
+                url: { type: String, required: false },        // Legacy format
                 location: {
                     type: String,
                     enum: ['home', 'shop', 'both'],
                     default: 'both'
-                }
+                },
+                activeStatus: { type: Boolean, default: true }
             }],
             default: [],
         },
@@ -33,8 +35,11 @@ const SystemSettingSchema = new Schema(
     { timestamps: true }
 );
 
-// Singleton pattern helper: ensuring only one document exists is usually handled 
-// by the application logic (always fetching the first one or upserting).
+// Force re-compile of the model during development hot-reloads to prevent schema caching
+if (process.env.NODE_ENV === 'development' && models.SystemSetting) {
+    delete models.SystemSetting;
+}
+
 const SystemSetting = models.SystemSetting || model('SystemSetting', SystemSettingSchema);
 
 export default SystemSetting;

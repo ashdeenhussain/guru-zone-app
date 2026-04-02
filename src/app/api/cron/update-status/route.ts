@@ -3,6 +3,7 @@ import connectToDatabase from '@/lib/db';
 import Tournament from '@/models/Tournament';
 import Transaction from '@/models/Transaction';
 import Notification from '@/models/Notification';
+import { sendPushNotification } from '@/lib/webpush';
 
 /**
  * Cron Job Endpoint - Automated Task Scheduler
@@ -54,12 +55,26 @@ export async function GET(req: Request) {
                             title: 'Match Started! Check Room ID.',
                             message: `${tournament.title} has started! Check the room credentials and join now.`,
                             type: 'info',
-                            link: `/dashboard/tournaments/${tournament._id}`,
+                            link: tournament.createdBy ? `/battle-zone/${tournament._id}` : `/tournaments/${tournament._id}`,
                         });
                         return notification.save();
                     });
 
                     await Promise.all(notificationPromises);
+
+                    // ── Push Notification (To Participants) ──
+                    try {
+                        const pushPromises = tournament.participants.map((participant: any) => 
+                            sendPushNotification((participant.userId._id || participant.userId).toString(), {
+                                title: '🎮 Match Started!',
+                                body: `${tournament.title} has started! Join the room now.`,
+                                url: tournament.createdBy ? `/battle-zone/${tournament._id}` : `/tournaments/${tournament._id}`
+                            })
+                        );
+                        await Promise.all(pushPromises);
+                    } catch (pushErr) {
+                        console.error('[Cron] Match start push notification failed:', pushErr);
+                    }
 
                     results.tournamentAutoStart.success++;
                 } catch (error: any) {
@@ -134,6 +149,17 @@ export async function GET(req: Request) {
                     });
                     await notification.save();
 
+                    // ── Push Notification (To User) ──
+                    try {
+                        await sendPushNotification(transaction.user.toString(), {
+                            title: '❌ Transaction Failed',
+                            body: `Your ${transaction.type} of ₹${Math.abs(transaction.amount)} failed due to timeout.`,
+                            url: '/dashboard/finance'
+                        });
+                    } catch (pushErr) {
+                        console.error('[Cron] Transaction cleanup push notification failed:', pushErr);
+                    }
+
                     results.transactionCleanup.success++;
                 } catch (error: any) {
                     results.transactionCleanup.failed++;
@@ -144,6 +170,73 @@ export async function GET(req: Request) {
             }
         } catch (error: any) {
             results.transactionCleanup.errors.push(`Query error: ${error.message}`);
+        }
+
+        // ===========================
+        // TASK 4: Battle Zone Host AFK Penalty (-10)
+        // ===========================
+        try {
+            const twentyMinutesAgo = new Date(currentTime.getTime() - 20 * 60 * 1000);
+            
+            // Find community matches that are 'Full' for > 20 mins but have no roomID
+            const afkTournaments = await Tournament.find({
+                status: 'Full',
+                updatedAt: { $lt: twentyMinutesAgo },
+                createdBy: { $ne: null }
+            }).select('+roomID');
+
+            for (const tournament of afkTournaments) {
+                if (!tournament.roomID) {
+                    // Refund Joiners
+                    if (tournament.entryFee > 0) {
+                        for (const p of tournament.participants) {
+                            const pId = p.userId?._id || p.userId;
+                            const user = await User.findById(pId);
+                            if (user) {
+                                user.walletBalance += tournament.entryFee;
+                                await user.save();
+                                
+                                await Transaction.create({
+                                    user: pId,
+                                    amount: tournament.entryFee,
+                                    type: 'refund',
+                                    description: `Refund (Host AFK): ${tournament.title}`,
+                                    status: 'completed',
+                                    referenceId: tournament._id
+                                });
+                            }
+                        }
+                    }
+
+                    // Penalty for Host (-10)
+                    const host = await User.findById(tournament.createdBy);
+                    if (host) {
+                        host.trustScore = Math.max(0, (host.trustScore || 100) - 10);
+                        await host.save();
+
+                        await Notification.create({
+                            userId: tournament.createdBy,
+                            title: '🛑 Trust Score Penalty (AFK)',
+                            message: `Tournament "${tournament.title}" was cancelled because you failed to provide Room ID within 20 mins. -10 Trust Score penalty.`,
+                            type: 'error'
+                        });
+
+                        try {
+                            await sendPushNotification(tournament.createdBy.toString(), {
+                                title: '🛑 Penalty: Match Cancelled',
+                                body: `-10 Trust Score. You failed to provide Room IDs for "${tournament.title}" in time.`,
+                            });
+                        } catch (pErr) {}
+                    }
+
+                    // Cancel Tournament
+                    tournament.status = 'Cancelled';
+                    tournament.cancellationReason = 'Host AFK (No Room ID provided within 20 minutes)';
+                    await tournament.save();
+                }
+            }
+        } catch (error: any) {
+            console.error('[CRON] Host AFK task failed:', error);
         }
 
         // ===========================

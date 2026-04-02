@@ -116,10 +116,16 @@ const UserSchema = new Schema(
         claimedRankRewards: [{
             type: String, // will store strings like 'Silver-1', 'Gold-1' etc. basically rank tier+division keys
         }],
+        trustScore: {
+            type: Number,
+            default: 100,
+            min: 0,
+            max: 100,
+        },
         hasCompletedOnboarding: {
             type: Boolean,
             default: false,
-        },
+            },
     },
     { timestamps: true }
 );

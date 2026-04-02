@@ -140,24 +140,23 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
             <div className="fixed top-0 left-0 w-full h-[500px] bg-gradient-to-b from-primary/10 to-transparent pointer-events-none" />
             <div className="fixed top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
 
-            {/* Custom Fixed Header (Overlays Layout Header) */}
-            <div className="fixed top-0 left-0 right-0 z-50 h-16 px-4 bg-background/80 backdrop-blur-xl border-b border-border flex items-center justify-between shadow-sm">
-                <div className="flex items-center gap-3">
-                    <div className="relative h-9 w-9 overflow-hidden rounded-xl border border-border shadow-sm">
-                        <img src="/logo.jpg" alt="Guru Zone" className="h-full w-full object-cover" />
+            {/* Standard Sub-Header with Back Navigation */}
+            <div className="pt-2 pb-3 px-4 border-b border-border/40 bg-background/50 backdrop-blur-md sticky top-0 z-30 mb-6 flex items-center gap-3 relative z-10 max-w-4xl mx-auto">
+                <Link href="/dashboard/tournaments" className="p-2 hover:bg-muted rounded-xl transition-colors">
+                    <ArrowLeft className="w-5 h-5" />
+                </Link>
+                <div className="flex-1 min-w-0">
+                    <h1 className="font-bold text-base leading-tight truncate">{tournament.title}</h1>
+                    <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${tournament.status === 'Open' ? 'bg-green-500' : 'bg-yellow-500'}`} />
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
+                            {tournament.status} • {tournament.format}
+                        </span>
                     </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                    <ThemeToggle />
-                    <Link href="/dashboard/settings" className="relative p-2 rounded-xl bg-muted/50 border border-border text-foreground hover:bg-muted transition-all">
-                        <Bell size={20} />
-                        <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full animate-pulse ring-2 ring-background"></span>
-                    </Link>
                 </div>
             </div>
 
-            <div className="container mx-auto px-4 pt-20 relative z-10 max-w-4xl space-y-6">
+            <div className="container mx-auto px-4 relative z-10 max-w-4xl space-y-6">
 
                 {/* Title Section */}
                 <div className="flex flex-col gap-4">

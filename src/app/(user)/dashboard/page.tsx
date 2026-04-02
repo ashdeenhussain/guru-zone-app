@@ -51,10 +51,12 @@ export default async function DashboardPage() {
     // Handle both old string[] structure and new object structure safely
     const dashboardBanners = allBanners
         .filter((banner: any) => {
-            if (typeof banner === 'string') return true; // Legacy: show everywhere
-            return banner.location === 'home' || banner.location === 'both';
+            if (typeof banner === 'string') return !!banner.trim(); // Legacy: show everywhere
+            if (banner.activeStatus === false) return false;
+            return banner && (banner.storageUrl || banner.url) && (banner.location === 'home' || banner.location === 'both');
         })
-        .map((banner: any) => typeof banner === 'string' ? banner : banner.url);
+        .map((banner: any) => typeof banner === 'string' ? banner : (banner.storageUrl || banner.url))
+        .filter(Boolean);
 
     const walletBalance = user.walletBalance || 0;
     const totalWins = user.totalWins || 0;

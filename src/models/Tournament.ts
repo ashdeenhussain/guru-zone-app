@@ -85,10 +85,34 @@ const TournamentSchema = new Schema(
         autoReleaseTime: {
             type: Date,
         },
+        winnerScreenshot: {
+            type: String,
+            required: false,
+        },
+        verificationStartedAt: {
+            type: Date,
+            required: false,
+        },
+        verificationStatus: {
+            type: String,
+            enum: ['Pending', 'Confirmed', 'Rejected'],
+            default: 'Pending',
+        },
+        disputeReason: {
+            type: String,
+            required: false,
+        },
+        disputeProof: {
+            type: String,
+            required: false,
+        },
         status: {
             type: String,
-            enum: ['Open', 'Live', 'Completed', 'Cancelled'],
-            default: 'Open',
+            enum: [
+                'upcoming', 'full', 'active', 'completed', 'cancelled', 'disputed', 
+                'Open', 'Live', 'Completed', 'Cancelled', 'pending_verification'
+            ], 
+            default: 'upcoming',
         },
         cancellationReason: {
             type: String,
@@ -102,6 +126,29 @@ const TournamentSchema = new Schema(
             rank1: { type: Schema.Types.ObjectId, ref: 'User' },
             rank2: { type: Schema.Types.ObjectId, ref: 'User' },
             rank3: { type: Schema.Types.ObjectId, ref: 'User' },
+        },
+        advancedRules: {
+            gameMode: { 
+                type: String, 
+                enum: ['Clash Squad', 'Lone Wolf'], 
+                default: 'Clash Squad' 
+            },
+            mapName: { 
+                type: String, 
+                default: 'Bermuda' 
+            },
+            rounds: { 
+                type: Number, 
+                default: 7 
+            },
+            limitedAmmo: { 
+                type: Boolean, 
+                default: true 
+            },
+            headshotOnly: { 
+                type: Boolean, 
+                default: false 
+            },
         },
     },
     { timestamps: true }

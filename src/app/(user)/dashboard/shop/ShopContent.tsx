@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Info, X, CheckCircle, AlertCircle, Loader2, CreditCard, ShoppingBag, Wallet } from "lucide-react";
 import { useRouter } from "next/navigation";
 import LuckyWheelGame from "./spin/LuckyWheelGame";
-import BannerCarousel from "@/components/shop/BannerCarousel";
+import PromotionalBanners from "@/components/shared/PromotionalBanners";
 import PageHeader from "@/components/PageHeader";
 
 // Types
@@ -239,7 +239,7 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
                 </div>
 
                 {/* Banner Carousel */}
-                <BannerCarousel images={bannerImages} />
+                <PromotionalBanners images={bannerImages} context="shop" />
 
                 {/* Tabs */}
                 <div className="flex items-center justify-center">

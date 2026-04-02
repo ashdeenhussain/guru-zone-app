@@ -19,7 +19,8 @@ import {
     X,
     LifeBuoy,
     Shield,
-    ArrowUpRight
+    ArrowUpRight,
+    Swords
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSession } from "next-auth/react";
@@ -47,6 +48,7 @@ export default function Sidebar({ onClose }: AdminSidebarProps) {
         { name: 'Command Center', href: '/admin/dashboard', icon: LayoutDashboard, permission: null },
         { name: 'Team', href: '/admin/team', icon: Shield, permission: 'manage_system' },
         { name: 'Tournaments', href: '/admin/tournaments', icon: Trophy, permission: 'manage_tournaments' },
+        { name: 'Battle Zone', href: '/admin/battle-zone', icon: Swords, permission: 'manage_tournaments' },
         { name: 'Users', href: '/admin/users', icon: Users, permission: 'manage_support' },
         { name: 'Finance', href: '/admin/finance', icon: Wallet, permission: 'manage_finance' },
         { name: 'Transactions', href: '/admin/transactions', icon: ArrowUpRight, permission: 'manage_finance' },

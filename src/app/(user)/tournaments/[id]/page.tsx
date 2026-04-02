@@ -31,6 +31,12 @@ export default async function TournamentDetailsPage(props: { params: Promise<{ i
         notFound();
     }
 
+    // Redirect to battle-zone if it's a community tournament
+    if (tournament.createdBy) {
+        const { redirect } = await import('next/navigation');
+        redirect(`/battle-zone/${params.id}`);
+    }
+
     let user = null;
     if (session?.user?.email) {
         user = await getUser(session.user.email);

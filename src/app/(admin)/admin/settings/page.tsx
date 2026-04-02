@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     Settings, Image as ImageIcon, CreditCard, Bell,
-    Save, Trash2, Plus, Info, CheckCircle, AlertTriangle, Loader2
+    Save, Trash2, Plus, Info, CheckCircle, AlertTriangle, Loader2, ChevronUp, ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -13,8 +13,9 @@ type SystemSettings = {
     minAppVersion: string;
     supportLink: string;
     bannerImages: {
-        url: string;
+        storageUrl: string;
         location: 'home' | 'shop' | 'both';
+        activeStatus: boolean;
     }[];
     announcement: string;
 };
@@ -57,6 +58,7 @@ export default function AdminSettingsPage() {
     });
 
     const [uploadingGuide, setUploadingGuide] = useState(false);
+    const [uploadingBannerIdx, setUploadingBannerIdx] = useState<number | null>(null);
 
     // Form State for Notification
     const [notification, setNotification] = useState({ title: '', message: '' });
@@ -153,6 +155,36 @@ export default function AdminSettingsPage() {
             showToast('error', 'Error uploading image');
         } finally {
             setUploadingGuide(false);
+        }
+    };
+
+    const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploadingBannerIdx(idx);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                const newBanners = [...settings.bannerImages];
+                newBanners[idx].storageUrl = data.url;
+                setSettings({ ...settings, bannerImages: newBanners });
+                showToast('success', 'Banner image uploaded');
+            } else {
+                showToast('error', 'Upload failed');
+            }
+        } catch (error) {
+            showToast('error', 'Error uploading banner');
+        } finally {
+            setUploadingBannerIdx(null);
         }
     };
 
@@ -369,15 +401,18 @@ export default function AdminSettingsPage() {
                                                 className="group relative flex flex-col md:flex-row gap-4 p-4 bg-card/60 backdrop-blur-sm rounded-2xl border border-white/5 hover:border-pink-500/30 transition-all"
                                             >
                                                 {/* Image Preview */}
-                                                <div className="relative w-full md:w-48 h-28 shrink-0 rounded-xl overflow-hidden bg-muted">
-                                                    {banner.url ? (
-                                                        <img src={banner.url} alt="Banner" className="w-full h-full object-cover" />
+                                                <div className="relative w-full md:w-48 h-28 shrink-0 rounded-xl overflow-hidden bg-muted border border-white/5">
+                                                    <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-md border border-white/10 z-10">
+                                                        <span className="text-xs font-bold text-white tracking-widest">#{idx + 1}</span>
+                                                    </div>
+                                                    {(banner.storageUrl || (banner as any).url) ? (
+                                                        <img src={banner.storageUrl || (banner as any).url} alt="Banner" className="w-full h-full object-cover" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center text-muted-foreground/20">
                                                             <ImageIcon size={32} />
                                                         </div>
                                                     )}
-                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                                                         <span className="text-xs font-bold text-white bg-black/60 px-2 py-1 rounded-full backdrop-blur-md">Preview</span>
                                                     </div>
                                                 </div>
@@ -385,17 +420,15 @@ export default function AdminSettingsPage() {
                                                 {/* Controls */}
                                                 <div className="flex-1 space-y-3">
                                                     <div className="space-y-1">
-                                                        <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Image URL</label>
+                                                        <div className="flex items-center justify-between">
+                                                            <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Banner Image</label>
+                                                            {uploadingBannerIdx === idx && <Loader2 size={12} className="animate-spin text-pink-500" />}
+                                                        </div>
                                                         <input
-                                                            type="text"
-                                                            value={banner.url}
-                                                            onChange={(e) => {
-                                                                const newBanners = [...settings.bannerImages];
-                                                                newBanners[idx].url = e.target.value;
-                                                                setSettings({ ...settings, bannerImages: newBanners });
-                                                            }}
-                                                            placeholder="https://..."
-                                                            className="w-full bg-muted/30 border border-white/5 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-pink-500/50 outline-none transition-all"
+                                                            type="file"
+                                                            accept="image/*"
+                                                            onChange={(e) => handleBannerUpload(e, idx)}
+                                                            className="w-full bg-muted/30 border border-white/5 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-pink-500/50 outline-none transition-all file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-pink-500/10 file:text-pink-500 hover:file:bg-pink-500/20"
                                                         />
                                                     </div>
 
@@ -416,12 +449,64 @@ export default function AdminSettingsPage() {
                                                                 <option value="both">Both Sections</option>
                                                             </select>
                                                         </div>
+                                                        <div className="flex-1 space-y-1">
+                                                            <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Status</label>
+                                                            <button
+                                                                onClick={() => {
+                                                                    const newBanners = [...settings.bannerImages];
+                                                                    newBanners[idx].activeStatus = !newBanners[idx].activeStatus;
+                                                                    setSettings({ ...settings, bannerImages: newBanners });
+                                                                }}
+                                                                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg border text-sm font-bold transition-all ${
+                                                                    banner.activeStatus
+                                                                        ? 'bg-green-500/10 border-green-500/30 text-green-500'
+                                                                        : 'bg-muted/30 border-white/5 text-muted-foreground'
+                                                                }`}
+                                                            >
+                                                                {banner.activeStatus ? 'Active' : 'Hidden'}
+                                                                <div className={`w-2 h-2 rounded-full ${banner.activeStatus ? 'bg-green-500' : 'bg-muted-foreground/50'}`} />
+                                                            </button>
+                                                        </div>
+
+                                                        <div className="flex flex-col gap-1 mt-auto">
+                                                            <button
+                                                                onClick={() => {
+                                                                    if (idx === 0) return;
+                                                                    const newBanners = [...settings.bannerImages];
+                                                                    const temp = newBanners[idx - 1];
+                                                                    newBanners[idx - 1] = newBanners[idx];
+                                                                    newBanners[idx] = temp;
+                                                                    setSettings({ ...settings, bannerImages: newBanners });
+                                                                }}
+                                                                disabled={idx === 0}
+                                                                className="h-8 w-10 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed border border-white/5 hover:border-white/10"
+                                                                title="Move Up"
+                                                            >
+                                                                <ChevronUp size={16} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    if (idx === settings.bannerImages.length - 1) return;
+                                                                    const newBanners = [...settings.bannerImages];
+                                                                    const temp = newBanners[idx + 1];
+                                                                    newBanners[idx + 1] = newBanners[idx];
+                                                                    newBanners[idx] = temp;
+                                                                    setSettings({ ...settings, bannerImages: newBanners });
+                                                                }}
+                                                                disabled={idx === settings.bannerImages.length - 1}
+                                                                className="h-8 w-10 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed border border-white/5 hover:border-white/10"
+                                                                title="Move Down"
+                                                            >
+                                                                <ChevronDown size={16} />
+                                                            </button>
+                                                        </div>
+
                                                         <button
                                                             onClick={() => {
                                                                 const newBanners = settings.bannerImages.filter((_, i) => i !== idx);
                                                                 setSettings({ ...settings, bannerImages: newBanners });
                                                             }}
-                                                            className="h-10 w-10 flex items-center justify-center rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all mt-auto"
+                                                            className="h-[68px] w-10 flex flex-col items-center justify-center rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all mt-auto border border-red-500/20 hover:border-transparent"
                                                             title="Remove Banner"
                                                         >
                                                             <Trash2 size={18} />
@@ -432,7 +517,7 @@ export default function AdminSettingsPage() {
                                         ))}
 
                                         <button
-                                            onClick={() => setSettings({ ...settings, bannerImages: [...settings.bannerImages, { url: '', location: 'both' }] })}
+                                            onClick={() => setSettings({ ...settings, bannerImages: [...settings.bannerImages, { storageUrl: '', location: 'both', activeStatus: true }] })}
                                             className="group flex flex-col items-center justify-center gap-3 p-8 rounded-2xl border-2 border-dashed border-white/10 hover:border-pink-500/50 hover:bg-pink-500/5 transition-all text-muted-foreground hover:text-pink-500"
                                         >
                                             <div className="p-3 bg-muted/50 group-hover:bg-pink-500/20 rounded-full transition-colors">

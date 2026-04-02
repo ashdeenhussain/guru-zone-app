@@ -12,7 +12,7 @@ interface JoinTournamentModalProps {
         _id: string;
         title: string;
         entryFee: number;
-        format: 'Solo' | 'Duo' | 'Squad';
+        format: 'Solo' | 'Duo' | 'Squad' | '1v1' | '2v2' | '4v4';
     };
     user: {
         walletBalance: number;
@@ -70,17 +70,10 @@ export default function JoinTournamentModal({ isOpen, onClose, tournament, user,
                 teammates: []
             };
 
-            if (tournament.format === 'Duo') {
-                payload.teamName = `Duo: ${formData.inGameName} & ${formData.partnerName}`; // Auto-generate or ask? Let's use partner name or just "Duo Team" if not asked. 
-                // Wait, requirements said "Team Name" MUST be asked.
-                // The current UI for Duo doesn't ask for a Team Name, only Partner Name.
-                // For now, I'll generate it or just leave it empty if not strictly required by my previous finding (Validation said required).
-                // Let's add a "Team Name" input for Duo as well in the UI first, or just use "Team ${Leader}"
-                // actually, I'll update the UI to ask for Team Name in Duo as well. 
-                // For now in payload:
+            if (['Duo', '2v2'].includes(tournament.format)) {
                 payload.teamName = formData.squadName || `${formData.inGameName}'s Team`;
                 payload.teammates.push({ name: formData.partnerName, uid: formData.partnerUid });
-            } else if (tournament.format === 'Squad') {
+            } else if (['Squad', '4v4'].includes(tournament.format)) {
                 payload.teamName = formData.squadName;
                 if (formData.player2Name) payload.teammates.push({ name: formData.player2Name, uid: formData.player2Uid });
                 if (formData.player3Name) payload.teammates.push({ name: formData.player3Name, uid: formData.player3Uid });
@@ -173,7 +166,7 @@ export default function JoinTournamentModal({ isOpen, onClose, tournament, user,
                                 </div>
 
                                 {/* Duo Fields */}
-                                {tournament.format === 'Duo' && (
+                                {['Duo', '2v2'].includes(tournament.format) && (
                                     <div className="space-y-3">
                                         <div>
                                             <label className="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wider">Team Name</label>
@@ -214,7 +207,7 @@ export default function JoinTournamentModal({ isOpen, onClose, tournament, user,
                                 )}
 
                                 {/* Squad Fields */}
-                                {tournament.format === 'Squad' && (
+                                {['Squad', '4v4'].includes(tournament.format) && (
                                     <div className="space-y-3">
                                         <div className="grid grid-cols-1 gap-3">
                                             <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider">Squad Name</label>

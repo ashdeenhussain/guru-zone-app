@@ -21,6 +21,7 @@ import {
     Sunset,
     ShoppingBag,
     Bell,
+    Swords,
     ScrollText
 } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
@@ -38,6 +39,7 @@ export default function DashboardSidebar() {
     const sidebarItems = [
         { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
         { icon: Trophy, label: "My Tournaments", href: "/dashboard/tournaments" },
+        { icon: Swords, label: "Battle Zone", href: "/dashboard/battle-zone" },
         { icon: ShoppingBag, label: "Diamond Shop", href: "/dashboard/shop" },
         { icon: Crown, label: "Leaderboard", href: "/dashboard/leaderboard" },
         { icon: Wallet, label: "Wallet", href: "/dashboard/wallet" },

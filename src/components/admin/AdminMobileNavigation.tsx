@@ -18,7 +18,8 @@ import {
     Users,
     Disc,
     Package,
-    Shield
+    Shield,
+    Swords
 } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -41,9 +42,12 @@ export default function AdminMobileNavigation() {
     return (
         <div className="lg:hidden">
             {/* Top Bar for Admin */}
-            <div className="fixed top-0 left-0 right-0 z-40 h-16 px-4 bg-background/95 backdrop-blur-md border-b border-border flex items-center justify-between shadow-sm transition-colors duration-300">
+            <div className="fixed top-0 left-0 right-0 z-40 h-16 px-4 bg-background/80 backdrop-blur-xl border-b border-border flex items-center justify-between shadow-sm transition-all duration-300">
                 <div className="flex items-center gap-3">
-                    <span className="font-bold text-lg"><span className="text-primary">Guru Zone</span> <span className="text-foreground">Admin</span></span>
+                    <div className="relative h-9 w-9 overflow-hidden rounded-xl border border-border shadow-sm">
+                        <img src="/logo.jpg" alt="Guru Zone" className="h-full w-full object-cover" />
+                    </div>
+                    <span className="font-bold text-lg hidden sm:inline-block"><span className="text-primary">Guru</span> <span className="text-foreground">Admin</span></span>
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -131,6 +135,23 @@ export default function AdminMobileNavigation() {
                             {/* Management Section */}
                             <div className="space-y-1">
                                 <h3 className="text-xs font-bold text-muted-foreground uppercase px-2 mb-2">Management</h3>
+
+                                {hasPermission('manage_tournaments') && (
+                                    <Link
+                                        href="/admin/battle-zone"
+                                        onClick={() => setIsMenuOpen(false)}
+                                        className="flex items-center gap-4 p-4 rounded-2xl bg-card border border-border hover:bg-muted/50 active:scale-[0.98] transition-all shadow-sm"
+                                    >
+                                        <div className="p-3 bg-red-500/10 text-red-500 rounded-xl">
+                                            <Swords size={24} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h4 className="font-bold text-foreground">Battle Zone</h4>
+                                            <p className="text-xs text-muted-foreground">Manage user hosted matches</p>
+                                        </div>
+                                        <ArrowUpRight size={18} className="text-muted-foreground" />
+                                    </Link>
+                                )}
 
                                 {hasPermission('manage_support') && (
                                     <Link

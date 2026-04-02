@@ -202,11 +202,15 @@ export default function TournamentsPage() {
                     </div>
                 ) : filteredTournaments.length > 0 ? (
                     <div className="grid grid-cols-1 gap-6">
-                        {filteredTournaments.map(tournament => (
-                            <Link key={tournament._id} href={`/tournaments/${tournament._id}`} className="block h-full">
-                                <TournamentCard tournament={tournament} />
-                            </Link>
-                        ))}
+                        {filteredTournaments.map(tournament => {
+                            const isCommunity = (tournament as any).createdBy != null;
+                            const linkHref = isCommunity ? `/battle-zone/${tournament._id}` : `/tournaments/${tournament._id}`;
+                            return (
+                                <Link key={tournament._id} href={linkHref} className="block h-full">
+                                    <TournamentCard tournament={tournament} />
+                                </Link>
+                            );
+                        })}
                     </div>
                 ) : (
                     <div className="bg-card border border-dashed border-border rounded-2xl p-12 flex flex-col items-center justify-center text-center">

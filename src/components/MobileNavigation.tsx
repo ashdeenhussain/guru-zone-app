@@ -181,6 +181,21 @@ export default function MobileNavigation() {
                                 </Link>
 
                                 <Link
+                                    href="/dashboard/battle-zone"
+                                    onClick={() => setIsMenuOpen(false)}
+                                    className="flex items-center gap-4 p-4 rounded-2xl bg-card border border-border/50 hover:bg-muted/50 active:scale-[0.98] transition-all"
+                                >
+                                    <div className="p-3 bg-rose-500/10 text-rose-500 rounded-xl">
+                                        <Swords size={24} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h4 className="font-bold text-foreground">Battle Zone</h4>
+                                        <p className="text-xs text-muted-foreground">Join community challenges</p>
+                                    </div>
+                                    <ArrowUpRight size={18} className="text-muted-foreground/50" />
+                                </Link>
+
+                                <Link
                                     href="/dashboard/wallet"
                                     onClick={() => setIsMenuOpen(false)}
                                     className="flex items-center gap-4 p-4 rounded-2xl bg-card border border-border/50 hover:bg-muted/50 active:scale-[0.98] transition-all"

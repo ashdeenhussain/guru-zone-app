@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Megaphone, ChevronRight } from 'lucide-react';
-import BannerCarousel from '@/components/shop/BannerCarousel';
+import PromotionalBanners from '@/components/shared/PromotionalBanners';
 
 export default function SystemWidgets({
     announcement,
@@ -32,10 +32,8 @@ export default function SystemWidgets({
                 </div>
             )}
 
-            {/* Banners Slider - Now using the Enhanced Carousel */}
-            {banners && banners.length > 0 && (
-                <BannerCarousel images={banners} />
-            )}
+            {/* Banners Slider - Now using the Unified PromotionalBanners */}
+            <PromotionalBanners images={banners} context="home" />
         </div>
     )
 }

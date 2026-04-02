@@ -15,7 +15,8 @@ import {
     History,
     Headphones,
     ChevronRight,
-    Shield
+    Shield,
+    Swords
 } from "lucide-react";
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
@@ -27,7 +28,7 @@ export default function Navbar() {
     const pathname = usePathname();
 
     // Hide Navbar on dashboard pages as they have their own sidebar, and on the Landing Page ("/")
-    if (pathname?.startsWith("/dashboard") || pathname?.startsWith("/admin") || pathname === "/" || pathname === "/login" || pathname === "/signup" || pathname === "/forgot-password" || pathname === "/reset-password") {
+    if (pathname?.startsWith("/dashboard") || pathname?.startsWith("/admin") || pathname?.startsWith("/battle-zone") || pathname?.startsWith("/tournaments") || pathname === "/" || pathname === "/login" || pathname === "/signup" || pathname === "/forgot-password" || pathname === "/reset-password") {
         return null;
     }
 
@@ -179,6 +180,15 @@ export default function Navbar() {
                             >
                                 <Trophy size={20} />
                                 <span className="font-bold">Leaderboard</span>
+                            </Link>
+
+                            <Link
+                                href="/dashboard/battle-zone"
+                                className="flex items-center space-x-3 p-2 text-foreground/80 hover:text-primary transition-colors"
+                                onClick={() => setIsOpen(false)}
+                            >
+                                <Swords size={20} />
+                                <span className="font-bold">Battle Zone</span>
                             </Link>
 
                             <Link

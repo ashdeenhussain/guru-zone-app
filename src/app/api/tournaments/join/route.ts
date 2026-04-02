@@ -41,7 +41,8 @@ export async function POST(req: Request) {
         }
 
         // Validate Team Name for Duo/Squad
-        if (tournament.format !== 'Solo' && !teamName) {
+        const isDuoOrSquad = ['Duo', 'Squad', '2v2', '4v4'].includes(tournament.format);
+        if (isDuoOrSquad && !teamName) {
             await session.abortTransaction();
             return NextResponse.json({ message: 'Team Name is required for Duo/Squad' }, { status: 400 });
         }
@@ -151,7 +152,7 @@ export async function POST(req: Request) {
             title: "Tournament Joined!",
             message: `You successfully joined ${tournament.title}. Good luck!`,
             type: "success",
-            link: `/dashboard/tournaments/${tournament._id}`
+            link: tournament.createdBy ? `/battle-zone/${tournament._id}` : `/tournaments/${tournament._id}`
         });
         await notification.save({ session });
 
