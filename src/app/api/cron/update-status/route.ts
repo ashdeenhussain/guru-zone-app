@@ -3,6 +3,7 @@ import connectToDatabase from '@/lib/db';
 import Tournament from '@/models/Tournament';
 import Transaction from '@/models/Transaction';
 import Notification from '@/models/Notification';
+import User from '@/models/User';
 import { sendPushNotification } from '@/lib/webpush';
 
 /**

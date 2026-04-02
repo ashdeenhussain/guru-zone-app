@@ -83,10 +83,15 @@ export default function BattleZonePage() {
                 description="Community hosted challenges & custom rooms."
                 icon={Swords}
                 customElement={
-                    <button onClick={() => setIsHostModalOpen(true)} className="bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
-                        <Plus className="w-3.5 h-3.5" />
-                        Host Match
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <span className="hidden xs:flex bg-primary/10 text-primary px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border border-primary/20 animate-pulse">
+                            BETA / WIP
+                        </span>
+                        <button onClick={() => setIsHostModalOpen(true)} className="bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
+                            <Plus className="w-3.5 h-3.5" />
+                            Host Match
+                        </button>
+                    </div>
                 }
             />
 

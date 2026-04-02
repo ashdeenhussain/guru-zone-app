@@ -189,7 +189,10 @@ export default function MobileNavigation() {
                                         <Swords size={24} />
                                     </div>
                                     <div className="flex-1">
-                                        <h4 className="font-bold text-foreground">Battle Zone</h4>
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="font-bold text-foreground">Battle Zone</h4>
+                                            <span className="bg-primary/20 text-primary text-[8px] font-black px-1.5 py-0.5 rounded uppercase">BETA</span>
+                                        </div>
                                         <p className="text-xs text-muted-foreground">Join community challenges</p>
                                     </div>
                                     <ArrowUpRight size={18} className="text-muted-foreground/50" />

@@ -150,8 +150,11 @@ export default function DashboardSidebar() {
                                         />
                                     </div>
 
-                                    <span className={`relative z-10 ml-3 transition-all duration-300 ${isHovered ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2 lg:opacity-0'}`}>
+                                    <span className={`relative z-10 ml-3 transition-all duration-300 flex items-center gap-2 ${isHovered ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2 lg:opacity-0'}`}>
                                         {item.label}
+                                        {item.label === "Battle Zone" && (
+                                            <span className="bg-primary/20 text-primary text-[8px] font-black px-1.5 py-0.5 rounded uppercase">BETA</span>
+                                        )}
                                     </span>
 
                                     {!isActive && !isAdminItem && (
