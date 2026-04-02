@@ -6,269 +6,162 @@ import Notification from '@/models/Notification';
 import User from '@/models/User';
 import { sendPushNotification } from '@/lib/webpush';
 
+export const dynamic = 'force-dynamic';
+
 /**
- * Cron Job Endpoint - Automated Task Scheduler
- * This endpoint is triggered every minute by Vercel Cron
- * Handles: Tournament Auto-Start, Transaction Cleanup
+ * Cron Job Endpoint - Handles:
+ * 1. Tournament Auto-Start (Open -> Live)
+ * 2. Unlocking Room IDs (15 mins before start)
+ * 3. Stuck Transaction Cleanup (30 mins timeout)
+ * 4. Battle Zone AFK Penalty (No Room ID within 20 mins)
  */
 export async function GET(req: Request) {
     try {
-        // Verify cron secret for security
+        // Security Check
         const authHeader = req.headers.get('authorization');
         const cronSecret = process.env.CRON_SECRET;
 
         if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-            return NextResponse.json(
-                { error: 'Unauthorized' },
-                { status: 401 }
-            );
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         await connectToDatabase();
 
         const results = {
-            tournamentAutoStart: { success: 0, failed: 0, errors: [] as string[] },
-            transactionCleanup: { success: 0, failed: 0, errors: [] as string[] },
+            autoStart: { processed: 0, errors: [] as string[] },
+            cleanup: { processed: 0, errors: [] as string[] },
+            afkPenalty: { processed: 0, errors: [] as string[] }
         };
 
-        const currentTime = new Date();
+        const now = new Date();
 
-        // ===========================
-        // TASK 1: Auto-Start Tournament
-        // ===========================
+        // --- TASK 1: Auto-Start & Credentials Reveal ---
         try {
-            // Find all tournaments that should start
-            const tournamentsToStart = await Tournament.find({
+            const tournaments = await Tournament.find({
                 status: 'Open',
-                startTime: { $lte: currentTime },
+                startTime: { $lte: new Date(now.getTime() + 15 * 60 * 1000) } // Check next 15 mins
             });
 
-            for (const tournament of tournamentsToStart) {
+            for (const t of tournaments) {
                 try {
-                    // Update tournament status to Live
-                    tournament.status = 'Live';
-                    await tournament.save();
+                    // 1. Auto-Start (If time is reached)
+                    if (t.startTime <= now && t.status === 'Open') {
+                        t.status = 'Live';
+                        await t.save();
 
-                    // Create notifications for all participants
-                    const notificationPromises = tournament.participants.map((participant: any) => {
-                        const notification = new Notification({
-                            userId: participant.userId,
-                            title: 'Match Started! Check Room ID.',
-                            message: `${tournament.title} has started! Check the room credentials and join now.`,
-                            type: 'info',
-                            link: tournament.createdBy ? `/battle-zone/${tournament._id}` : `/tournaments/${tournament._id}`,
-                        });
-                        return notification.save();
-                    });
-
-                    await Promise.all(notificationPromises);
-
-                    // ── Push Notification (To Participants) ──
-                    try {
-                        const pushPromises = tournament.participants.map((participant: any) => 
-                            sendPushNotification((participant.userId._id || participant.userId).toString(), {
-                                title: '🎮 Match Started!',
-                                body: `${tournament.title} has started! Join the room now.`,
-                                url: tournament.createdBy ? `/battle-zone/${tournament._id}` : `/tournaments/${tournament._id}`
-                            })
-                        );
-                        await Promise.all(pushPromises);
-                    } catch (pushErr) {
-                        console.error('[Cron] Match start push notification failed:', pushErr);
-                    }
-
-                    results.tournamentAutoStart.success++;
-                } catch (error: any) {
-                    results.tournamentAutoStart.failed++;
-                    results.tournamentAutoStart.errors.push(
-                        `Tournament ${tournament._id}: ${error.message}`
-                    );
-                }
-            }
-        } catch (error: any) {
-            results.tournamentAutoStart.errors.push(`Query error: ${error.message}`);
-        }
-
-        // ===========================
-        // TASK 2: Auto-Reveal Credentials
-        // ===========================
-        try {
-            // Find tournaments starting in the next 15 minutes that haven't had credentials revealed
-            const fifteenMinutesFromNow = new Date(currentTime.getTime() + 15 * 60 * 1000);
-
-            const tournamentsToReveal = await Tournament.find({
-                status: 'Open',
-                startTime: { $lte: fifteenMinutesFromNow },
-                autoReleaseTime: { $exists: false }, // Only update if not already set
-            });
-
-            for (const tournament of tournamentsToReveal) {
-                try {
-                    // Set autoReleaseTime to 15 minutes before start
-                    const releaseTime = new Date(tournament.startTime.getTime() - 15 * 60 * 1000);
-                    tournament.autoReleaseTime = releaseTime;
-                    await tournament.save();
-
-                    results.tournamentAutoStart.success++; // Count as part of tournament management
-                } catch (error: any) {
-                    results.tournamentAutoStart.failed++;
-                    results.tournamentAutoStart.errors.push(
-                        `Credential reveal for ${tournament._id}: ${error.message}`
-                    );
-                }
-            }
-        } catch (error: any) {
-            results.tournamentAutoStart.errors.push(`Credential reveal query error: ${error.message}`);
-        }
-
-        // ===========================
-        // TASK 3: Transaction Cleanup (Stuck Payments)
-        // ===========================
-        try {
-            // Find transactions pending for more than 30 minutes
-            const thirtyMinutesAgo = new Date(currentTime.getTime() - 30 * 60 * 1000);
-
-            const stuckTransactions = await Transaction.find({
-                status: { $in: ['pending', 'Pending'] },
-                createdAt: { $lt: thirtyMinutesAgo },
-                type: { $in: ['deposit', 'withdrawal'] }, // Only cleanup deposits/withdrawals
-            });
-
-            for (const transaction of stuckTransactions) {
-                try {
-                    transaction.status = 'failed';
-                    transaction.rejectionReason = 'Transaction timeout - no response after 30 minutes';
-                    await transaction.save();
-
-                    // Create notification for user
-                    const notification = new Notification({
-                        userId: transaction.user,
-                        title: 'Transaction Failed',
-                        message: `Your ${transaction.type} transaction of ₹${Math.abs(transaction.amount)} has failed due to timeout. Please try again.`,
-                        type: 'error',
-                        link: '/dashboard/finance',
-                    });
-                    await notification.save();
-
-                    // ── Push Notification (To User) ──
-                    try {
-                        await sendPushNotification(transaction.user.toString(), {
-                            title: '❌ Transaction Failed',
-                            body: `Your ${transaction.type} of ₹${Math.abs(transaction.amount)} failed due to timeout.`,
-                            url: '/dashboard/finance'
-                        });
-                    } catch (pushErr) {
-                        console.error('[Cron] Transaction cleanup push notification failed:', pushErr);
-                    }
-
-                    results.transactionCleanup.success++;
-                } catch (error: any) {
-                    results.transactionCleanup.failed++;
-                    results.transactionCleanup.errors.push(
-                        `Transaction ${transaction._id}: ${error.message}`
-                    );
-                }
-            }
-        } catch (error: any) {
-            results.transactionCleanup.errors.push(`Query error: ${error.message}`);
-        }
-
-        // ===========================
-        // TASK 4: Battle Zone Host AFK Penalty (-10)
-        // ===========================
-        try {
-            const twentyMinutesAgo = new Date(currentTime.getTime() - 20 * 60 * 1000);
-            
-            // Find community matches that are 'Full' for > 20 mins but have no roomID
-            const afkTournaments = await Tournament.find({
-                status: 'Full',
-                updatedAt: { $lt: twentyMinutesAgo },
-                createdBy: { $ne: null }
-            }).select('+roomID');
-
-            for (const tournament of afkTournaments) {
-                if (!tournament.roomID) {
-                    // Refund Joiners
-                    if (tournament.entryFee > 0) {
-                        for (const p of tournament.participants) {
+                        // Notify participants
+                        const notifyArr = t.participants.map((p: any) => {
                             const pId = p.userId?._id || p.userId;
-                            const user = await User.findById(pId);
-                            if (user) {
-                                user.walletBalance += tournament.entryFee;
-                                await user.save();
-                                
-                                await Transaction.create({
-                                    user: pId,
-                                    amount: tournament.entryFee,
-                                    type: 'refund',
-                                    description: `Refund (Host AFK): ${tournament.title}`,
-                                    status: 'completed',
-                                    referenceId: tournament._id
+                            return Notification.create({
+                                userId: pId,
+                                title: 'Match Started!',
+                                message: `${t.title} has started! Join the room now.`,
+                                type: 'info',
+                                link: t.createdBy ? `/battle-zone/${t._id}` : `/tournaments/${t._id}`
+                            });
+                        });
+                        await Promise.all(notifyArr);
+
+                        // Push Notifications
+                        for (const p of t.participants) {
+                            try {
+                                const pId = p.userId?._id || p.userId;
+                                await sendPushNotification(pId.toString(), {
+                                    title: '🎮 Match Started!',
+                                    body: `${t.title} has started! Join now.`,
+                                    url: t.createdBy ? `/battle-zone/${t._id}` : `/tournaments/${t._id}`
                                 });
-                            }
+                            } catch (e) {}
                         }
                     }
 
-                    // Penalty for Host (-10)
-                    const host = await User.findById(tournament.createdBy);
+                    // 2. Set Reveal time (15 mins before)
+                    if (!t.autoReleaseTime) {
+                        t.autoReleaseTime = new Date(t.startTime.getTime() - 15 * 60 * 1000);
+                        await t.save();
+                    }
+                    results.autoStart.processed++;
+                } catch (err: any) {
+                    results.autoStart.errors.push(`${t._id}: ${err.message}`);
+                }
+            }
+        } catch (e) { console.error("AutoStart Error:", e); }
+
+        // --- TASK 2: Transaction Cleanup ---
+        try {
+            const timeoutThreshold = new Date(now.getTime() - 30 * 60 * 1000);
+            const stuckTrxs = await Transaction.find({
+                status: { $in: ['pending', 'Pending'] },
+                createdAt: { $lt: timeoutThreshold },
+                type: { $in: ['deposit', 'withdrawal'] }
+            });
+
+            for (const trx of stuckTrxs) {
+                try {
+                    trx.status = 'failed';
+                    trx.rejectionReason = 'Timeout (30 mins)';
+                    await trx.save();
+                    results.cleanup.processed++;
+                } catch (e) {}
+            }
+        } catch (e) {}
+
+        // --- TASK 3: Battle Zone AFK Penalty ---
+        try {
+            const afkThreshold = new Date(now.getTime() - 20 * 60 * 1000);
+            const afkTourneys = await Tournament.find({
+                status: { $in: ['full', 'Full'] }, // Handle both just in case
+                updatedAt: { $lt: afkThreshold },
+                createdBy: { $ne: null }
+            }).select('+roomID');
+
+            for (const t of afkTourneys) {
+                if (!t.roomID) {
+                    // Refund Players
+                    for (const p of t.participants) {
+                        try {
+                            const pId = p.userId?._id || p.userId;
+                            const pUser = await User.findById(pId);
+                            if (pUser) {
+                                pUser.walletBalance += t.entryFee;
+                                await pUser.save();
+                                
+                                await Transaction.create({
+                                    user: pId,
+                                    amount: t.entryFee,
+                                    type: 'refund',
+                                    description: `Refund (Host AFK): ${t.title}`,
+                                    status: 'completed',
+                                    referenceId: t._id
+                                });
+                            }
+                        } catch (e) {}
+                    }
+
+                    // Penalize Host
+                    const host = await User.findById(t.createdBy);
                     if (host) {
                         host.trustScore = Math.max(0, (host.trustScore || 100) - 10);
                         await host.save();
-
+                        
                         await Notification.create({
-                            userId: tournament.createdBy,
-                            title: '🛑 Trust Score Penalty (AFK)',
-                            message: `Tournament "${tournament.title}" was cancelled because you failed to provide Room ID within 20 mins. -10 Trust Score penalty.`,
+                            userId: t.createdBy,
+                            title: '🛑 Trust Score Penalty',
+                            message: `Tournament "${t.title}" was cancelled (No Room ID). -10 trust score.`,
                             type: 'error'
                         });
-
-                        try {
-                            await sendPushNotification(tournament.createdBy.toString(), {
-                                title: '🛑 Penalty: Match Cancelled',
-                                body: `-10 Trust Score. You failed to provide Room IDs for "${tournament.title}" in time.`,
-                            });
-                        } catch (pErr) {}
                     }
 
-                    // Cancel Tournament
-                    tournament.status = 'Cancelled';
-                    tournament.cancellationReason = 'Host AFK (No Room ID provided within 20 minutes)';
-                    await tournament.save();
+                    t.status = 'Cancelled';
+                    t.cancellationReason = 'Host AFK (No Room ID provided within 20 minutes)';
+                    await t.save();
+                    results.afkPenalty.processed++;
                 }
             }
-        } catch (error: any) {
-            console.error('[CRON] Host AFK task failed:', error);
-        }
+        } catch (e) {}
 
-        // ===========================
-        // Return Results Summary
-        // ===========================
-        return NextResponse.json({
-            success: true,
-            timestamp: currentTime.toISOString(),
-            results: {
-                tournamentAutoStart: {
-                    processed: results.tournamentAutoStart.success + results.tournamentAutoStart.failed,
-                    successful: results.tournamentAutoStart.success,
-                    failed: results.tournamentAutoStart.failed,
-                    errors: results.tournamentAutoStart.errors,
-                },
-                transactionCleanup: {
-                    processed: results.transactionCleanup.success + results.transactionCleanup.failed,
-                    successful: results.transactionCleanup.success,
-                    failed: results.transactionCleanup.failed,
-                    errors: results.transactionCleanup.errors,
-                },
-            },
-        });
+        return NextResponse.json({ success: true, results });
     } catch (error: any) {
-        console.error('Cron job error:', error);
-        return NextResponse.json(
-            {
-                success: false,
-                error: error.message || 'Internal server error',
-            },
-            { status: 500 }
-        );
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
