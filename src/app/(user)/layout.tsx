@@ -77,7 +77,7 @@ export default async function UserLayout({
 
             <DashboardHeader />
 
-            <main className="flex-1 overflow-x-hidden pb-16 lg:pb-0 lg:pl-20 pt-20">
+            <main className="flex-1 overflow-x-hidden pb-16 lg:pb-0 lg:pl-20 pt-16 lg:pt-20">
                 <div className="w-full">
                     {children}
                 </div>

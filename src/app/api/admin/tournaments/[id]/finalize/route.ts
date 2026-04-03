@@ -65,10 +65,11 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
                         return; // Skip payment
                     }
 
-                    // Calculate Rank Points
+                    // Calculate Rank Points (Top 10 Support)
                     let pointsToAdd = 0;
                     if (rank === '1st') pointsToAdd = 50;
                     else if (rank === '2nd' || rank === '3rd') pointsToAdd = 20;
+                    else pointsToAdd = 10; // For ranks 4-10
 
                     // 1. Update User Wallet & Stats
                     await User.findByIdAndUpdate(userId, {
@@ -91,12 +92,29 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
                     }], { session: dbSession });
                 };
 
-                // Execute distributions
-                await Promise.all([
-                    distributePrize(winners.rank1, prizes.first, '1st'),
-                    distributePrize(winners.rank2, prizes.second, '2nd'),
-                    distributePrize(winners.rank3, prizes.third, '3rd'),
-                ]);
+                // Execute distributions dynamically based on prizeType
+                const distributionMapping = [
+                    { key: 'rank1', prize: prizes.first, label: '1st' },
+                    { key: 'rank2', prize: prizes.second, label: '2nd' },
+                    { key: 'rank3', prize: prizes.third, label: '3rd' },
+                    { key: 'rank4', prize: prizes.fourth, label: '4th' },
+                    { key: 'rank5', prize: prizes.fifth, label: '5th' },
+                    { key: 'rank6', prize: prizes.sixth, label: '6th' },
+                    { key: 'rank7', prize: prizes.seventh, label: '7th' },
+                    { key: 'rank8', prize: prizes.eighth, label: '8th' },
+                    { key: 'rank9', prize: prizes.ninth, label: '9th' },
+                    { key: 'rank10', prize: prizes.tenth, label: '10th' },
+                ];
+
+                const distributionPromises = distributionMapping
+                    .filter((_, i) => {
+                        if (tournament.prizeType === 'TOP 3') return i < 3;
+                        if (tournament.prizeType === 'TOP 5') return i < 5;
+                        return true;
+                    })
+                    .map(item => distributePrize(winners[item.key], item.prize, item.label));
+
+                await Promise.all(distributionPromises);
 
                 // Update Tournament Status
                 tournament.status = 'Completed';
@@ -126,7 +144,6 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
         }
 
         // Trigger Rank Rewards Post-Transaction (Best Effort)
-        // We do this after commit to avoid locking issues or failures rolling back the prize.
         const triggerRankRewardParams = async (userId: string) => {
             if (!userId) return;
             try {
@@ -135,12 +152,8 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
             } catch (e) { console.error('Rank reward error', e); }
         };
 
-        // Run sequentially or parallel
-        await Promise.all([
-            triggerRankRewardParams(winners.rank1),
-            triggerRankRewardParams(winners.rank2),
-            triggerRankRewardParams(winners.rank3)
-        ]);
+        const activeWinners = Object.values(winners).filter(Boolean) as string[];
+        await Promise.all(activeWinners.map(winnerId => triggerRankRewardParams(winnerId as string)));
 
         return NextResponse.json(result);
 

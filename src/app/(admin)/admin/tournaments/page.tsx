@@ -45,10 +45,18 @@ interface Tournament {
     banner?: string;
     entryFee: number;
     prizePool: number;
+    prizeType: 'TOP 3' | 'TOP 5' | 'TOP 10';
     prizeDistribution: {
         first: number;
         second: number;
         third: number;
+        fourth: number;
+        fifth: number;
+        sixth: number;
+        seventh: number;
+        eighth: number;
+        ninth: number;
+        tenth: number;
     };
     maxSlots: number;
     joinedCount: number;
@@ -58,9 +66,16 @@ interface Tournament {
     roomPassword?: string;
     participants: Participant[];
     winners?: {
-        rank1: string;
-        rank2: string;
-        rank3: string;
+        rank1?: string;
+        rank2?: string;
+        rank3?: string;
+        rank4?: string;
+        rank5?: string;
+        rank6?: string;
+        rank7?: string;
+        rank8?: string;
+        rank9?: string;
+        rank10?: string;
     };
 }
 
@@ -271,7 +286,7 @@ function TournamentList({ tournaments, loading, onManage }: { tournaments: Tourn
     );
 
     // Filter Logic
-    const activeTournaments = tournaments.filter(t => ['Open', 'Live'].includes(t.status));
+    const activeTournaments = tournaments.filter(t => ['Open', 'Live', 'upcoming', 'active'].includes(t.status));
     const historyTournaments = tournaments.filter(t => ['Completed', 'Cancelled'].includes(t.status));
 
     const displayedTournaments = filter === 'active' ? activeTournaments : historyTournaments;
@@ -427,9 +442,47 @@ function CreateTournamentForm({ onBack, onSuccess }: { onBack: () => void, onSuc
         prizePool: 0,
         maxSlots: 48,
         startTime: '',
-        prizeDistribution: { first: 0, second: 0, third: 0 }
+        prizeType: 'TOP 3',
+        prizeDistribution: {
+            first: 0, second: 0, third: 0, fourth: 0, fifth: 0,
+            sixth: 0, seventh: 0, eighth: 0, ninth: 0, tenth: 0
+        }
     });
     const [loading, setLoading] = useState(false);
+
+    // Auto-Calculate Prize Distribution
+    useEffect(() => {
+        const totalCollected = formData.entryFee * (formData.maxSlots || 0);
+        const PLATFORM_FEE = 0.30; // 30% platform fee
+        const calculatedPool = Math.floor(totalCollected * (1 - PLATFORM_FEE));
+
+        const PERCENT_TIERS: Record<string, number[]> = {
+            'TOP 3': [50, 30, 20],
+            'TOP 5': [40, 25, 15, 10, 10],
+            'TOP 10': [30, 20, 15, 10, 8, 5, 4, 3, 3, 2]
+        };
+
+        const tiers = PERCENT_TIERS[formData.prizeType] || PERCENT_TIERS['TOP 3'];
+        const keys = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'] as const;
+
+        const newDistribution = { ...formData.prizeDistribution };
+        keys.forEach((key, i) => {
+            if (i < tiers.length) {
+                (newDistribution as any)[key] = Math.floor((calculatedPool * tiers[i]) / 100);
+            } else {
+                (newDistribution as any)[key] = 0;
+            }
+        });
+
+        // Sum up the distribution to get the actual pool (due to rounding)
+        const finalPool = Object.values(newDistribution).reduce((a, b) => a + b, 0);
+
+        setFormData(prev => ({
+            ...prev,
+            prizePool: finalPool,
+            prizeDistribution: newDistribution
+        }));
+    }, [formData.entryFee, formData.maxSlots, formData.prizeType]);
 
     // Specific 15-char limit friendly names
     const PRESET_NAMES = [
@@ -442,6 +495,12 @@ function CreateTournamentForm({ onBack, onSuccess }: { onBack: () => void, onSuc
         e.preventDefault();
         setLoading(true);
         try {
+            if (!formData.startTime) {
+                alert('Please select a Start Time');
+                setLoading(false);
+                return;
+            }
+
             // Fix: Convert local datetime-local string to UTC ISO string
             const payload = {
                 ...formData,
@@ -455,8 +514,11 @@ function CreateTournamentForm({ onBack, onSuccess }: { onBack: () => void, onSuc
             });
             const data = await res.json();
             if (data.success) onSuccess();
-            else alert('Error: ' + data.error);
-        } catch (err) { alert('Something went wrong'); }
+            else alert('API Error: ' + data.error);
+        } catch (err: any) { 
+            alert('Frontend Error: ' + err.message); 
+            console.error(err);
+        }
         finally { setLoading(false); }
     };
 
@@ -577,32 +639,79 @@ function CreateTournamentForm({ onBack, onSuccess }: { onBack: () => void, onSuc
                                     value={formData.entryFee} onChange={e => setFormData({ ...formData, entryFee: parseInt(e.target.value) || 0 })} />
                             </div>
                         </InputGroup>
-                        <InputGroup label="Total Slots">
-                            <input type="number" className={`${inputStyles} font-mono`}
-                                value={formData.maxSlots} onChange={e => setFormData({ ...formData, maxSlots: parseInt(e.target.value) || 0 })} />
+
+                        <InputGroup label="Prize Pool (Auto-calculated)">
+                            <div className="relative">
+                                <span className="absolute left-3 top-3 text-emerald-600 dark:text-emerald-500 font-bold">$</span>
+                                <input type="number" className={`${inputStyles} pl-8 font-mono bg-muted/30`}
+                                    value={formData.prizePool} readOnly />
+                                <div className="absolute right-3 top-2.5 text-[10px] text-muted-foreground uppercase font-bold">Total Pool</div>
+                            </div>
+                        </InputGroup>
+                    </div>
+
+                    <div className="pt-2">
+                        <InputGroup label="Max Players / Slots">
+                            <div className="relative">
+                                <input type="number" className={inputStyles}
+                                    value={formData.maxSlots} onChange={e => setFormData({ ...formData, maxSlots: parseInt(e.target.value) || 0 })} />
+                                <div className="absolute right-3 top-3 pointer-events-none text-muted-foreground"><Users size={14} /></div>
+                            </div>
+                        </InputGroup>
+                    </div>
+                </div>
+
+                {/* 3. Winners & Distribution */}
+                <div className="bg-card/80 dark:bg-card/30 backdrop-blur-md border border-border/50 dark:border-white/5 rounded-2xl p-5 space-y-5 relative overflow-hidden shadow-sm">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-yellow-500/10 rounded-bl-full blur-2xl pointer-events-none" />
+
+                    <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50 dark:border-white/5">
+                        <Trophy size={14} className="text-yellow-500 dark:text-yellow-400" />
+                        <span className="text-xs font-bold text-yellow-600 dark:text-yellow-100">Winner Allocation</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                        <InputGroup label="Selection Type">
+                            <select className={selectStyles} value={formData.prizeType} onChange={e => setFormData({ ...formData, prizeType: e.target.value as any })}>
+                                <option value="TOP 3">Top 3 Winners</option>
+                                <option value="TOP 5">Top 5 Winners</option>
+                                <option value="TOP 10">Top 10 Winners</option>
+                            </select>
                         </InputGroup>
                     </div>
 
                     <div className="bg-muted/30 dark:bg-black/20 rounded-xl p-4 border border-border/50 dark:border-white/5">
-                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3 block">Prize Distribution</label>
-                        <div className="space-y-3">
+                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3 block">Calculated Prize Distribution</label>
+                        <div className="grid grid-cols-2 gap-3">
                             {[
                                 { label: '1st Place', color: 'text-yellow-600 dark:text-yellow-400', val: 'first' },
                                 { label: '2nd Place', color: 'text-gray-500 dark:text-gray-300', val: 'second' },
-                                { label: '3rd Place', color: 'text-orange-600 dark:text-orange-400', val: 'third' }
-                            ].map((rank: any) => (
+                                { label: '3rd Place', color: 'text-orange-600 dark:text-orange-400', val: 'third' },
+                                { label: '4th Place', color: 'text-blue-500/80', val: 'fourth' },
+                                { label: '5th Place', color: 'text-blue-500/80', val: 'fifth' },
+                                { label: '6th Place', color: 'text-blue-500/80', val: 'sixth' },
+                                { label: '7th Place', color: 'text-blue-500/80', val: 'seventh' },
+                                { label: '8th Place', color: 'text-blue-500/80', val: 'eighth' },
+                                { label: '9th Place', color: 'text-blue-500/80', val: 'ninth' },
+                                { label: '10th Place', color: 'text-blue-500/80', val: 'tenth' }
+                            ].filter((_, i) => {
+                                if (formData.prizeType === 'TOP 3') return i < 3;
+                                if (formData.prizeType === 'TOP 5') return i < 5;
+                                return true;
+                            }).map((rank: any) => (
                                 <div key={rank.val} className="flex items-center gap-3">
-                                    <span className={`w-20 text-xs font-bold ${rank.color}`}>{rank.label}</span>
+                                    <span className={`w-20 text-[10px] font-bold ${rank.color}`}>{rank.label}</span>
                                     <div className="relative flex-1">
-                                        <input type="number" placeholder="0" className="w-full bg-background/50 dark:bg-black/40 border-none rounded-lg py-1.5 px-3 text-sm text-right font-mono text-green-600 dark:text-green-400 focus:ring-1 focus:ring-green-500/50"
+                                        <input type="number" placeholder="0" className="w-full bg-background/50 dark:bg-black/40 border-none rounded-lg py-1 px-3 text-sm text-right font-mono text-green-600 dark:text-green-400 focus:ring-1 focus:ring-green-500/50"
                                             value={(formData.prizeDistribution as any)[rank.val]}
                                             onChange={e => {
                                                 const val = parseInt(e.target.value) || 0;
                                                 const newDist = { ...formData.prizeDistribution, [rank.val]: val };
+                                                const total = Object.values(newDist).reduce((a, b) => a + b, 0);
                                                 setFormData({
                                                     ...formData,
                                                     prizeDistribution: newDist,
-                                                    prizePool: newDist.first + newDist.second + newDist.third
+                                                    prizePool: total
                                                 });
                                             }} />
                                     </div>
@@ -610,7 +719,10 @@ function CreateTournamentForm({ onBack, onSuccess }: { onBack: () => void, onSuc
                             ))}
                         </div>
                         <div className="mt-4 pt-3 border-t border-border/40 dark:border-white/10 flex justify-between items-center">
-                            <span className="text-xs text-muted-foreground">Total Prize Pool</span>
+                            <div>
+                                <span className="text-xs text-muted-foreground block">Adjusted Prize Pool</span>
+                                <span className="text-[8px] text-muted-foreground font-bold uppercase tracking-wider italic">(-30% Platform Management Fee)</span>
+                            </div>
                             <span className="text-lg font-bold text-green-600 dark:text-green-400 font-mono tracking-tight">${formData.prizePool}</span>
                         </div>
                     </div>
@@ -618,13 +730,14 @@ function CreateTournamentForm({ onBack, onSuccess }: { onBack: () => void, onSuc
 
                 <div className="pt-4 pb-12">
                     <button
+                        type="submit"
                         disabled={loading}
                         className="group w-full relative overflow-hidden py-4 bg-gradient-to-r from-primary to-blue-600 rounded-xl font-bold text-white shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none"
                     >
                         <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                         <span className="relative flex items-center justify-center gap-2">
                             {loading ? (
-                                <>Deploying System...</>
+                                "Deploying System..."
                             ) : (
                                 <>
                                     <Trophy size={18} className="text-yellow-300" />
@@ -634,11 +747,11 @@ function CreateTournamentForm({ onBack, onSuccess }: { onBack: () => void, onSuc
                         </span>
                     </button>
                     <p className="text-center text-[10px] text-muted-foreground mt-3">
-                        This will deduct fees from the Prize Pool wallet immediately.
+                        This will launch the tournament and calculate prizes immediately.
                     </p>
                 </div>
-            </form >
-        </div >
+            </form>
+        </div>
     );
 }
 
@@ -653,7 +766,14 @@ function ManageTournamentView({ tournament, onBack, onUpdate }: { tournament: To
     const [winners, setWinners] = useState({
         rank1: (tournament.winners as any)?.rank1 || '',
         rank2: (tournament.winners as any)?.rank2 || '',
-        rank3: (tournament.winners as any)?.rank3 || ''
+        rank3: (tournament.winners as any)?.rank3 || '',
+        rank4: (tournament.winners as any)?.rank4 || '',
+        rank5: (tournament.winners as any)?.rank5 || '',
+        rank6: (tournament.winners as any)?.rank6 || '',
+        rank7: (tournament.winners as any)?.rank7 || '',
+        rank8: (tournament.winners as any)?.rank8 || '',
+        rank9: (tournament.winners as any)?.rank9 || '',
+        rank10: (tournament.winners as any)?.rank10 || ''
     });
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -1070,14 +1190,26 @@ function ManageTournamentView({ tournament, onBack, onUpdate }: { tournament: To
                                                 <div className="text-xs text-yellow-600 font-bold uppercase mt-1">1st Place • ${tournament.prizeDistribution.first}</div>
                                             </div>
                                             <div className="grid grid-cols-2 gap-4">
-                                                <div className="p-3 bg-gray-500/10 rounded-xl">
-                                                    <div className="text-sm font-bold">2nd: {winners.rank2 || 'N/A'}</div>
-                                                    <div className="text-[10px] text-muted-foreground">${tournament.prizeDistribution.second}</div>
-                                                </div>
-                                                <div className="p-3 bg-orange-500/10 rounded-xl">
-                                                    <div className="text-sm font-bold">3rd: {winners.rank3 || 'N/A'}</div>
-                                                    <div className="text-[10px] text-muted-foreground">${tournament.prizeDistribution.third}</div>
-                                                </div>
+                                                {[
+                                                    { rank: 'rank2', label: '2nd', prize: tournament.prizeDistribution.second, color: 'bg-gray-500/10' },
+                                                    { rank: 'rank3', label: '3rd', prize: tournament.prizeDistribution.third, color: 'bg-orange-500/10' },
+                                                    { rank: 'rank4', label: '4th', prize: tournament.prizeDistribution.fourth, color: 'bg-blue-500/10' },
+                                                    { rank: 'rank5', label: '5th', prize: tournament.prizeDistribution.fifth, color: 'bg-blue-500/10' },
+                                                    { rank: 'rank6', label: '6th', prize: tournament.prizeDistribution.sixth, color: 'bg-blue-500/10' },
+                                                    { rank: 'rank7', label: '7th', prize: tournament.prizeDistribution.seventh, color: 'bg-blue-500/10' },
+                                                    { rank: 'rank8', label: '8th', prize: tournament.prizeDistribution.eighth, color: 'bg-blue-500/10' },
+                                                    { rank: 'rank9', label: '9th', prize: tournament.prizeDistribution.ninth, color: 'bg-blue-500/10' },
+                                                    { rank: 'rank10', label: '10th', prize: tournament.prizeDistribution.tenth, color: 'bg-blue-500/10' }
+                                                ].filter((_, i) => {
+                                                    if (tournament.prizeType === 'TOP 3') return i < 2;
+                                                    if (tournament.prizeType === 'TOP 5') return i < 4;
+                                                    return true;
+                                                }).map((r) => (
+                                                    <div key={r.rank} className={`p-3 ${r.color} rounded-xl`}>
+                                                        <div className="text-sm font-bold">{r.label}: {(winners as any)[r.rank] || 'N/A'}</div>
+                                                        <div className="text-[10px] text-muted-foreground">${r.prize}</div>
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
                                     ) : (
@@ -1099,18 +1231,25 @@ function ManageTournamentView({ tournament, onBack, onUpdate }: { tournament: To
                                 <div className="space-y-4">
                                     {/* Winners Selection Card */}
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        {['rank1', 'rank2', 'rank3'].map((rank, i) => {
+                                        {['rank1', 'rank2', 'rank3', 'rank4', 'rank5', 'rank6', 'rank7', 'rank8', 'rank9', 'rank10'].filter((_, i) => {
+                                            if (tournament.prizeType === 'TOP 3') return i < 3;
+                                            if (tournament.prizeType === 'TOP 5') return i < 5;
+                                            return true;
+                                        }).map((rank, i) => {
                                             const winnerId = (winners as any)[rank];
                                             const winner = tournament.participants?.find(p => (p.userId as any)?._id?.toString() === winnerId?.toString() || p.userId === winnerId);
+                                            const prizeKeys = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'];
+                                            const prize = (tournament.prizeDistribution as any)[prizeKeys[i]];
                                             const placeColors = i === 0 ? 'text-yellow-500 border-yellow-500/20 bg-yellow-500/5'
                                                 : i === 1 ? 'text-gray-400 border-gray-400/20 bg-gray-400/5'
-                                                    : 'text-orange-600 border-orange-600/20 bg-orange-600/5';
+                                                    : i === 2 ? 'text-orange-600 border-orange-600/20 bg-orange-600/5'
+                                                        : 'text-blue-500 border-blue-500/20 bg-blue-500/5';
 
                                             return (
                                                 <div key={rank} className={`border rounded-xl p-3 flex flex-col gap-2 relative group ${placeColors}`}>
                                                     <div className="text-[10px] font-bold uppercase opacity-80 flex justify-between">
                                                         <span>Rank {i + 1}</span>
-                                                        <span className="font-mono">${i === 0 ? tournament.prizeDistribution.first : i === 1 ? tournament.prizeDistribution.second : tournament.prizeDistribution.third}</span>
+                                                        <span className="font-mono">${prize}</span>
                                                     </div>
                                                     {winner ? (
                                                         <>
@@ -1229,7 +1368,11 @@ function ManageTournamentView({ tournament, onBack, onUpdate }: { tournament: To
                                                                 <td className="px-4 py-3 text-right">
                                                                     {/* Actions (Winner Selection) */}
                                                                     <div className="flex justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                                                                        {['rank1', 'rank2', 'rank3'].map((r, idx) => {
+                                                                        {['rank1', 'rank2', 'rank3', 'rank4', 'rank5', 'rank6', 'rank7', 'rank8', 'rank9', 'rank10'].filter((_, i) => {
+                                                                            if (tournament.prizeType === 'TOP 3') return i < 3;
+                                                                            if (tournament.prizeType === 'TOP 5') return i < 5;
+                                                                            return true;
+                                                                        }).map((r, idx) => {
                                                                             const userIdStr = (p.userId as any)?._id || p.userId;
                                                                             const isSelected = (winners as any)[r] === userIdStr;
                                                                             const isTaken = (winners as any)[r] && !isSelected;

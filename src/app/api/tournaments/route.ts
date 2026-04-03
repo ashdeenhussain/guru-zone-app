@@ -20,7 +20,7 @@ export async function GET(req: Request) {
         const query: any = {
             isVisible: { $ne: false },
             $or: [
-                { status: { $in: ['Open', 'Live'] } },
+                { status: { $in: ['Open', 'Live', 'upcoming', 'active'] } },
                 {
                     status: { $in: ['Completed', 'Cancelled'] },
                     updatedAt: { $gte: cutoffTime }

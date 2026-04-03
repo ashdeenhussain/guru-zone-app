@@ -9,7 +9,7 @@ import bcrypt from 'bcryptjs';
 
 export const authOptions: AuthOptions = {
     debug: true,
-    adapter: MongoDBAdapter(clientPromise),
+    // adapter: MongoDBAdapter(clientPromise),
     providers: [
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID || '',

@@ -10,10 +10,18 @@ interface Tournament {
     gameType: string;
     entryFee: number;
     prizePool: number;
+    prizeType?: 'TOP 3' | 'TOP 5' | 'TOP 10';
     prizeDistribution: {
         first: number;
         second: number;
         third: number;
+        fourth?: number;
+        fifth?: number;
+        sixth?: number;
+        seventh?: number;
+        eighth?: number;
+        ninth?: number;
+        tenth?: number;
     };
     maxSlots: number;
     joinedCount: number;
@@ -112,11 +120,96 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
                         <div className="absolute right-0 top-full mt-2 w-48 p-3 bg-card backdrop-blur-xl border border-border rounded-xl hidden group-hover/prize:block z-20 shadow-2xl">
                             <div className="text-xs text-muted-foreground space-y-1">
                                 <div className="flex justify-between border-b border-border pb-1 mb-1 font-semibold text-foreground"><span>Distribution</span></div>
-                                <div className="flex justify-between"><span>🥇 1st:</span> <span className="text-primary">{tournament.prizeDistribution.first} Coins</span></div>
-                                <div className="flex justify-between"><span>🥈 2nd:</span> <span className="text-muted-foreground">{tournament.prizeDistribution.second} Coins</span></div>
-                                <div className="flex justify-between"><span>🥉 3rd:</span> <span className="text-muted-foreground">{tournament.prizeDistribution.third} Coins</span></div>
+                                <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
+                                    {[
+                                        { label: '🥇 1st', val: tournament.prizeDistribution.first, color: 'text-primary' },
+                                        { label: '🥈 2nd', val: tournament.prizeDistribution.second, color: 'text-muted-foreground' },
+                                        { label: '🥉 3rd', val: tournament.prizeDistribution.third, color: 'text-muted-foreground' },
+                                        { label: '🎖️ 4th', val: tournament.prizeDistribution.fourth, color: 'text-muted-foreground' },
+                                        { label: '🎖️ 5th', val: tournament.prizeDistribution.fifth, color: 'text-muted-foreground' },
+                                        { label: '🎖️ 6th', val: tournament.prizeDistribution.sixth, color: 'text-muted-foreground' },
+                                        { label: '🎖️ 7th', val: tournament.prizeDistribution.seventh, color: 'text-muted-foreground' },
+                                        { label: '🎖️ 8th', val: tournament.prizeDistribution.eighth, color: 'text-muted-foreground' },
+                                        { label: '🎖️ 9th', val: tournament.prizeDistribution.ninth, color: 'text-muted-foreground' },
+                                        { label: '🎖️ 10th', val: tournament.prizeDistribution.tenth, color: 'text-muted-foreground' },
+                                    ].filter(item => item.val !== undefined && item.val > 0).map((item, idx) => (
+                                        <div key={idx} className="flex justify-between text-[10px]">
+                                            <span>{item.label}:</span>
+                                            <span className={item.color}>{item.val} Coins</span>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                {/* Prize Breakdown Section (Premium Tier Layouts) */}
+                <div className="mb-5 relative z-10">
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
+                            <div className="h-[1px] w-4 bg-primary/30" />
+                            Prize Allocation
+                        </div>
+                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                            {tournament.prizeType || 'TOP 3'}
+                        </span>
+                    </div>
+
+                    <div className={`grid gap-2 relative z-10 ${
+                        (tournament.prizeType || 'TOP 3').toString().toUpperCase().trim() === 'TOP 3' ? 'grid-cols-3' : 
+                        'grid-cols-3 sm:grid-cols-5'
+                    }`}>
+                        {[
+                            { label: 'Top 1', val: tournament.prizeDistribution.first, theme: 'gold' },
+                            { label: 'Top 2', val: tournament.prizeDistribution.second, theme: 'silver' },
+                            { label: 'Top 3', val: tournament.prizeDistribution.third, theme: 'bronze' },
+                            { label: 'Top 4', val: tournament.prizeDistribution.fourth, theme: 'default' },
+                            { label: 'Top 5', val: tournament.prizeDistribution.fifth, theme: 'default' },
+                            { label: 'Top 6', val: tournament.prizeDistribution.sixth, theme: 'default' },
+                            { label: 'Top 7', val: tournament.prizeDistribution.seventh, theme: 'default' },
+                            { label: 'Top 8', val: tournament.prizeDistribution.eighth, theme: 'default' },
+                            { label: 'Top 9', val: tournament.prizeDistribution.ninth, theme: 'default' },
+                            { label: 'Top 10', val: tournament.prizeDistribution.tenth, theme: 'default' },
+                        ].filter((item, i) => {
+                            const pType = (tournament.prizeType || 'TOP 3').toString().toUpperCase().trim();
+                            if (pType === 'TOP 3') return i < 3;
+                            if (pType === 'TOP 5') return i < 5;
+                            return true;
+                        }).map((item, idx) => {
+                            const isTop3 = idx < 3;
+                            const themes: Record<string, string> = {
+                                gold: 'border-amber-500/40 bg-gradient-to-br from-amber-500/30 via-yellow-500/10 to-transparent text-amber-700 dark:text-amber-300 shadow-[0_8px_30px_rgb(245,158,11,0.15)] ring-1 ring-amber-500/20',
+                                silver: 'border-indigo-400/40 bg-gradient-to-br from-indigo-500/20 via-slate-400/10 to-transparent text-indigo-700 dark:text-indigo-300 shadow-[0_8px_30px_rgb(99,102,241,0.1)] ring-1 ring-indigo-400/20',
+                                bronze: 'border-rose-400/40 bg-gradient-to-br from-rose-500/20 via-orange-500/10 to-transparent text-rose-700 dark:text-rose-300 shadow-[0_8px_30px_rgb(244,63,94,0.1)] ring-1 ring-rose-400/20',
+                                default: 'bg-emerald-500/5 border-emerald-500/20 text-emerald-700 dark:text-emerald-400/80 backdrop-blur-sm'
+                            };
+                            const themeStyles = themes[item.theme] || themes.default;
+
+                            return (
+                                <div 
+                                    key={idx} 
+                                    className={`relative flex flex-col items-center justify-center gap-1.5 rounded-xl border transition-all duration-300 hover:scale-[1.05] hover:z-10 ${themeStyles} ${isTop3 ? 'py-5 px-3 min-h-[90px] shadow-md' : 'py-2 px-1 min-h-[60px] opacity-80'}`}
+                                >
+                                    {isTop3 && (
+                                        <div className={`absolute -top-2 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tighter ${
+                                            idx === 0 ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-500/30' : 
+                                            idx === 1 ? 'bg-slate-400 text-white' : 
+                                            'bg-orange-500 text-white'
+                                        }`}>
+                                            {idx === 0 ? 'WINNER' : idx === 1 ? 'ELITE' : 'PRO'}
+                                        </div>
+                                    )}
+                                    <span className={`text-[9px] font-bold uppercase ${!isTop3 ? 'opacity-60' : 'opacity-80'}`}>{item.label}</span>
+                                    <span className={`font-black ${isTop3 ? 'text-lg' : 'text-sm'} leading-tight`}>
+                                        {item.val}
+                                    </span>
+                                    <span className={`text-[8px] font-bold opacity-40`}>
+                                        ({Math.round(((item.val || 0) / tournament.prizePool) * 100)}%)
+                                    </span>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 

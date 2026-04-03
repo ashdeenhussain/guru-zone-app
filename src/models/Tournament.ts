@@ -43,10 +43,22 @@ const TournamentSchema = new Schema(
             type: Number,
             required: true,
         },
+        prizeType: {
+            type: String,
+            enum: ['TOP 3', 'TOP 5', 'TOP 10'],
+            default: 'TOP 3',
+        },
         prizeDistribution: {
             first: { type: Number, default: 0 },
             second: { type: Number, default: 0 },
             third: { type: Number, default: 0 },
+            fourth: { type: Number, default: 0 },
+            fifth: { type: Number, default: 0 },
+            sixth: { type: Number, default: 0 },
+            seventh: { type: Number, default: 0 },
+            eighth: { type: Number, default: 0 },
+            ninth: { type: Number, default: 0 },
+            tenth: { type: Number, default: 0 },
         },
         maxSlots: {
             type: Number,
@@ -112,7 +124,7 @@ const TournamentSchema = new Schema(
                 'upcoming', 'full', 'active', 'completed', 'cancelled', 'disputed', 
                 'Open', 'Live', 'Completed', 'Cancelled', 'pending_verification'
             ], 
-            default: 'upcoming',
+            default: 'Open',
         },
         cancellationReason: {
             type: String,
@@ -126,6 +138,13 @@ const TournamentSchema = new Schema(
             rank1: { type: Schema.Types.ObjectId, ref: 'User' },
             rank2: { type: Schema.Types.ObjectId, ref: 'User' },
             rank3: { type: Schema.Types.ObjectId, ref: 'User' },
+            rank4: { type: Schema.Types.ObjectId, ref: 'User' },
+            rank5: { type: Schema.Types.ObjectId, ref: 'User' },
+            rank6: { type: Schema.Types.ObjectId, ref: 'User' },
+            rank7: { type: Schema.Types.ObjectId, ref: 'User' },
+            rank8: { type: Schema.Types.ObjectId, ref: 'User' },
+            rank9: { type: Schema.Types.ObjectId, ref: 'User' },
+            rank10: { type: Schema.Types.ObjectId, ref: 'User' },
         },
         advancedRules: {
             gameMode: { 

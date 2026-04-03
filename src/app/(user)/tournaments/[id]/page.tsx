@@ -9,10 +9,16 @@ import { notFound } from 'next/navigation';
 async function getTournament(id: string) {
     await connectToDatabase();
     const tournament = await Tournament.findById(id)
+        .select('+roomID') // Include to check existence
         .populate('participants.userId', 'username name email inGameName uid avatarId image')
         .lean();
     if (!tournament) return null;
-    return JSON.parse(JSON.stringify(tournament));
+    
+    // Check if room is ready but don't send the sensitive ID yet
+    const isRoomReady = !!tournament.roomID;
+    delete tournament.roomID;
+    
+    return JSON.parse(JSON.stringify({ ...tournament, isRoomReady }));
 }
 
 async function getUser(email: string) {
