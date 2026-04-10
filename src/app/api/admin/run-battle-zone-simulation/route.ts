@@ -4,7 +4,7 @@ import Tournament from '@/models/Tournament';
 import User from '@/models/User';
 import Transaction from '@/models/Transaction';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { authOptions, hasPermission } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 
 // ─────────────────────────────────────────────────────────────────────────────
