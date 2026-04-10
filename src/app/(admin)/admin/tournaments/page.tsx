@@ -24,6 +24,8 @@ import { format } from 'date-fns';
 import { AVATARS } from '@/lib/avatars';
 import ImageUpload from '@/components/admin/ImageUpload';
 import Image from 'next/image';
+import { useSession } from 'next-auth/react';
+import { Modal } from '@/components/ui/Modal';
 
 // Types
 interface Participant {
@@ -77,6 +79,7 @@ interface Tournament {
         rank9?: string;
         rank10?: string;
     };
+    createdBy?: string;
 }
 
 // Helper: Countdown Timer
@@ -113,11 +116,13 @@ function CountdownTimer({ targetDate }: { targetDate: string }) {
 }
 
 export default function AdminTournamentsPage() {
+    const { data: session } = useSession();
     const [tournaments, setTournaments] = useState<Tournament[]>([]);
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState<'list' | 'create' | 'manage'>('list');
     const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
     const [urgentCount, setUrgentCount] = useState(0);
+    const [authError, setAuthError] = useState<string | null>(null);
 
     // Fetch Tournaments & Check Urgency
     const fetchTournaments = async () => {
@@ -152,6 +157,15 @@ export default function AdminTournamentsPage() {
     }, []);
 
     const handleManage = (t: Tournament) => {
+        const userId = (session?.user as any)?.id;
+        const isSuperAdmin = (session?.user as any)?.permissions?.includes('manage_system');
+        const isCreator = userId && t.createdBy === userId;
+
+        if (!isSuperAdmin && !isCreator) {
+            setAuthError('You do not have permission to manage this tournament. Only the creator or a System Admin can perform management actions.');
+            return;
+        }
+
         setSelectedTournament(t);
         setView('manage');
     };
@@ -264,6 +278,29 @@ export default function AdminTournamentsPage() {
                         </motion.div>
                     )}
                 </AnimatePresence>
+
+                {/* Authorization Error Modal */}
+                <Modal 
+                    isOpen={!!authError} 
+                    onClose={() => setAuthError(null)} 
+                    title="Access Denied"
+                >
+                    <div className="flex flex-col items-center text-center py-4">
+                        <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-4 text-red-500">
+                            <ShieldAlert size={32} />
+                        </div>
+                        <h3 className="text-xl font-bold text-foreground mb-2">Unauthorized Access</h3>
+                        <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
+                            {authError}
+                        </p>
+                        <button 
+                            onClick={() => setAuthError(null)}
+                            className="w-full py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-bold transition-all shadow-lg shadow-primary/20"
+                        >
+                            Understood
+                        </button>
+                    </div>
+                </Modal>
             </div>
         </div>
     );

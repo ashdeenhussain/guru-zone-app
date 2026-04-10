@@ -6,6 +6,7 @@ import SpinItem from "@/models/SpinItem";
 import Order from "@/models/Order";
 import Transaction from "@/models/Transaction";
 import mongoose from "mongoose";
+import { rateLimit, getIP } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
     try {
@@ -13,6 +14,18 @@ export async function POST(req: Request) {
         if (!session || !session.user) {
             return Response.json({ error: "Unauthorized" }, { status: 401 });
         }
+
+        // Rate Limiting: 10 spins per minute
+        const identifier = (session.user as any).id || getIP(req);
+        const { success, limit, reset } = rateLimit(identifier, { limit: 10, windowMs: 60000 });
+
+        if (!success) {
+            return Response.json({ 
+                error: "Wait a moment... too many spins! Please slow down.", 
+                resetAt: new Date(reset).toLocaleTimeString()
+            }, { status: 429 });
+        }
+
 
         await connectToDatabase();
 

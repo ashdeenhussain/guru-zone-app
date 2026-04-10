@@ -22,20 +22,17 @@ export async function PATCH(
         const body = await req.json();
 
         // Security: Pick only allowed fields
-        const { name, inGameName, freeFireUid, walletBalance } = body;
+        const { name, inGameName, freeFireUid } = body;
 
-        // Explicitly Reject Email/Password attempts
-        if (body.email || body.password) {
-            // We can strictly fail, or just ignore. 
-            // The prompt says "strictly IGNORE/REJECT". 
-            // I'll ignore them by just strictly constructing the update object.
+        // Explicitly Reject Email/Password/Wallet attempts
+        if (body.email || body.password || body.walletBalance !== undefined) {
+            // We ignore these to prevent direct manipulation
         }
 
         const updateData: any = {};
         if (name !== undefined) updateData.name = name;
         if (inGameName !== undefined) updateData.inGameName = inGameName;
         if (freeFireUid !== undefined) updateData.freeFireUid = freeFireUid;
-        if (walletBalance !== undefined) updateData.walletBalance = walletBalance;
 
         const user = await User.findByIdAndUpdate(
             id,

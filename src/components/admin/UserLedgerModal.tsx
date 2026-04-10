@@ -33,6 +33,7 @@ export default function UserLedgerModal({ isOpen, onClose, userId, userName }: U
     const [error, setError] = useState<string | null>(null);
     const [runningBalances, setRunningBalances] = useState<number[]>([]);
     const [calculatedBalance, setCalculatedBalance] = useState<number>(0);
+    const [isReconciling, setIsReconciling] = useState(false);
 
     useEffect(() => {
         if (isOpen && userId) {
@@ -55,11 +56,31 @@ export default function UserLedgerModal({ isOpen, onClose, userId, userName }: U
             }
             const result = await res.json();
             setData(result);
-            calculateRunningBalances(result.transactions);
+            calculateRunningBalances(result.transactions, result.user.walletBalance);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Unknown error");
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleReconcile = async () => {
+        if (!confirm(`Reconcile Balance? This will update the user's wallet from Rs. ${data?.user.walletBalance.toLocaleString()} to Rs. ${calculatedBalance.toLocaleString()} to match the ledger history.`)) return;
+
+        setIsReconciling(true);
+        try {
+            const res = await fetch(`/api/admin/wallet/reconcile`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, reason: 'Ledger Audit Correction' })
+            });
+            if (!res.ok) throw new Error('Failed to reconcile balance');
+            alert('Balance Reconciled Successfully!');
+            fetchLedger();
+        } catch (err) {
+            alert(err instanceof Error ? err.message : 'Error reconciling');
+        } finally {
+            setIsReconciling(false);
         }
     };
 
@@ -116,7 +137,7 @@ export default function UserLedgerModal({ isOpen, onClose, userId, userName }: U
         }
     };
 
-    const calculateRunningBalances = (transactions: any[]) => {
+    const calculateRunningBalances = (transactions: any[], currentBalance: number) => {
         // Calculate Chronologically (Oldest to Newest) starting from 0
         // We need to reverse the *copy* of transactions array since display is Newest-First.
         const chronological = [...transactions].reverse();
@@ -133,8 +154,9 @@ export default function UserLedgerModal({ isOpen, onClose, userId, userName }: U
         setCalculatedBalance(current);
 
         // Detect Discrepancy (Manual DB Edits)
-        if (data && data.user) {
-            const discrepancy = data.user.walletBalance - current;
+        if (data || currentBalance !== undefined) {
+            const userBalance = data?.user.walletBalance ?? currentBalance;
+            const discrepancy = userBalance - current;
             // Allow small float tolerance
             if (Math.abs(discrepancy) > 1) {
                 // If there is a discrepancy, we insert a "Ghost" adjustment at the beginning of time
@@ -274,9 +296,26 @@ export default function UserLedgerModal({ isOpen, onClose, userId, userName }: U
                                         </span>
                                     )}
                                 </div>
-                                <p className={`text-3xl font-mono font-bold ${isSuspicious || isDesync ? 'text-red-400' : 'text-indigo-400'}`}>
-                                    Rs. {data.user.walletBalance.toLocaleString()}
-                                </p>
+                                <div className="flex items-center justify-between gap-4">
+                                    <p className={`text-3xl font-mono font-bold ${isSuspicious || isDesync ? 'text-red-400' : 'text-indigo-400'}`}>
+                                        Rs. {data.user.walletBalance.toLocaleString()}
+                                    </p>
+                                    {isDesync && (
+                                        <button
+                                            onClick={handleReconcile}
+                                            disabled={isReconciling}
+                                            className="px-3 py-1.5 bg-red-500 hover:bg-red-600 disabled:bg-neutral-700 text-white text-[10px] uppercase font-bold rounded-lg transition-all shadow-sm flex items-center gap-1.5 whitespace-nowrap"
+                                        >
+                                            {isReconciling ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
+                                            Reconcile Fix
+                                        </button>
+                                    )}
+                                </div>
+                                {isDesync && (
+                                    <p className="mt-2 text-[10px] text-red-500/70 font-medium">
+                                        Calculated: Rs. {calculatedBalance.toLocaleString()} ({data.user.walletBalance - calculatedBalance > 0 ? '+' : ''}{(data.user.walletBalance - calculatedBalance).toLocaleString()} diff)
+                                    </p>
+                                )}
                             </div>
                         </div>
 

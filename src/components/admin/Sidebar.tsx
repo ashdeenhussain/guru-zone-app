@@ -20,7 +20,8 @@ import {
     LifeBuoy,
     Shield,
     ArrowUpRight,
-    Swords
+    Swords,
+    Globe
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSession } from "next-auth/react";
@@ -35,7 +36,12 @@ export default function Sidebar({ onClose }: AdminSidebarProps) {
     const hasPermission = (permission: string) => {
         if (!session?.user) return false;
         const user = session.user as any;
-        return user.role === 'admin' || user.permissions?.includes(permission);
+        
+        // Super Admins have manage_system permission which grants access to everything
+        if (user.permissions?.includes('manage_system')) return true;
+        
+        // Otherwise check for the specific permission
+        return user.permissions?.includes(permission);
     };
 
     const pathname = usePathname();
@@ -52,6 +58,7 @@ export default function Sidebar({ onClose }: AdminSidebarProps) {
         { name: 'Users', href: '/admin/users', icon: Users, permission: 'manage_support' },
         { name: 'Finance', href: '/admin/finance', icon: Wallet, permission: 'manage_finance' },
         { name: 'Transactions', href: '/admin/transactions', icon: ArrowUpRight, permission: 'manage_finance' },
+        { name: 'Landing Page', href: '/admin/landing-page', icon: Globe, permission: 'manage_system' },
         { name: 'Audit Logs', href: '/admin/audit-logs', icon: Shield, permission: 'manage_system' },
     ];
 

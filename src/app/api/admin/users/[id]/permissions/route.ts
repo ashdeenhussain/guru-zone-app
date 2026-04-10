@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
 import User from "@/models/User";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { authOptions, hasPermission } from "@/lib/auth";
+import AdminActivity from "@/models/AdminActivity";
 
 export async function PATCH(
     req: Request,
@@ -12,11 +13,9 @@ export async function PATCH(
     try {
         const session = await getServerSession(authOptions);
 
-        // Security check: Only admins can assign permissions
-        // For now, we assume only 'admin' role can assign permissions to others.
-        // We could also allow someone with 'manage_system' permission to do this.
-        if (!session || (session.user as any).role !== 'admin') {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        // Security check: Only admins with manage_system permission can assign permissions
+        if (!hasPermission(session, 'manage_system')) {
+            return NextResponse.json({ error: "Unauthorized. Requires manage_system permission." }, { status: 401 });
         }
 
         const params = await context.params;
@@ -29,8 +28,7 @@ export async function PATCH(
             id,
             {
                 role,
-                permissions: role === 'admin' ? [] : permissions // If admin, clear specific permissions (implied full access) or keep them? 
-                // My logic says role === 'admin' OR permissions.includes. So empty permissions for admin is fine.
+                permissions: role === 'admin' ? [] : permissions 
             },
             { new: true }
         ).select("-password");
@@ -39,7 +37,17 @@ export async function PATCH(
             return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
+        // Log Activity
+        await AdminActivity.create({
+            adminId: session.user.id,
+            adminName: session.user.name,
+            actionType: 'UPDATE_PERMISSIONS',
+            targetId: updatedUser._id,
+            details: `Updated permissions for ${updatedUser.email}. Role: ${role}, Perms: ${permissions?.join(', ')}`
+        });
+
         return NextResponse.json(updatedUser);
+
     } catch (error) {
         console.error("Error updating permissions:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

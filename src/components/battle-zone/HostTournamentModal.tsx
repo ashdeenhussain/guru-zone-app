@@ -478,7 +478,7 @@ export default function HostTournamentModal({ isOpen, onClose, onSuccess }: Host
                                             </>
                                         ) : (
                                             <>
-                                                🚀 Create Match
+                                                Create Tournament
                                                 <div className="text-xs bg-black/20 px-2 py-0.5 rounded-md ml-1 -my-1 border border-white/10">
                                                     -{parsedFee} Coins
                                                 </div>

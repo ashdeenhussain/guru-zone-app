@@ -5,7 +5,7 @@ import User from '@/models/User';
 import Transaction from '@/models/Transaction';
 import Notification from '@/models/Notification';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { authOptions, hasPermission } from '@/lib/auth';
 import AdminActivity from '@/models/AdminActivity';
 import mongoose from 'mongoose';
 
@@ -13,7 +13,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     let session = null;
     try {
         const authSession = await getServerSession(authOptions);
-        if (!authSession || !authSession.user || (authSession.user as any).role !== 'admin') {
+        if (!hasPermission(authSession, 'manage_tournaments')) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -29,6 +29,17 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
         if (!tournament) {
             await session.abortTransaction();
             return NextResponse.json({ success: false, error: 'Tournament not found' }, { status: 404 });
+        }
+
+        // Ownership Check: Only creator or Super Admin can cancel
+        const canManage = hasPermission(authSession, 'manage_system') || (tournament.createdBy?.toString() === (authSession as any)?.user?.id);
+        
+        if (!canManage) {
+            await session.abortTransaction();
+            return NextResponse.json({ 
+                success: false, 
+                error: 'Unauthorized: You can only cancel tournaments created by you.' 
+            }, { status: 403 });
         }
 
         if (!['Open', 'Live'].includes(tournament.status)) {

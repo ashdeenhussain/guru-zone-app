@@ -2,13 +2,13 @@ import { NextResponse } from 'next/server';
 import connectToDB from '@/lib/db';
 import Tournament from '@/models/Tournament';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { authOptions, hasPermission } from '@/lib/auth';
 import AdminActivity from '@/models/AdminActivity';
 
 export async function PATCH(req: Request, context: { params: Promise<{ id: string }> }) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session || !session.user || (session.user as any).role !== 'admin') {
+        if (!hasPermission(session, 'manage_tournaments')) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -17,12 +17,24 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
         const { id } = params;
         const body = await req.json();
 
+        const tournament = await Tournament.findById(id);
+        if (!tournament) {
+            return NextResponse.json({ success: false, error: 'Tournament not found' }, { status: 404 });
+        }
 
-        // Prevent updating sensitive fields via this generic route if needed, 
-        // but for now we trust the admin to send correct data.
-        // We specifically want to allow updating the 'status'.
+        // Ownership Check: Only creator or Super Admin can edit
+        const canManage = hasPermission(session, 'manage_system') || (tournament.createdBy?.toString() === (session as any)?.user?.id);
+        
+        if (!canManage) {
+            return NextResponse.json({ 
+                success: false, 
+                error: 'Unauthorized: You can only manage tournaments created by you.' 
+            }, { status: 403 });
+        }
 
-        const tournament = await Tournament.findByIdAndUpdate(id, { $set: body }, { new: true });
+        // Apply updates
+        Object.assign(tournament, body);
+        await tournament.save();
 
         if (!tournament) {
             return NextResponse.json({ success: false, error: 'Tournament not found' }, { status: 404 });

@@ -235,7 +235,7 @@ export default function PlayerControls({ tournament, userId, onUpdate }: PlayerC
                             </>
                         ) : (
                             <>
-                                <Eye className="w-5 h-5" /> REVEAL ROOM DETAILS
+                                <Eye className="w-5 h-5" /> View Room Details
                             </>
                         )}
                     </button>
@@ -347,7 +347,7 @@ export default function PlayerControls({ tournament, userId, onUpdate }: PlayerC
                                                     className="h-14 bg-red-500/10 hover:bg-red-500/15 text-red-500 border border-red-500/20 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95"
                                                 >
                                                     <AlertTriangle className="w-5 h-5" />
-                                                    Dispute
+                                                    Disagree
                                                 </button>
                                             </div>
                                         </div>
@@ -409,7 +409,7 @@ export default function PlayerControls({ tournament, userId, onUpdate }: PlayerC
                                 <div className="space-y-1">
                                     <h3 className="font-black text-xl text-destructive uppercase tracking-tight flex items-center gap-2">
                                         <AlertTriangle className="w-6 h-6" />
-                                        Dispute Case
+                                        Dispute Result
                                     </h3>
                                     <p className="text-[10px] font-black text-muted-foreground uppercase opacity-70">Official Protest</p>
                                 </div>

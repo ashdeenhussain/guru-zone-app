@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { Upload, X, Loader2, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
+import { toast } from 'sonner';
 
 interface ImageUploadProps {
     value: string;
@@ -35,11 +36,11 @@ export default function ImageUpload({ value, onChange, label = "Upload Image", c
             if (data.success && data.url) {
                 onChange(data.url);
             } else {
-                alert(data.error || 'Upload failed');
+                toast.error(data.error || 'Upload failed');
             }
         } catch (error) {
             console.error('Upload error:', error);
-            alert('Something went wrong during upload.');
+            toast.error('Something went wrong during upload.');
         } finally {
             setIsUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = '';

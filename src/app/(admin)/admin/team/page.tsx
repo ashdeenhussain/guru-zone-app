@@ -12,9 +12,10 @@ import {
     Activity,
     Edit,
     Trash2,
-    Eye,
     ChevronDown
 } from 'lucide-react';
+import { Modal } from '@/components/ui/Modal';
+import { toast } from 'sonner';
 
 interface TeamMember {
     _id: string;
@@ -96,15 +97,15 @@ export default function TeamManagementPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: promoteEmail, permissions: selectedPermissions })
             });
-
             if (res.ok) {
                 setIsPromoteOpen(false);
                 setPromoteEmail('');
                 setSelectedPermissions([]);
                 fetchTeam();
+                toast.success('Staff member added successfully');
             } else {
                 const err = await res.json();
-                alert(err.error);
+                toast.error(err.error);
             }
         } catch (error) {
             console.error(error);
@@ -123,9 +124,31 @@ export default function TeamManagementPage() {
             if (res.ok) {
                 setIsPermissionsOpen(false);
                 fetchTeam();
+                toast.success('Permissions updated successfully');
             }
         } catch (error) {
             console.error(error);
+        }
+    };
+
+    const handleDeleteMember = async (id: string, name: string) => {
+        if (!confirm(`Are you sure you want to remove staff access for ${name}? They will be demoted to a regular user.`)) return;
+
+        try {
+            const res = await fetch(`/api/admin/team/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                fetchTeam();
+                toast.success('Staff member removed');
+            } else {
+                const err = await res.json();
+                toast.error(err.error || 'Failed to remove staff member');
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('An error occurred while removing staff member');
         }
     };
 
@@ -179,8 +202,11 @@ export default function TeamManagementPage() {
                     team.map((member) => (
                         <div key={member._id} className="bg-card border border-border rounded-2xl p-6 flex flex-col gap-4 relative overflow-hidden group hover:border-indigo-500/30 transition-all duration-300">
                             <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                                <button onClick={() => openPermissionsModal(member)} className="p-2 bg-muted/50 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground">
+                                <button onClick={() => openPermissionsModal(member)} className="p-2 bg-muted/50 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground" title="Edit Permissions">
                                     <Edit className="w-4 h-4" />
+                                </button>
+                                <button onClick={() => handleDeleteMember(member._id, member.name)} className="p-2 bg-red-500/10 hover:bg-red-500 rounded-lg text-red-500 hover:text-white transition-colors" title="Remove Staff Access">
+                                    <Trash2 className="w-4 h-4" />
                                 </button>
                             </div>
 
@@ -350,36 +376,3 @@ export default function TeamManagementPage() {
 }
 
 // Simple Modal Wrapper
-function Modal({ isOpen, onClose, title, children }: { isOpen: boolean, onClose: () => void, title: string, children: React.ReactNode }) {
-    return (
-        <AnimatePresence>
-            {isOpen && (
-                <>
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={onClose}
-                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
-                    />
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        className="fixed inset-0 m-auto max-w-lg h-fit bg-background border border-border rounded-2xl z-[70] p-0 overflow-hidden shadow-2xl max-h-[90vh] flex flex-col"
-                    >
-                        <div className="p-5 border-b border-border flex justify-between items-center bg-card">
-                            <h2 className="text-lg font-bold text-foreground">{title}</h2>
-                            <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <div className="p-6 overflow-y-auto">
-                            {children}
-                        </div>
-                    </motion.div>
-                </>
-            )}
-        </AnimatePresence>
-    );
-}

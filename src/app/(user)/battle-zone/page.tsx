@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import PageHeader from '@/components/PageHeader';
-import { Swords, Plus, Users, Calendar, Trophy, Coins, Loader2 } from 'lucide-react';
+import { Swords, Plus, Users, Calendar, Trophy, Coins, Loader2, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { useSession } from 'next-auth/react';
@@ -79,7 +79,7 @@ export default function BattleZonePage() {
 
     return (
         <MaintenanceWrapper 
-            isActive={true} 
+            isActive={false} 
             title="Match Center - Coming Soon"
             description="We're currently finalizing the Battle Zone with new features and a premium match center experience. Stay tuned!"
             improvementDetails={[
@@ -100,7 +100,16 @@ export default function BattleZonePage() {
                             <span className="hidden xs:flex bg-primary/10 text-primary px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border border-primary/20 animate-pulse">
                                 BETA / WIP
                             </span>
-                            <button onClick={() => setIsHostModalOpen(true)} className="bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
+                            <button 
+                                onClick={() => setIsHostModalOpen(true)} 
+                                disabled={session?.user && (session.user as any).trustScore < 80}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors shadow-lg
+                                    ${session?.user && (session.user as any).trustScore < 80 
+                                        ? 'bg-muted text-muted-foreground grayscale cursor-not-allowed border border-border/50' 
+                                        : 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/20'
+                                    }
+                                `}
+                            >
                                 <Plus className="w-3.5 h-3.5" />
                                 Host Match
                             </button>
@@ -109,6 +118,25 @@ export default function BattleZonePage() {
                 />
 
                 <div className="p-4 md:p-6 space-y-6 max-w-4xl mx-auto">
+                    {/* Trust Score Warning (Scenario 1) */}
+                    {session?.user && (session.user as any).trustScore < 80 && (
+                        <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-4">
+                                <div className="bg-destructive/20 p-3 rounded-xl text-destructive shadow-lg shadow-destructive/10">
+                                    <ShieldAlert className="w-8 h-8" />
+                                </div>
+                                <div>
+                                    <h4 className="font-black text-lg text-destructive uppercase tracking-tight">Hosting Restricted</h4>
+                                    <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Your Trust Score is {(session.user as any).trustScore}</p>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-[10px] font-black text-muted-foreground uppercase opacity-70 mb-1">Threshold Required</p>
+                                <p className="text-sm font-black text-foreground">80+ TRUST POINTS</p>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Tabs Selector */}
                     {session && (
                         <div className="grid grid-cols-2 p-1.5 bg-muted/40 rounded-xl border border-border/50">
@@ -173,7 +201,7 @@ export default function BattleZonePage() {
                                             </div>
                                             <h3 className="font-bold text-foreground line-clamp-1">{tournament.title}</h3>
                                             <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                                                Hosted by <span className="text-foreground font-medium">Player</span>
+                                                Hosted by <span className="text-foreground font-medium">{tournament.createdBy?.name || 'Player'}</span>
                                             </p>
                                         </div>
                                         <div className="text-right">
@@ -201,7 +229,7 @@ export default function BattleZonePage() {
                                     </div>
 
                                     <button onClick={() => router.push(`/battle-zone/${tournament._id}`)} className="w-full mt-3 bg-foreground text-background font-bold py-2.5 rounded-lg text-sm hover:opacity-90 transition-opacity relative z-10 flex items-center justify-center gap-2">
-                                        View Battle
+                                        Enter Battle Center
                                         <Trophy className="w-3.5 h-3.5" />
                                     </button>
                                 </div>

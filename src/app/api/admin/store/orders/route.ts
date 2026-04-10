@@ -1,5 +1,6 @@
-
 import { NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
+
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import Order from '@/models/Order';
@@ -28,19 +29,12 @@ export async function GET(request: Request) {
             filter.source = 'shop';
         }
 
-        // Fetch orders, populate product details and user name/email if needed
-        // Filter by source: 'shop' to exclude spin wins by default
-        // Sort by Pending first, then date
         const orders = await Order.find(filter)
-            .populate('productId', 'title priceCoins category') // Populate product details
-            .populate('userId', 'name email') // Populate user details if needed
-            .sort({ status: 1, createdAt: -1 }); // 'Pending' starts with P. 'Approved' A, 'Rejected' R. Sory by status might be tricky alphabetically. A(pproved), P(ending), R(ejected). 
+            .populate('userId', 'name email image')
+            .populate('productId', 'title priceCoins category imageType imageUrl emoji') 
+            .sort({ createdAt: -1 });
 
-        // Custom sort might be needed client side, or we just fetch all and sort. 
-        // Or we can rely on creation date for now, or just prioritize pending in frontend.
-        // Actually, let's just return them sorted by createdAt desc, frontend can filter.
-
-        return NextResponse.json({ success: true, orders });
+        return NextResponse.json({ success: true, orders, filter });
 
     } catch (error: any) {
         console.error('Error fetching orders:', error);

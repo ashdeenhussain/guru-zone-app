@@ -18,12 +18,12 @@ export async function GET(req: Request) {
 
         // 1. Calculate Cash Flow
         const depositStats = await Transaction.aggregate([
-            { $match: { type: 'deposit', status: 'approved' } },
+            { $match: { type: 'deposit', status: { $in: ['approved', 'Approved'] } } },
             { $group: { _id: null, total: { $sum: '$amount' } } }
         ]);
 
         const withdrawalStats = await Transaction.aggregate([
-            { $match: { type: 'withdrawal', status: 'approved' } },
+            { $match: { type: 'withdrawal', status: { $in: ['approved', 'Approved'] } } },
             { $group: { _id: null, total: { $sum: '$amount' } } }
         ]);
 
@@ -36,7 +36,7 @@ export async function GET(req: Request) {
         // Only for 'Completed' tournaments to be accurate, or maybe all Non-Cancelled?
         // Prompt says "completed tournaments".
 
-        const tournaments = await Tournament.find({ status: 'Completed' });
+        const tournaments = await Tournament.find({ status: { $in: ['completed', 'Completed'] } });
 
         let totalRevenue = 0;
         const profitTable = tournaments.map(t => {
@@ -53,12 +53,12 @@ export async function GET(req: Request) {
             };
         });
 
-        const pendingDepositsCount = await Transaction.countDocuments({ type: 'deposit', status: 'pending' });
-        const pendingWithdrawalsCount = await Transaction.countDocuments({ type: 'withdrawal', status: 'pending' });
+        const pendingDepositsCount = await Transaction.countDocuments({ type: 'deposit', status: { $in: ['pending', 'Pending'] } });
+        const pendingWithdrawalsCount = await Transaction.countDocuments({ type: 'withdrawal', status: { $in: ['pending', 'Pending'] } });
 
         // Count pending by method
         const pendingByMethod = await Transaction.aggregate([
-            { $match: { status: 'pending' } },
+            { $match: { status: { $in: ['pending', 'Pending'] } } },
             { $group: { _id: '$method', count: { $sum: 1 } } }
         ]);
 

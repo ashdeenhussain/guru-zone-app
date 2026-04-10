@@ -3,7 +3,7 @@ import connectToDB from '@/lib/db';
 import Tournament from '@/models/Tournament';
 import User from '@/models/User';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { authOptions, hasPermission } from '@/lib/auth';
 import AdminActivity from '@/models/AdminActivity';
 
 // Helper to check for admin role (in a real app, middleware handles this, but good to be safe)
@@ -11,6 +11,11 @@ import AdminActivity from '@/models/AdminActivity';
 
 export async function GET() {
     try {
+        const session = await getServerSession(authOptions);
+        if (!hasPermission(session, 'manage_tournaments')) {
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+        }
+
         await connectToDB();
         const tournaments = await Tournament.find({})
             .sort({ createdAt: -1 })
@@ -25,7 +30,7 @@ export async function GET() {
 export async function POST(req: Request) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session || !session.user || (session.user as any).role !== 'admin') {
+        if (!hasPermission(session, 'manage_tournaments')) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -35,7 +40,10 @@ export async function POST(req: Request) {
         // Basic validation happens in Mongoose, but we can force specifics here
         // prizeDistribution is key
 
-        const tournament = await Tournament.create(body);
+        const tournament = await Tournament.create({ 
+            ...body, 
+            createdBy: session.user.id 
+        });
 
         // Log Activity
         await AdminActivity.create({

@@ -8,6 +8,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         await connectToDatabase();
         const { id } = await params; // Await the params promise
         const tournament = await Tournament.findById(id)
+            .populate('createdBy', 'name')
             .populate('participants.userId', 'username inGameName freeFireUid image name')
             .populate('winners.rank1', 'username inGameName freeFireUid image name')
             .populate('winners.rank2', 'username inGameName freeFireUid image name')

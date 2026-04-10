@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { authOptions, hasPermission } from '@/lib/auth';
 import connectToDatabase from '@/lib/db';
 import User from '@/models/User';
 import AdminActivity from '@/models/AdminActivity';
@@ -9,7 +9,7 @@ import AdminActivity from '@/models/AdminActivity';
 export async function GET(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session || session.user.role !== 'admin') {
+        if (!hasPermission(session, 'manage_system')) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session || session.user.role !== 'admin') { // In real app, check for 'manage_system' permission
+        if (!hasPermission(session, 'manage_system')) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 

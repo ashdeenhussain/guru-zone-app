@@ -4,7 +4,7 @@ import Tournament from '@/models/Tournament';
 import User from '@/models/User';
 import Transaction from '@/models/Transaction';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { authOptions, hasPermission } from '@/lib/auth';
 import AdminActivity from '@/models/AdminActivity';
 import { processRankRewards } from '@/lib/reward-processor';
 import mongoose from 'mongoose';
@@ -12,7 +12,7 @@ import mongoose from 'mongoose';
 export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session || !session.user || (session.user as any).role !== 'admin') {
+        if (!hasPermission(session, 'manage_tournaments')) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -21,7 +21,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
         const { id } = params;
         const { winners } = await req.json();
 
-        const adminId = (session.user as any).id;
+        const adminId = session.user.id;
         const adminName = session.user.name;
 
         // Start MongoDB Session for Transaction
@@ -33,6 +33,13 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
                 const tournament = await Tournament.findById(id).session(dbSession);
                 if (!tournament) {
                     throw new Error('Tournament not found');
+                }
+
+                // Ownership Check: Only creator or Super Admin can finalize
+                const canManage = hasPermission(session, 'manage_system') || (tournament.createdBy?.toString() === (session as any)?.user?.id);
+
+                if (!canManage) {
+                    throw new Error('Unauthorized: You can only finalize tournaments created by you.');
                 }
 
 

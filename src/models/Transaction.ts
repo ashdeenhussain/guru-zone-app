@@ -13,7 +13,7 @@ const TransactionSchema = new Schema(
         },
         type: {
             type: String,
-            enum: ['deposit', 'withdrawal', 'entry_fee', 'prize_winnings', 'refund', 'shop_purchase', 'spin_win', 'ADMIN_ADJUSTMENT'],
+            enum: ['deposit', 'withdrawal', 'entry_fee', 'prize_winnings', 'refund', 'shop_purchase', 'spin_win', 'daily_reward_spin', 'daily_free_coins', 'ADMIN_ADJUSTMENT'],
             required: true,
         },
         method: {

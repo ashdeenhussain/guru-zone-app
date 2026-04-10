@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { authOptions, hasPermission } from '@/lib/auth';
 import connectToDatabase from '@/lib/db';
 import User from '@/models/User';
 import AdminActivity from '@/models/AdminActivity';
@@ -8,7 +8,7 @@ import AdminActivity from '@/models/AdminActivity';
 export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session || session.user.role !== 'admin') {
+        if (!hasPermission(session, 'manage_system')) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 

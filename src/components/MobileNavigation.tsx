@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import {
     LayoutDashboard,
     Trophy,
@@ -11,7 +12,8 @@ import {
     X,
     Bell,
     Swords,
-    ScrollText
+    ScrollText,
+    Gift
 } from "lucide-react";
 import { useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -25,10 +27,12 @@ import {
     Settings,
 } from "lucide-react";
 import NotificationDropdown from "@/components/dashboard/NotificationDropdown";
+import DailyRewardModal from "@/components/dashboard/DailyRewardModal";
 
 export default function MobileNavigation() {
     const pathname = usePathname();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isDailyRewardOpen, setIsDailyRewardOpen] = useState(false);
     const { data: session } = useSession();
 
     const navItems = [
@@ -48,12 +52,21 @@ export default function MobileNavigation() {
             <div className="fixed top-0 left-0 right-0 z-[60] h-16 px-4 bg-background/80 backdrop-blur-xl border-b border-border flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-3">
                     <div className="relative h-9 w-9 overflow-hidden rounded-xl border border-border shadow-sm">
-                        <img src="/logo.jpg" alt="Guru Zone" className="h-full w-full object-cover" />
+                        <Image src="/logo.jpg" alt="Guru Zone" fill className="object-cover" />
                     </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <ThemeToggle />
+                    {/* Daily Reward Link */}
+                    <Link
+                        href="/dashboard/daily-reward"
+                        className="relative p-2 rounded-xl bg-gradient-to-br from-purple-600/20 to-fuchsia-600/20 border border-purple-500/30 text-purple-400 hover:text-purple-300 hover:bg-purple-500/20 transition-all group"
+                        aria-label="Daily Reward"
+                    >
+                        <Gift size={20} className="group-hover:scale-110 transition-transform" />
+                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-fuchsia-500 rounded-full animate-ping" />
+                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-fuchsia-500 rounded-full" />
+                    </Link>
                     <NotificationDropdown />
                 </div>
             </div>
@@ -263,6 +276,18 @@ export default function MobileNavigation() {
                                     <ArrowUpRight size={18} className="text-muted-foreground/50" />
                                 </Link>
 
+                                {/* Theme Toggle inside menu */}
+                                <div className="flex items-center gap-4 p-4 rounded-2xl bg-card border border-border/50">
+                                    <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+                                    </div>
+                                    <div className="flex-1">
+                                        <h4 className="font-bold text-foreground">Appearance</h4>
+                                        <p className="text-xs text-muted-foreground">Switch light / dark theme</p>
+                                    </div>
+                                    <ThemeToggle />
+                                </div>
+
                                 <button
                                     onClick={() => { signOut(); setIsMenuOpen(false); }}
                                     className="flex w-full items-center gap-4 p-4 rounded-2xl bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 active:scale-[0.98] transition-all"
@@ -283,6 +308,15 @@ export default function MobileNavigation() {
                             </div>
                         </div>
                     </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Daily Reward Modal */}
+            <AnimatePresence>
+                {isDailyRewardOpen && (
+                    <DailyRewardModal
+                        onClose={() => setIsDailyRewardOpen(false)}
+                    />
                 )}
             </AnimatePresence>
         </div>

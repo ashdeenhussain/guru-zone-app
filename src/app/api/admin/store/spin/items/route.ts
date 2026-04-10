@@ -4,6 +4,18 @@ import { authOptions } from "@/lib/auth";
 import connectToDB from "@/lib/db";
 import SpinItem from "@/models/SpinItem";
 import AdminActivity from "@/models/AdminActivity";
+import { z } from "zod";
+
+const spinItemSchema = z.object({
+    label: z.string().min(1, "Label is required"),
+    type: z.enum(['coins', 'product', 'empty', 'Product']),
+    value: z.string().optional(),
+    probability: z.number().min(0).max(100),
+    isActive: z.boolean().optional().default(true),
+    color: z.string().optional(),
+    product: z.string().optional(),
+    icon: z.string().optional()
+});
 
 export async function GET() {
     try {
@@ -31,7 +43,16 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const newItem = await SpinItem.create(body);
+        const validation = spinItemSchema.safeParse(body);
+
+        if (!validation.success) {
+            return NextResponse.json({ 
+                error: "Invalid item data", 
+                details: validation.error.format() 
+            }, { status: 400 });
+        }
+
+        const newItem = await SpinItem.create(validation.data);
 
         // Log
         await AdminActivity.create({

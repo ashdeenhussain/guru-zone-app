@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import cloudinary from '@/lib/cloudinary';
 
 // Constants
@@ -28,6 +30,11 @@ function detectFileType(buffer: Buffer): string | null {
 
 export async function POST(req: Request) {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session) {
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+        }
+
         const data = await req.formData();
         const file: File | null = data.get('file') as unknown as File;
 

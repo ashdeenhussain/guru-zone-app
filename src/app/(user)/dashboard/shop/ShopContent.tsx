@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Info, X, CheckCircle, AlertCircle, Loader2, CreditCard, ShoppingBag, Wallet } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import LuckyWheelGame from "./spin/LuckyWheelGame";
 import PromotionalBanners from "@/components/shared/PromotionalBanners";
 import PageHeader from "@/components/PageHeader";
@@ -37,7 +38,7 @@ interface Order {
     _id: string;
     productId: Product;
     pricePaid: number;
-    status: "Pending" | "Approved" | "Rejected";
+    status: "pending" | "approved" | "rejected";
     createdAt: string;
     description?: string;
     adminComment?: string;
@@ -59,7 +60,7 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
     const [activeTab, setActiveTab] = useState<"Shop" | "Orders">("Shop");
     const [orders, setOrders] = useState<Order[]>([]);
     const [loadingOrders, setLoadingOrders] = useState(false);
-    const [orderFilter, setOrderFilter] = useState<"All" | "Pending" | "Approved" | "Rejected">("All");
+    const [orderFilter, setOrderFilter] = useState<"All" | "pending" | "approved" | "rejected">("All");
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
     // Fetch Orders when tab changes
@@ -142,7 +143,7 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
             }
 
             setPurchaseStatus("success");
-            setMessage("Order Placed Successfully! Status: Pending.");
+            setMessage("Order Placed Successfully! Status: pending.");
 
             // Refresh to update balance
             router.refresh();
@@ -197,10 +198,11 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
                         <div className="flex items-center justify-between mb-3 relative z-10">
                             <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 flex items-center justify-center shrink-0">
-                                    <img
+                                    <Image
                                         src="/spin-icon-clean.png"
                                         alt="Spin"
-                                        className="w-full h-full object-contain animate-spin"
+                                        fill
+                                        className="object-contain animate-spin"
                                         style={{ animationDuration: '3s' }}
                                     />
                                 </div>
@@ -278,7 +280,7 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
                         >
                             {/* Filter Bar */}
                             <div className="flex gap-2 overflow-x-auto pb-2 noscrollbar">
-                                {(["All", "Pending", "Approved", "Rejected"] as const).map(filter => (
+                                {(["All", "pending", "approved", "rejected"] as const).map(filter => (
                                     <button
                                         key={filter}
                                         onClick={() => setOrderFilter(filter)}
@@ -287,7 +289,7 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
                                             : "bg-card border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
                                             }`}
                                     >
-                                        {filter === "Approved" ? "Completed" : filter}
+                                        {filter === "approved" ? "Completed" : (filter === "All" ? "All" : filter.charAt(0).toUpperCase() + filter.slice(1))}
                                     </button>
                                 ))}
                             </div>
@@ -296,7 +298,7 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
                             <div className="space-y-3">
                                 {loadingOrders ? (
                                     <div className="py-20 flex justify-center"><Loader2 className="animate-spin text-primary w-8 h-8" /></div>
-                                ) : orders.filter(o => orderFilter === "All" || o.status === orderFilter).length === 0 ? (
+                                ) : orders.filter(o => orderFilter === "All" || o.status?.toLowerCase() === orderFilter.toLowerCase()).length === 0 ? (
                                     <div className="flex flex-col items-center justify-center py-16 text-muted-foreground bg-muted/5 rounded-3xl border border-border/50 border-dashed">
                                         <div className="p-4 rounded-full bg-muted/50 mb-3">
                                             <ShoppingBag size={24} className="opacity-50" />
@@ -307,7 +309,7 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
                                 ) : (
                                     <div className="grid gap-3">
                                         {orders
-                                            .filter(o => orderFilter === "All" || o.status === orderFilter)
+                                            .filter(o => orderFilter === "All" || o.status?.toLowerCase() === orderFilter.toLowerCase())
                                             .map((order) => (
                                                 <div
                                                     key={order._id}
@@ -315,12 +317,12 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
                                                     className="cursor-pointer bg-card border border-border p-4 rounded-2xl flex items-center justify-between shadow-sm hover:border-primary/30 transition-colors"
                                                 >
                                                     <div className="flex items-center gap-4">
-                                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${order.status === "Approved" ? "bg-green-500/10 text-green-500" :
-                                                            order.status === "Rejected" ? "bg-red-500/10 text-red-500" :
+                                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${order.status?.toLowerCase() === "approved" ? "bg-green-500/10 text-green-500" :
+                                                            order.status?.toLowerCase() === "rejected" ? "bg-red-500/10 text-red-500" :
                                                                 "bg-yellow-500/10 text-yellow-500"
                                                             }`}>
                                                             {order.productId?.imageUrl ? (
-                                                                <img src={order.productId.imageUrl} className="w-8 h-8 object-contain" alt="Product" />
+                                                                <Image src={order.productId.imageUrl} fill className="object-contain" alt="Product" />
                                                             ) : (
                                                                 <ShoppingBag size={20} />
                                                             )}
@@ -339,11 +341,11 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
                                                     </div>
                                                     <div className="text-right">
                                                         <p className="font-black text-primary text-sm mb-1">🪙 {order.pricePaid?.toLocaleString()}</p>
-                                                        <span className={`text-[10px] uppercase font-bold px-2.5 py-1 rounded-full border ${order.status === "Approved" ? "bg-green-500/10 text-green-500 border-green-500/20" :
-                                                            order.status === "Rejected" ? "bg-red-500/10 text-red-500 border-red-500/20" :
+                                                        <span className={`text-[10px] uppercase font-bold px-2.5 py-1 rounded-full border ${order.status?.toLowerCase() === "approved" ? "bg-green-500/10 text-green-500 border-green-500/20" :
+                                                            order.status?.toLowerCase() === "rejected" ? "bg-red-500/10 text-red-500 border-red-500/20" :
                                                                 "bg-yellow-500/10 text-yellow-500 border-yellow-500/20 animate-pulse"
                                                             }`}>
-                                                            {order.status === "Approved" ? "Completed" : order.status}
+                                                            {order.status?.toLowerCase() === "approved" ? "Completed" : order.status}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -382,7 +384,7 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
                                                     <div className="flex-1 w-full flex flex-col items-center justify-center relative z-10">
                                                         <div className="w-10 h-10 md:w-14 md:h-14 mb-2 relative transition-transform duration-300 group-hover:scale-110">
                                                             {product.imageUrl ? (
-                                                                <img src={product.imageUrl} alt={product.title} className="w-full h-full object-contain drop-shadow-md" />
+                                                                <Image src={product.imageUrl} fill alt={product.title} className="object-contain drop-shadow-md" />
                                                             ) : (
                                                                 <span className="text-3xl">💎</span>
                                                             )}
@@ -435,10 +437,11 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
                                                     )}
 
                                                     <div className="relative aspect-[2/1] w-full bg-muted/20 overflow-hidden">
-                                                        <img
+                                                        <Image
                                                             src={product.imageUrl || "/placeholder-diamond.png"}
                                                             alt={product.title}
-                                                            className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                                                            fill
+                                                            className="object-cover transform group-hover:scale-105 transition-transform duration-500"
                                                         />
                                                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
                                                         <div className="absolute bottom-3 left-4 right-4 text-white">
@@ -560,9 +563,10 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
                             >
                                 {/* Product Hero Header */}
                                 <div className="relative h-32 w-full overflow-hidden">
-                                    <img
+                                    <Image
                                         src={selectedProduct.imageUrl || "/placeholder-diamond.png"}
-                                        className="w-full h-full object-cover"
+                                        fill
+                                        className="object-cover"
                                         alt=""
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
@@ -679,21 +683,21 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
                                 <div className="p-6 space-y-6">
                                     {/* Status Section */}
                                     <div className="flex flex-col items-center justify-center text-center space-y-2">
-                                        <div className={`w-16 h-16 rounded-full flex items-center justify-center ${selectedOrder.status === "Approved" ? "bg-green-500/10 text-green-500" :
-                                            selectedOrder.status === "Rejected" ? "bg-red-500/10 text-red-500" :
+                                        <div className={`w-16 h-16 rounded-full flex items-center justify-center ${selectedOrder.status?.toLowerCase() === "approved" ? "bg-green-500/10 text-green-500" :
+                                            selectedOrder.status?.toLowerCase() === "rejected" ? "bg-red-500/10 text-red-500" :
                                                 "bg-yellow-500/10 text-yellow-500"
                                             }`}>
-                                            {selectedOrder.status === "Approved" ? <CheckCircle size={32} /> :
-                                                selectedOrder.status === "Rejected" ? <X size={32} /> :
+                                            {selectedOrder.status?.toLowerCase() === "approved" ? <CheckCircle size={32} /> :
+                                                selectedOrder.status?.toLowerCase() === "rejected" ? <X size={32} /> :
                                                     <Loader2 size={32} className="animate-spin" />}
                                         </div>
                                         <div>
-                                            <h4 className={`text-xl font-black ${selectedOrder.status === "Approved" ? "text-green-500" :
-                                                selectedOrder.status === "Rejected" ? "text-red-500" :
+                                            <h4 className={`text-xl font-black ${selectedOrder.status?.toLowerCase() === "approved" ? "text-green-500" :
+                                                selectedOrder.status?.toLowerCase() === "rejected" ? "text-red-500" :
                                                     "text-yellow-500"
                                                 }`}>
-                                                {selectedOrder.status === "Approved" ? "Order Completed" :
-                                                    selectedOrder.status === "Rejected" ? "Order Rejected" :
+                                                {selectedOrder.status?.toLowerCase() === "approved" ? "Order Completed" :
+                                                    selectedOrder.status?.toLowerCase() === "rejected" ? "Order Rejected" :
                                                         "Order Pending"}
                                             </h4>
                                             <p className="text-xs text-muted-foreground font-mono mt-1">
@@ -703,7 +707,7 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
                                     </div>
 
                                     {/* Rejection Reason - Only if Rejected */}
-                                    {selectedOrder.status === "Rejected" && selectedOrder.adminComment && (
+                                    {selectedOrder.status?.toLowerCase() === "rejected" && selectedOrder.adminComment && (
                                         <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-4 text-center">
                                             <p className="text-xs font-bold text-red-500 uppercase tracking-wider mb-1">Reason for Rejection</p>
                                             <p className="text-sm text-foreground/90 font-medium">
@@ -715,9 +719,9 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
                                     {/* Product Info */}
                                     <div className="bg-muted/30 rounded-xl p-4 border border-border space-y-3">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-lg bg-card border border-border flex items-center justify-center shrink-0">
+                                            <div className="w-10 h-10 rounded-lg bg-card border border-border flex items-center justify-center shrink-0 relative overflow-hidden">
                                                 {selectedOrder.productId?.imageUrl ? (
-                                                    <img src={selectedOrder.productId.imageUrl} className="w-6 h-6 object-contain" alt="" />
+                                                    <Image src={selectedOrder.productId.imageUrl} fill className="object-contain p-1" alt="" />
                                                 ) : (
                                                     <ShoppingBag size={18} />
                                                 )}

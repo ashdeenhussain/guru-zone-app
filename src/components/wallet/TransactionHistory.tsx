@@ -50,7 +50,7 @@ export default function TransactionHistory({ transactions, loading }: Transactio
     // Helper to determine if a transaction is a "credit" (money in)
     const isCreditTransaction = (trx: Transaction) => {
         const type = trx.type.toLowerCase();
-        if (type === 'deposit' || type === 'prize_winnings' || type === 'refund') return true;
+        if (['deposit', 'prize_winnings', 'refund', 'spin_win', 'daily_reward_spin', 'daily_free_coins'].includes(type)) return true;
         if (type === 'admin_adjustment') {
             return trx.details?.adjustmentType === 'CREDIT';
         }

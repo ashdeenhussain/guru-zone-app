@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { authOptions, hasPermission } from '@/lib/auth';
 import StoreProduct from '@/models/StoreProduct';
 import AdminActivity from '@/models/AdminActivity';
 import connectToDB from '@/lib/db';
@@ -12,7 +12,7 @@ export async function POST(request: Request) {
         await connectToDB();
         const session = await getServerSession(authOptions);
 
-        if (!session || !session.user || (session.user as any).role !== 'admin') {
+        if (!hasPermission(session, 'manage_store')) {
             return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
         }
 
@@ -82,7 +82,7 @@ export async function GET(request: Request) {
         await connectToDB();
         const session = await getServerSession(authOptions);
 
-        if (!session || !session.user || (session.user as any).role !== 'admin') {
+        if (!hasPermission(session, 'manage_store')) {
             return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
         }
 
@@ -101,7 +101,7 @@ export async function DELETE(request: Request) {
     try {
         await connectToDB();
         const session = await getServerSession(authOptions);
-        if (!session || !session.user || (session.user as any).role !== 'admin') {
+        if (!hasPermission(session, 'manage_store')) {
             return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
         }
 

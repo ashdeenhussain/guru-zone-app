@@ -21,7 +21,11 @@ export async function GET(req: Request) {
 
         const query: any = {};
         if (type) query.type = type;
-        if (status && status !== 'all') query.status = status;
+        if (status && status !== 'all') {
+            const statusLower = status.toLowerCase();
+            const statusUpper = statusLower.charAt(0).toUpperCase() + statusLower.slice(1);
+            query.status = { $in: [statusLower, statusUpper] };
+        }
         if (method && method !== 'all') query.method = method;
 
         if (dateRange) {

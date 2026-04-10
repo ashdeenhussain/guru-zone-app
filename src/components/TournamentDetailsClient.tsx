@@ -351,31 +351,30 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
                     {activeTab === 'winners' && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700">
                              {/* Champions Podium Section */}
-                             <div className="relative pt-12 pb-8">
+                             <div className="relative pt-6 md:pt-12 pb-4 md:pb-8">
                                  {/* Background Aura */}
                                  <div className="absolute inset-x-0 top-0 h-96 bg-gradient-to-b from-primary/10 via-transparent to-transparent blur-[120px] pointer-events-none" />
                                  
-                                 <div className="relative text-center mb-12">
-                                     <h2 className="text-4xl md:text-6xl font-black text-foreground tracking-tighter uppercase italic leading-[0.8] mb-2">
+                                 <div className="relative text-center mb-6 md:mb-12">
+                                     <h2 className="text-3xl md:text-6xl font-black text-foreground tracking-tighter uppercase italic leading-[0.8] mb-2">
                                          Champions <span className="text-primary italic">Declared</span>
                                      </h2>
-                                     <p className="text-muted-foreground font-bold tracking-[0.3em] uppercase text-[10px]">Victory Has Been Claimed</p>
-                                     <div className="flex justify-center mt-6">
-                                         <div className="px-6 py-2 bg-primary/10 border border-primary/20 rounded-full flex items-center gap-2">
-                                             <Trophy size={18} className="text-primary animate-bounce" />
-                                             <span className="text-sm font-black text-primary uppercase">Elite Match Hall of Fame</span>
+                                     <p className="text-muted-foreground font-bold tracking-[0.2em] md:tracking-[0.3em] uppercase text-[8px] md:text-[10px]">Victory Has Been Claimed</p>
+                                     <div className="flex justify-center mt-4 md:mt-6">
+                                         <div className="px-4 md:px-6 py-1.5 md:py-2 bg-primary/10 border border-primary/20 rounded-full flex items-center gap-2">
+                                             <Trophy size={14} className="text-primary animate-bounce md:w-[18px] md:h-[18px]" />
+                                             <span className="text-[10px] md:text-sm font-black text-primary uppercase">Elite Match Hall of Fame</span>
                                          </div>
                                      </div>
                                  </div>
 
-                                 <div className="flex flex-col md:flex-row items-end justify-center gap-4 md:gap-2 px-2 max-w-4xl mx-auto">
-                                     {/* Rank 2 - Silver */}
+                                 <div className="flex items-end justify-center gap-1.5 md:gap-4 px-1 md:px-2 max-w-4xl mx-auto">
                                      {tournament.winners?.rank2 && (
-                                     <div className="w-full md:flex-1 order-2 md:order-1 group animate-in slide-in-from-bottom-12 duration-700 delay-100">
+                                     <div className="flex-1 order-1 group animate-in slide-in-from-bottom-12 duration-700 delay-100">
                                          <div className="flex flex-col items-center">
-                                             <div className="relative mb-4">
+                                             <div className="relative mb-2 md:mb-4">
                                                  <div className="absolute inset-0 bg-slate-400/20 blur-2xl rounded-full scale-150 rotate-12 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                                 <div className="relative w-24 h-24 md:w-28 md:h-28 rounded-full p-1 bg-gradient-to-tr from-slate-500 to-slate-200 border-2 border-white/20 shadow-2xl overflow-hidden backdrop-blur-xl">
+                                                 <div className="relative w-16 h-16 sm:w-20 s:h-20 md:w-28 md:h-28 rounded-full p-0.5 md:p-1 bg-gradient-to-tr from-slate-500 to-slate-200 border-2 border-white/20 shadow-2xl overflow-hidden backdrop-blur-xl">
                                                      <div className="w-full h-full rounded-full overflow-hidden bg-background/50">
                                                         <img 
                                                             src={AVATARS.find(a => a.id === (tournament.winners?.rank2 as any)?.avatarId)?.src || AVATARS[0].src} 
@@ -384,14 +383,14 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
                                                         />
                                                      </div>
                                                  </div>
-                                                 <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-slate-500 text-white text-[9px] font-black px-3 py-1 rounded-full shadow-lg border border-white/20 uppercase tracking-tighter">Silver</div>
+                                                 <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 bg-slate-500 text-white text-[7px] md:text-[9px] font-black px-2 md:px-3 py-0.5 md:py-1 rounded-full shadow-lg border border-white/10 uppercase tracking-tighter whitespace-nowrap">Silver</div>
                                              </div>
-                                             <div className="w-full h-[140px] md:h-[200px] bg-slate-500/10 backdrop-blur-xl border-x border-t border-slate-500/20 rounded-t-[2.5rem] flex flex-col items-center p-4 transition-all group-hover:bg-slate-500/20">
-                                                 <span className="text-sm md:text-base font-black text-foreground truncate w-full text-center">{(tournament.winners?.rank2 as any)?.name || "Challenger"}</span>
-                                                 <span className="text-[10px] text-muted-foreground font-bold mt-1">ID: {(tournament.winners?.rank2 as any)?.freeFireUid || "—"}</span>
-                                                 <div className="mt-auto px-4 py-2 bg-slate-500/20 rounded-2xl flex items-center gap-1.5 border border-slate-500/30">
-                                                     <Coins size={14} className="text-slate-400" />
-                                                     <span className="text-xs font-black text-slate-300">{tournament.prizeDistribution.second}</span>
+                                             <div className="w-full h-[100px] md:h-[200px] bg-slate-500/10 backdrop-blur-xl border-x border-t border-slate-500/20 rounded-t-[1.5rem] md:rounded-t-[2.5rem] flex flex-col items-center p-2 md:p-4 transition-all group-hover:bg-slate-500/20">
+                                                 <span className="text-[10px] md:text-base font-black text-foreground truncate w-full text-center">{(tournament.winners?.rank2 as any)?.name || "Challenger"}</span>
+                                                 <span className="text-[8px] md:text-[10px] text-muted-foreground font-bold mt-0.5 md:mt-1">ID: {(tournament.winners?.rank2 as any)?.freeFireUid || "—"}</span>
+                                                 <div className="mt-auto px-2 md:px-4 py-1 md:py-2 bg-slate-500/20 rounded-xl md:rounded-2xl flex items-center gap-1 border border-slate-500/30">
+                                                     <Coins size={10} className="text-slate-400 md:w-3.5 md:h-3.5" />
+                                                     <span className="text-[9px] md:text-xs font-black text-slate-300">{tournament.prizeDistribution.second}</span>
                                                  </div>
                                              </div>
                                          </div>
@@ -400,11 +399,11 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
 
                                      {/* Rank 1 - Gold */}
                                      {tournament.winners?.rank1 && (
-                                     <div className="w-full md:flex-1 order-1 md:order-2 z-10 group animate-in slide-in-from-bottom-16 duration-700">
+                                     <div className="flex-1 order-2 z-10 group animate-in slide-in-from-bottom-16 duration-700">
                                          <div className="flex flex-col items-center">
-                                             <div className="relative mb-6">
+                                             <div className="relative mb-3 md:mb-6">
                                                  <div className="absolute inset-0 bg-primary/30 blur-[40px] rounded-full scale-150 animate-pulse" />
-                                                 <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full p-1.5 bg-gradient-to-tr from-primary to-yellow-200 border-4 border-primary/40 shadow-[0_0_50px_rgba(var(--primary),0.3)] overflow-hidden backdrop-blur-xl">
+                                                 <div className="relative w-20 h-20 sm:w-24 s:h-24 md:w-40 md:h-40 rounded-full p-1 md:p-1.5 bg-gradient-to-tr from-primary to-yellow-200 border-2 md:border-4 border-primary/40 shadow-[0_0_50px_rgba(var(--primary),0.3)] overflow-hidden backdrop-blur-xl">
                                                      <div className="w-full h-full rounded-full overflow-hidden bg-background">
                                                         <img 
                                                             src={AVATARS.find(a => a.id === (tournament.winners?.rank1 as any)?.avatarId)?.src || AVATARS[0].src} 
@@ -413,15 +412,15 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
                                                         />
                                                      </div>
                                                  </div>
-                                                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 scale-150 drop-shadow-lg">👑</div>
-                                                 <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] md:text-xs font-black px-5 py-1.5 rounded-full shadow-2xl border-2 border-white/20 whitespace-nowrap uppercase tracking-tighter">Grand Champion</div>
+                                                 <div className="absolute -top-3 md:-top-4 left-1/2 -translate-x-1/2 scale-110 md:scale-150 drop-shadow-lg">👑</div>
+                                                 <div className="absolute -bottom-2 md:-bottom-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[7px] md:text-xs font-black px-2 md:px-5 py-1 md:py-1.5 rounded-full shadow-2xl border md:border-2 border-white/20 whitespace-nowrap uppercase tracking-tighter">Grand Champion</div>
                                              </div>
-                                             <div className="w-full h-[180px] md:h-[260px] bg-primary/10 backdrop-blur-3xl border-x border-t border-primary/30 rounded-t-[3rem] flex flex-col items-center p-6 transition-all group-hover:bg-primary/15 shadow-[0_-20px_50px_-10px_rgba(var(--primary),0.1)]">
-                                                 <span className="text-xl md:text-2xl font-black text-foreground truncate w-full text-center">{(tournament.winners?.rank1 as any)?.name || "Alpha Player"}</span>
-                                                 <span className="text-xs text-primary/70 font-black mt-1 tracking-wider uppercase">ID: {(tournament.winners?.rank1 as any)?.freeFireUid || "—"}</span>
-                                                 <div className="mt-auto px-6 py-3 bg-primary text-primary-foreground rounded-[1.5rem] flex items-center gap-2 shadow-[0_10px_20px_rgba(var(--primary),0.3)] border border-white/20">
-                                                     <Coins size={18} />
-                                                     <span className="text-base md:text-xl font-black">{tournament.prizeDistribution.first}</span>
+                                             <div className="w-full h-[130px] md:h-[260px] bg-primary/10 backdrop-blur-3xl border-x border-t border-primary/30 rounded-t-[2rem] md:rounded-t-[3rem] flex flex-col items-center p-3 md:p-6 transition-all group-hover:bg-primary/15 shadow-[0_-20px_50px_-10px_rgba(var(--primary),0.1)]">
+                                                 <span className="text-[12px] md:text-2xl font-black text-foreground truncate w-full text-center">{(tournament.winners?.rank1 as any)?.name || "Alpha Player"}</span>
+                                                 <span className="text-[8px] md:text-xs text-primary/70 font-black mt-0.5 md:mt-1 tracking-wider uppercase">ID: {(tournament.winners?.rank1 as any)?.freeFireUid || "—"}</span>
+                                                 <div className="mt-auto px-3 md:px-6 py-1.5 md:py-3 bg-primary text-primary-foreground rounded-xl md:rounded-[1.5rem] flex items-center gap-1 md:gap-2 shadow-[0_10px_20px_rgba(var(--primary),0.3)] border border-white/20">
+                                                     <Coins size={12} className="md:w-4.5 md:h-4.5" />
+                                                     <span className="text-[11px] md:text-xl font-black">{tournament.prizeDistribution.first}</span>
                                                  </div>
                                              </div>
                                          </div>
@@ -430,11 +429,11 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
 
                                      {/* Rank 3 - Bronze/Orange */}
                                      {tournament.winners?.rank3 && (
-                                     <div className="w-full md:flex-1 order-3 md:order-3 group animate-in slide-in-from-bottom-12 duration-700 delay-200">
+                                     <div className="flex-1 order-3 group animate-in slide-in-from-bottom-12 duration-700 delay-200">
                                          <div className="flex flex-col items-center">
-                                             <div className="relative mb-4">
+                                             <div className="relative mb-2 md:mb-4">
                                                  <div className="absolute inset-0 bg-orange-500/20 blur-2xl rounded-full scale-150 -rotate-12 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                                 <div className="relative w-20 h-20 md:w-28 md:h-28 rounded-full p-1 bg-gradient-to-tr from-orange-700 to-orange-400 border-2 border-white/20 shadow-2xl overflow-hidden backdrop-blur-xl">
+                                                 <div className="relative w-14 h-14 sm:w-18 s:h-18 md:w-28 md:h-28 rounded-full p-0.5 md:p-1 bg-gradient-to-tr from-orange-700 to-orange-400 border-2 border-white/20 shadow-2xl overflow-hidden backdrop-blur-xl">
                                                      <div className="w-full h-full rounded-full overflow-hidden bg-background/50">
                                                         <img 
                                                             src={AVATARS.find(a => a.id === (tournament.winners?.rank3 as any)?.avatarId)?.src || AVATARS[0].src} 
@@ -443,14 +442,14 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
                                                         />
                                                      </div>
                                                  </div>
-                                                 <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-orange-600 text-white text-[9px] font-black px-3 py-1 rounded-full shadow-lg border border-white/20 uppercase tracking-tighter">Bronze</div>
+                                                 <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 bg-orange-600 text-white text-[7px] md:text-[9px] font-black px-2 md:px-3 py-0.5 md:py-1 rounded-full shadow-lg border border-white/10 uppercase tracking-tighter whitespace-nowrap">Bronze</div>
                                              </div>
-                                             <div className="w-full h-[120px] md:h-[160px] bg-orange-500/10 backdrop-blur-xl border-x border-t border-orange-500/20 rounded-t-[2.5rem] flex flex-col items-center p-4 transition-all group-hover:bg-orange-500/20">
-                                                 <span className="text-sm md:text-base font-black text-foreground truncate w-full text-center">{(tournament.winners?.rank3 as any)?.name || "Elite Pro"}</span>
-                                                 <span className="text-[10px] text-muted-foreground font-bold mt-1">ID: {(tournament.winners?.rank3 as any)?.freeFireUid || "—"}</span>
-                                                 <div className="mt-auto px-4 py-2 bg-orange-500/20 rounded-2xl flex items-center gap-1.5 border border-orange-500/30">
-                                                     <Coins size={14} className="text-orange-400" />
-                                                     <span className="text-xs font-black text-orange-300">{tournament.prizeDistribution.third}</span>
+                                             <div className="w-full h-[80px] md:h-[160px] bg-orange-500/10 backdrop-blur-xl border-x border-t border-orange-500/20 rounded-t-[1.5rem] md:rounded-t-[2.5rem] flex flex-col items-center p-2 md:p-4 transition-all group-hover:bg-orange-500/20">
+                                                 <span className="text-[10px] md:text-base font-black text-foreground truncate w-full text-center">{(tournament.winners?.rank3 as any)?.name || "Elite Pro"}</span>
+                                                 <span className="text-[8px] md:text-[10px] text-muted-foreground font-bold mt-0.5 md:mt-1">ID: {(tournament.winners?.rank3 as any)?.freeFireUid || "—"}</span>
+                                                 <div className="mt-auto px-2 md:px-4 py-1 md:py-2 bg-orange-500/20 rounded-xl md:rounded-2xl flex items-center gap-1 border border-orange-500/30">
+                                                     <Coins size={10} className="text-orange-400 md:w-3.5 md:h-3.5" />
+                                                     <span className="text-[9px] md:text-xs font-black text-orange-300">{tournament.prizeDistribution.third}</span>
                                                  </div>
                                              </div>
                                          </div>
@@ -460,10 +459,10 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
                              </div>
 
                              {/* Elite Contenders (Top 4-10) */}
-                             <div className="bg-card/30 backdrop-blur-xl border border-white/5 rounded-[2.5rem] p-6 mb-12">
-                                 <div className="flex items-center gap-4 mb-6">
+                             <div className="bg-card/30 backdrop-blur-xl border border-white/5 rounded-[1.5rem] md:rounded-[2.5rem] p-4 md:p-6 mb-8 md:mb-12">
+                                 <div className="flex items-center gap-4 mb-4 md:mb-6">
                                      <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-border/40" />
-                                     <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.4em] opacity-40">Elite Contenders</span>
+                                     <span className="text-[8px] md:text-[10px] font-black text-muted-foreground uppercase tracking-[0.4em] opacity-40">Elite Contenders</span>
                                      <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-border/40" />
                                  </div>
                                  
@@ -543,7 +542,7 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
                                                     onClick={handleJoinClick}
                                                     className="flex-1 min-w-[160px] bg-primary hover:bg-primary/90 text-primary-foreground text-base font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-primary/25 transition-all active:scale-[0.98] flex items-center justify-center gap-2 group/btn"
                                                 >
-                                                    Join Now
+                                                    Join Match
                                                     <ChevronRight className="group-hover/btn:translate-x-1 transition-transform" />
                                                 </button>
                                                 <Link href="/dashboard/wallet" className="flex-1 min-w-[160px] bg-muted hover:bg-muted/80 text-foreground text-sm font-bold py-3.5 px-6 rounded-xl border border-border transition-all flex items-center justify-center gap-2">
@@ -759,8 +758,13 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         <div className="font-bold text-foreground truncate">{playerUser.name || "Mystery Player"}</div>
-                                                        <div className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">
-                                                            ID: {playerUser.freeFireUid || "—"}
+                                                        <div className="flex flex-col gap-0.5 mt-0.5">
+                                                            <div className="text-[10px] text-primary/80 font-black uppercase tracking-wider flex items-center gap-1">
+                                                                <span className="opacity-50 text-[8px]">IGN:</span> {player.inGameName || "—"}
+                                                            </div>
+                                                            <div className="text-[9px] text-muted-foreground font-black uppercase tracking-widest flex items-center gap-1">
+                                                                <span className="opacity-40 text-[7px]">UID:</span> {player.uid || "—"}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                     <div className="p-2 text-primary opacity-0 group-hover:opacity-100 transition-opacity">

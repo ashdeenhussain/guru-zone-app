@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import Link from 'next/link';
 
 export default function AdminDisputesPage() {
     const [disputes, setDisputes] = useState<any[]>([]);
@@ -85,7 +86,7 @@ export default function AdminDisputesPage() {
                 <div>
                     <h1 className="text-3xl font-black text-foreground flex items-center gap-3">
                         <ShieldAlert className="w-8 h-8 text-destructive" />
-                        Battle Zone Disputes
+                        Dispute Resolution Centre
                     </h1>
                     <p className="text-muted-foreground text-sm mt-1">
                         Review and resolve contested Battle Zone matches.
@@ -148,7 +149,7 @@ export default function AdminDisputesPage() {
                                     <div className="bg-destructive/5 border border-destructive/10 rounded-xl p-4">
                                         <h4 className="text-xs font-black text-destructive uppercase tracking-widest flex items-center gap-2 mb-3">
                                             <AlertTriangle className="w-4 h-4" />
-                                            Joiner Dispute Reason
+                                            Dispute Evidence
                                         </h4>
                                         <p className="text-sm font-medium leading-relaxed italic text-foreground/90">
                                             &quot;{dispute.disputeReason || 'No specific reason provided.'}&quot;
@@ -220,6 +221,13 @@ export default function AdminDisputesPage() {
 
                             {/* Actions Footer */}
                             <div className="bg-muted/20 p-4 border-t border-border flex justify-end gap-3">
+                                <Link
+                                    href={`/admin/battle-zone/disputes/${dispute._id}`}
+                                    className="flex items-center gap-2 text-xs font-bold bg-primary/10 text-primary hover:bg-primary/20 px-4 py-2.5 rounded-xl border border-primary/20 transition-all"
+                                >
+                                    <Eye className="w-3.5 h-3.5" />
+                                    Review Case
+                                </Link>
                                 <button
                                     onClick={() => handleResolve(dispute._id, 'force_refund')}
                                     disabled={!!isResolving}

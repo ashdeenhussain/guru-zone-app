@@ -8,15 +8,20 @@ declare module "next-auth" {
         user: {
             /** The user's unique identifier. */
             id: string
-            /** The user's role. */
             role?: string
             permissions?: string[]
+            trustScore?: number
+            status?: string
+            banReason?: string
         } & DefaultSession["user"]
     }
 
     interface User {
         role?: string
         permissions?: string[]
+        trustScore?: number
+        status?: string
+        banReason?: string
     }
 }
 
@@ -25,5 +30,8 @@ declare module "next-auth/jwt" {
         id: string
         role?: string
         permissions?: string[]
+        trustScore?: number
+        status?: string
+        banReason?: string
     }
 }

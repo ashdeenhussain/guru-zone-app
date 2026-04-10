@@ -25,7 +25,7 @@ async function getDailyUsage(userId: string) {
             $match: {
                 user: new mongoose.Types.ObjectId(userId), // Explicitly cast to ObjectId
                 type: 'withdrawal',
-                status: { $in: ['pending', 'approved'] },
+                status: { $in: ['pending', 'approved', 'Pending', 'Approved'] },
                 createdAt: { $gte: todayStart, $lte: todayEnd }
             }
         },

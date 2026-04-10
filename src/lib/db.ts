@@ -32,6 +32,7 @@ async function connectToDatabase() {
         const opts = {
             bufferCommands: false,
             family: 4, // Force IPv4 to fix some Windows DNS issues
+            serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds instead of 30
         };
 
         cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {

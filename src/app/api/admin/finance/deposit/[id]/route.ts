@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { authOptions, hasPermission } from '@/lib/auth';
 import connectDB from '@/lib/db';
 import Transaction from '@/models/Transaction';
 import User from '@/models/User';
@@ -14,7 +14,7 @@ export async function PATCH(
 ) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session || session.user.role !== 'admin') {
+        if (!hasPermission(session, 'manage_finance')) {
             return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
         }
 

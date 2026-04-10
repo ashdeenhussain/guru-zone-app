@@ -59,7 +59,7 @@ async function getAdminStats() {
         }),
 
         // 5. Pending Shop Orders
-        Order.countDocuments({ status: 'Pending' }),
+        Order.countDocuments({ status: { $in: ['pending', 'Pending'] } }),
 
         // 6. Total Net Revenue (Deposits - Withdrawals)
         Transaction.aggregate([

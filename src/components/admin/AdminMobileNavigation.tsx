@@ -34,7 +34,12 @@ export default function AdminMobileNavigation() {
     const hasPermission = (permission: string) => {
         if (!session?.user) return false;
         const user = session.user as any;
-        return user.role === 'admin' || user.permissions?.includes(permission);
+        
+        // Super Admins have manage_system permission which grants access to everything
+        if (user.permissions?.includes('manage_system')) return true;
+        
+        // Otherwise check for the specific permission
+        return user.permissions?.includes(permission);
     };
 
     const isActive = (href: string) => pathname === href || pathname?.startsWith(href + '/');

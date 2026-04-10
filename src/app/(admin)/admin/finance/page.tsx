@@ -3,10 +3,11 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { RefreshCcw, X, ShieldAlert, DollarSign, TrendingUp, Eye, AlertCircle, CheckCircle, XCircle, Calendar, Filter, CreditCard, ZoomIn } from 'lucide-react';
+import { RefreshCcw, X, ShieldAlert, DollarSign, TrendingUp, Eye, AlertCircle, CheckCircle, XCircle, Calendar, Filter, CreditCard, ZoomIn, Gift } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import ImageZoomModal from '@/components/admin/ImageZoomModal';
 import UserLedgerModal from '@/components/admin/UserLedgerModal';
+import AdminDailySpinPage from './daily-spin/page';
 
 interface Transaction {
     _id: string;
@@ -47,7 +48,9 @@ interface FinanceStats {
 export default function AdminFinancePage() {
     const searchParams = useSearchParams();
     const tabParam = searchParams?.get('tab');
-    const [activeTab, setActiveTab] = useState<'deposits' | 'withdrawals' | 'reports'>((tabParam === 'withdrawals' || tabParam === 'reports') ? tabParam : 'deposits');
+    const [activeTab, setActiveTab] = useState<'deposits' | 'withdrawals' | 'reports' | 'daily-spin'>(
+        (tabParam === 'withdrawals' || tabParam === 'reports' || tabParam === 'daily-spin') ? tabParam : 'deposits'
+    );
     const [isLoading, setIsLoading] = useState(false);
 
     // Data States
@@ -289,10 +292,20 @@ export default function AdminFinancePage() {
                     >
                         <TrendingUp size={16} /> Stats
                     </button>
+                    {/* ========= Win 1K Spinner Tab ========= */}
+                    <button
+                        onClick={() => setActiveTab('daily-spin')}
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold border transition-all shrink-0 whitespace-nowrap ${activeTab === 'daily-spin'
+                            ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/30'
+                            : 'bg-zinc-800 text-gray-300 border-zinc-700 hover:bg-zinc-700'
+                            }`}
+                    >
+                        <Gift size={16} /> Win 1K Spinner
+                    </button>
                 </div>
 
                 {/* Mobile Optimized Filter Triggers (3 Rectangles) */}
-                {activeTab !== 'reports' && (
+                {(activeTab === 'deposits' || activeTab === 'withdrawals') && (
                     <>
                         <div className="grid grid-cols-3 gap-3 mb-6">
                             {/* Status Trigger */}
@@ -454,6 +467,9 @@ export default function AdminFinancePage() {
 
                 {/* Content Areas */}
                 <div className="min-h-[400px]">
+
+                    {/* DAILY SPIN TAB */}
+                    {activeTab === 'daily-spin' && <AdminDailySpinPage />}
 
                     {/* DEPOSITS TAB */}
                     {activeTab === 'deposits' && (

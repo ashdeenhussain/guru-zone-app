@@ -18,6 +18,7 @@ export default function HostControls({ tournament, onUpdate }: HostControlsProps
     const [selectedWinner, setSelectedWinner] = useState('');
     const [isUpdating, setIsUpdating] = useState(false);
     const [isDeclaring, setIsDeclaring] = useState(false);
+    const [isEditingRoom, setIsEditingRoom] = useState(false);
 
     // New State for Timer & Disputes
     const [timeLeft, setTimeLeft] = useState<string>('');
@@ -62,7 +63,7 @@ export default function HostControls({ tournament, onUpdate }: HostControlsProps
             });
             const data = await res.json();
             if (data.success) {
-                toast.success('Room details broadcasted to players');
+                toast.success('Room details updated');
                 onUpdate();
             } else {
                 toast.error(data.error);
@@ -159,48 +160,58 @@ export default function HostControls({ tournament, onUpdate }: HostControlsProps
                 
                 <h4 className="font-black text-xs mb-6 flex items-center gap-2 uppercase tracking-widest text-muted-foreground">
                     <Lock className="w-4 h-4 text-green-500" />
-                    1. Room Configuration
+                    Match Room Details
                 </h4>
                 
-                <form onSubmit={handleUpdateRoom} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider ml-1">Room ID</label>
-                            <input
-                                type="text"
-                                value={roomId}
-                                onChange={(e) => setRoomId(e.target.value)}
-                                className="w-full bg-muted/50 border border-border rounded-2xl px-5 py-3 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                                placeholder="Enter Room ID"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider ml-1">Password</label>
-                            <input
-                                type="text"
-                                value={roomPass}
-                                onChange={(e) => setRoomPass(e.target.value)}
-                                className="w-full bg-muted/50 border border-border rounded-2xl px-5 py-3 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                                placeholder="Enter Room Password"
-                            />
-                        </div>
-                    </div>
-                    
-                    <button
-                        type="submit"
-                        disabled={isUpdating}
-                        className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-black py-4 rounded-2xl text-xs uppercase tracking-[0.1em] transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-[0.98]"
+                {!isEditingRoom && !tournament.roomID ? (
+                    <button 
+                        onClick={() => setIsEditingRoom(true)}
+                        className="w-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 font-black py-4 rounded-2xl text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95"
                     >
-                        {isUpdating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                        Broadcast Room Details
+                        <Radio className="w-5 h-5" />
+                        Share Room Details
                     </button>
-                    
-                    <div className="bg-muted/30 p-3 rounded-xl border border-border/50">
-                        <p className="text-[10px] text-muted-foreground text-center font-bold italic">
-                            Details are securely encrypted and shared only with joined participants.
-                        </p>
-                    </div>
-                </form>
+                ) : (
+                    <form onSubmit={handleUpdateRoom} className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider ml-1">Room ID</label>
+                                <input
+                                    type="text"
+                                    value={roomId}
+                                    onChange={(e) => setRoomId(e.target.value)}
+                                    className="w-full bg-muted/50 border border-border rounded-2xl px-5 py-3 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                                    placeholder="12345678"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider ml-1">Password</label>
+                                <input
+                                    type="text"
+                                    value={roomPass}
+                                    onChange={(e) => setRoomPass(e.target.value)}
+                                    className="w-full bg-muted/50 border border-border rounded-2xl px-5 py-3 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                                    placeholder="pass123"
+                                />
+                            </div>
+                        </div>
+                        
+                        <button
+                            type="submit"
+                            disabled={isUpdating}
+                            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-black py-4 rounded-2xl text-xs uppercase tracking-[0.1em] transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-[0.98]"
+                        >
+                            {isUpdating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                            Save & Share Details
+                        </button>
+                        
+                        <div className="bg-muted/30 p-3 rounded-xl border border-border/50">
+                            <p className="text-[10px] text-muted-foreground text-center font-bold italic">
+                                Details are securely encrypted and shared only with joined participants.
+                            </p>
+                        </div>
+                    </form>
+                )}
             </section>
 
             {/* Step 2: Declare Result */}
@@ -288,7 +299,7 @@ export default function HostControls({ tournament, onUpdate }: HostControlsProps
                 ) : (
                     <div className="space-y-6">
                         <div className="space-y-3">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider ml-1">Select Winning Captain</label>
+                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider ml-1">Select Winner</label>
                             <div className="grid grid-cols-1 gap-2">
                                 {tournament.participants.map((p: any) => {
                                     const pId = (p.userId && typeof p.userId === 'object' && '_id' in p.userId) ? p.userId._id : p.userId;
@@ -352,7 +363,7 @@ export default function HostControls({ tournament, onUpdate }: HostControlsProps
                             ) : (
                                 <>
                                     <Trophy className="w-5 h-5" />
-                                    Confirm Victory & End Match
+                                    Declare Winner & End Match
                                 </>
                             )}
                         </button>
@@ -408,7 +419,7 @@ export default function HostControls({ tournament, onUpdate }: HostControlsProps
                             initial={{ scale: 0.9, opacity: 0, y: 20 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                            className="bg-card w-full max-w-sm rounded-[2.5rem] border border-border shadow-2xl p-8 space-y-6 relative z-10"
+                            className="bg-card w-full max-sm rounded-[2.5rem] border border-border shadow-2xl p-8 space-y-6 relative z-10"
                         >
                             <div className="flex justify-between items-start">
                                 <div className="space-y-1">

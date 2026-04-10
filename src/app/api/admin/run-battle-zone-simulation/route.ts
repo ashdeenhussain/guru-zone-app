@@ -345,15 +345,22 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
     try {
-        // ── Security: Admin-only ───────────────────────────────────────────────
+        // ── Security: Admin-only + Explicit Toggle ──────────────────────────────
+        if (process.env.ENABLE_DANGEROUS_SIMULATION !== 'true') {
+            return NextResponse.json(
+                { success: false, error: 'Simulation is disabled. Set ENABLE_DANGEROUS_SIMULATION=true to enable.' },
+                { status: 403 }
+            );
+        }
+
         const { searchParams } = new URL(req.url);
         const secret = searchParams.get('secret') || req.headers.get('x-simulation-secret');
         const isSecretValid = secret === process.env.NEXTAUTH_SECRET;
 
         const session = await getServerSession(authOptions);
-        if (!isSecretValid && (!session || (session.user as any).role !== 'admin')) {
+        if (!isSecretValid && (!hasPermission(session as any, 'manage_system'))) {
             return NextResponse.json(
-                { success: false, error: 'Unauthorized. Admin only.' },
+                { success: false, error: 'Unauthorized. Requires manage_system permission or valid secret.' },
                 { status: 403 }
             );
         }

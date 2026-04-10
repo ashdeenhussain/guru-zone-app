@@ -172,12 +172,12 @@ export default function TournamentDetailsPage({ params }: { params: Promise<{ id
                         </span>
                     </div>
                 </div>
-                {tournament.createdBy && (
                     <div className="flex items-center gap-1.5 bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-full">
                         <Shield className="w-3 h-3 text-primary" />
-                        <span className="text-[10px] font-bold text-primary">HOSTED BY USER</span>
+                        <span className="text-[10px] font-bold text-primary italic uppercase tracking-tighter">
+                            {tournament.createdBy?.name || 'ADMIN'}
+                        </span>
                     </div>
-                )}
             </div>
 
             <main className="flex-1 max-w-2xl mx-auto w-full p-4 space-y-6">
@@ -256,11 +256,10 @@ export default function TournamentDetailsPage({ params }: { params: Promise<{ id
                                     />
                                 )}
                                 <Icon className={`w-5 h-5 relative z-10 transition-transform ${isActive ? 'scale-110' : ''}`} />
-                                <span className="text-[10px] font-black uppercase tracking-tighter relative z-10 leading-none">
-                                    {tab.label.split(' ')[1] || tab.label}
+                                <span className="text-[10px] font-black uppercase tracking-tighter relative z-10 leading-none text-center">
+                                    {tab.label}
                                 </span>
 
-                                {/* Notification Dot */}
                                 {tab.hasNotification && (
                                     <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-background animate-pulse z-20" />
                                 )}
@@ -513,4 +512,3 @@ export default function TournamentDetailsPage({ params }: { params: Promise<{ id
         </div>
     );
 }
-

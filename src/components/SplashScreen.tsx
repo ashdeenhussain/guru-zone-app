@@ -33,8 +33,7 @@ const SplashScreen = () => {
           <Image
             src="/logo.jpg"
             alt="Guru Zone Logo"
-            width={120}
-            height={120}
+            fill
             className="object-contain" // Use object-contain to prevent cropping
             priority
           />

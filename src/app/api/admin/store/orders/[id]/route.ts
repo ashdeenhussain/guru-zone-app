@@ -34,12 +34,12 @@ export async function PATCH(
             return NextResponse.json({ success: false, message: 'Order not found' }, { status: 404 });
         }
 
-        if (order.status !== 'Pending') {
+        if (!['Pending', 'pending'].includes(order.status)) {
             return NextResponse.json({ success: false, message: 'Order is already processed' }, { status: 400 });
         }
 
         if (action === 'approve') {
-            order.status = 'Approved';
+            order.status = 'approved';
 
             // Mark the purchase transaction as approved
             await Transaction.findOneAndUpdate(
@@ -83,7 +83,7 @@ export async function PATCH(
                 return NextResponse.json({ success: false, message: 'Reason is required for rejection' }, { status: 400 });
             }
 
-            order.status = 'Rejected';
+            order.status = 'rejected';
             order.adminComment = reason;
 
             // Mark the purchase transaction as rejected

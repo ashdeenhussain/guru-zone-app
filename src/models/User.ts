@@ -126,6 +126,22 @@ const UserSchema = new Schema(
             type: Boolean,
             default: false,
             },
+        lastDailySpinAt: {
+            type: Date,
+            default: null,
+        },
+        lastFreeCoinsAt: {
+            type: Date,
+            default: null,
+        },
+        freeCoinsStreak: {
+            type: Number,
+            default: 0, // 0 = not started, 1-7 = current day
+        },
+        freeCoinsStreakStartedAt: {
+            type: Date,
+            default: null,
+        },
     },
     { timestamps: true }
 );

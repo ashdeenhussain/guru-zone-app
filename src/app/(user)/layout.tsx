@@ -8,6 +8,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import OnboardingFlow from "@/components/onboarding/OnboardingFlow";
 import MobileNavigation from "@/components/MobileNavigation";
+import BackToTop from "@/components/BackToTop";
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +85,7 @@ export default async function UserLayout({
             </main>
 
             {showOnboarding && <OnboardingFlow user={user} />}
+            <BackToTop />
         </div>
     );
 }

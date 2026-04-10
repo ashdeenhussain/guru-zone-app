@@ -22,7 +22,8 @@ import {
     ShoppingBag,
     Bell,
     Swords,
-    ScrollText
+    ScrollText,
+    Gift
 } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { useState } from "react";
@@ -37,6 +38,7 @@ export default function DashboardSidebar() {
     // We don't need useTheme here anymore as it's in the header
 
     const sidebarItems = [
+        { icon: Gift, label: "Daily Reward", href: "/dashboard/daily-reward", special: true },
         { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
         { icon: Trophy, label: "My Tournaments", href: "/dashboard/tournaments" },
         { icon: Swords, label: "Battle Zone", href: "/dashboard/battle-zone" },
@@ -113,9 +115,10 @@ export default function DashboardSidebar() {
 
                     {/* Navigation Items */}
                     <nav className="flex-1 space-y-2 overflow-y-auto overflow-x-hidden no-scrollbar pb-4">
-                        {sidebarItems.map((item) => {
+                        {sidebarItems.map((item: any) => {
                             const isActive = pathname === item.href;
                             const isAdminItem = item.label === "Admin Command";
+                            const isSpecial = item.special === true;
 
                             return (
                                 <Link
@@ -128,7 +131,9 @@ export default function DashboardSidebar() {
                                             ? "bg-gradient-to-r from-primary/20 to-primary/5 text-primary font-bold shadow-[0_0_20px_rgba(255,215,0,0.1)] border border-primary/20"
                                             : isAdminItem
                                                 ? "text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 border border-purple-500/20"
-                                                : "text-muted-foreground hover:text-foreground hover:bg-muted hover:translate-x-1"
+                                                : isSpecial
+                                                    ? "text-fuchsia-400 hover:text-fuchsia-300 hover:bg-fuchsia-500/10 border border-fuchsia-500/20 bg-fuchsia-500/5"
+                                                    : "text-muted-foreground hover:text-foreground hover:bg-muted hover:translate-x-1"
                                         }
                                     `}
                                     title={!isHovered ? item.label : ''}
@@ -139,13 +144,16 @@ export default function DashboardSidebar() {
                                             <div className="absolute -left-1 top-0 bottom-0 w-1 bg-primary shadow-[0_0_10px_var(--primary)] rounded-r-full" />
                                         </>
                                     )}
+                                    {isSpecial && !isActive && (
+                                        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-fuchsia-500 rounded-full animate-ping" />
+                                    )}
 
                                     <div className="min-w-[24px] flex justify-center relative z-10">
                                         <item.icon
                                             size={20}
                                             className={`
                                                 transition-transform duration-300 group-hover:scale-110 
-                                                ${isActive ? 'text-primary drop-shadow-[0_0_5px_rgba(255,215,0,0.5)]' : 'group-hover:text-foreground'}
+                                                ${isActive ? 'text-primary drop-shadow-[0_0_5px_rgba(255,215,0,0.5)]' : isSpecial ? 'text-fuchsia-400' : 'group-hover:text-foreground'}
                                             `}
                                         />
                                     </div>
@@ -155,9 +163,12 @@ export default function DashboardSidebar() {
                                         {item.label === "Battle Zone" && (
                                             <span className="bg-primary/20 text-primary text-[8px] font-black px-1.5 py-0.5 rounded uppercase">BETA</span>
                                         )}
+                                        {isSpecial && (
+                                            <span className="bg-fuchsia-500/20 text-fuchsia-400 text-[8px] font-black px-1.5 py-0.5 rounded uppercase">NEW</span>
+                                        )}
                                     </span>
 
-                                    {!isActive && !isAdminItem && (
+                                    {!isActive && !isAdminItem && !isSpecial && (
                                         <div className="absolute inset-0 border border-transparent group-hover:border-border/50 rounded-xl transition-colors duration-300" />
                                     )}
                                 </Link>

@@ -36,7 +36,9 @@ export async function GET(req: Request) {
             query.createdBy = null;
         }
 
-        const tournaments = await Tournament.find(query).sort({ startTime: 1 });
+        const tournaments = await Tournament.find(query)
+            .populate('createdBy', 'name')
+            .sort({ startTime: 1 });
 
         return NextResponse.json({ success: true, data: tournaments });
     } catch (error) {

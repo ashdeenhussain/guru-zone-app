@@ -10,11 +10,18 @@ import ThemeToggle from "@/components/ThemeToggle";
 
 export default function LandingPage() {
     const [isLoading, setIsLoading] = useState(true);
+    const [pageData, setPageData] = useState<any>(null);
 
     useEffect(() => {
         const timer = setTimeout(() => {
             setIsLoading(false);
         }, 1500);
+
+        // Fetch dynamic content
+        fetch("/api/landing-page")
+            .then(res => res.json())
+            .then(data => setPageData(data))
+            .catch(err => console.error("Error loading landing page data:", err));
 
         return () => clearTimeout(timer);
     }, []);
@@ -109,22 +116,22 @@ export default function LandingPage() {
                             </motion.div>
 
                             {/* Headline */}
-                            <motion.h1
+                            <motion.h2
                                 variants={itemVariants}
-                                className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight mb-6 drop-shadow-2xl leading-[0.9]"
+                                className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight mb-6 drop-shadow-2xl leading-[0.9] uppercase"
                             >
-                                DOMINATE <br className="hidden md:block" />
-                                <span className="text-transparent bg-clip-text bg-gradient-to-b from-primary to-yellow-600 filter drop-shadow-sm">THE BATTLEGROUND</span>
-                            </motion.h1>
+                                {pageData?.hero?.title?.split(' ').slice(0, -2).join(' ')} <br className="hidden md:block" />
+                                <span className="text-transparent bg-clip-text bg-gradient-to-b from-primary to-yellow-600 filter drop-shadow-sm">
+                                    {pageData?.hero?.title?.split(' ').slice(-2).join(' ') || "THE BATTLEGROUND"}
+                                </span>
+                            </motion.h2>
 
                             {/* Subheadline */}
                             <motion.p
                                 variants={itemVariants}
                                 className="text-lg md:text-2xl text-muted-foreground mb-10 leading-relaxed max-w-2xl mx-auto font-light"
                             >
-                                Join the elite arena where skill pays off. Compete in daily
-                                <span className="text-primary font-bold"> High-Stakes Tournaments</span>,
-                                climbing the ranks to become a legend.
+                                {pageData?.hero?.subtitle || "Join the elite arena where skill pays off. Compete in daily High-Stakes Tournaments, climbing the ranks to become a legend."}
                             </motion.p>
 
                             {/* CTAs */}
@@ -136,14 +143,14 @@ export default function LandingPage() {
                                     <button className="group relative w-full sm:w-auto px-10 py-5 bg-primary text-black font-extrabold text-xl uppercase tracking-widest rounded-xl overflow-hidden hover:scale-105 transition-transform duration-300 shadow-[0_0_40px_-10px_rgba(255,215,0,0.6)]">
                                         <div className="absolute inset-0 bg-white/40 translate-y-full group-hover:translate-y-0 transition-transform duration-300 skew-y-12" />
                                         <div className="relative flex items-center justify-center gap-3">
-                                            Get Started
+                                            {pageData?.hero?.primaryCtaText || "Get Started"}
                                             <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
                                         </div>
                                     </button>
                                 </Link>
                                 <Link href="/login" className="w-full sm:w-auto">
                                     <button className="group w-full sm:w-auto px-10 py-5 glass text-foreground font-bold text-xl uppercase tracking-widest rounded-xl hover:bg-white/10 transition-all border border-white/10 hover:border-white/20">
-                                        Sign In
+                                        {pageData?.hero?.secondaryCtaText || "Sign In"}
                                     </button>
                                 </Link>
                             </motion.div>
@@ -367,41 +374,48 @@ export default function LandingPage() {
                             <h2 className="text-3xl md:text-4xl font-black text-foreground">FREQUENTLY ASKED QUESTIONS</h2>
                         </div>
                         <div className="space-y-4">
-                            <FaqItem q="Is it safe to deposit money?" a="Absolutely. We use secure, encrypted payment gateways. Your funds are held safely until you withdraw." />
-                            <FaqItem q="How do I get the Room ID & Password?" a="Once you join a tournament, the Room ID and Password will be displayed in your 'My Matches' section 15 minutes before start." />
-                            <FaqItem q="What is the minimum withdrawal?" a="You can withdraw as low as PKR 50 directly to your account. Withdrawals are processed 24/7." />
+                            {pageData?.faqs?.length > 0 ? (
+                                pageData.faqs.filter((f: any) => f.isActive).map((faq: any, i: number) => (
+                                    <FaqItem key={i} q={faq.question} a={faq.answer} />
+                                ))
+                            ) : (
+                                <>
+                                    <FaqItem q="Is it safe to deposit money?" a="Absolutely. We use secure, encrypted payment gateways. Your funds are held safely until you withdraw." />
+                                    <FaqItem q="How do I get the Room ID & Password?" a="Once you join a tournament, the Room ID and Password will be displayed in your 'My Matches' section 15 minutes before start." />
+                                    <FaqItem q="What is the minimum withdrawal?" a="You can withdraw as low as PKR 50 directly to your account. Withdrawals are processed 24/7." />
+                                </>
+                            )}
                         </div>
                     </section>
 
-                    {/* Footer */}
                     <footer className="relative z-10 border-t border-border bg-card text-card-foreground pt-16 pb-8">
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-12 mb-12 text-center md:text-left">
                             <div className="col-span-1 md:col-span-2">
-                                <h3 className="text-2xl font-black text-primary mb-4">GURU ZONE</h3>
+                                <h3 className="text-2xl font-black text-primary mb-4 uppercase tracking-tighter">GURU ZONE</h3>
                                 <p className="text-muted-foreground max-w-sm mx-auto md:mx-0 mb-6">
-                                    The ultimate platform for esports enthusiasts. We turn your gaming passion into a professional career.
+                                    {pageData?.about?.content || "The ultimate platform for esports enthusiasts. We turn your gaming passion into a professional career."}
                                 </p>
                                 <div className="flex gap-4 justify-center md:justify-start">
-                                    <SocialIcon icon={Twitter} />
-                                    <SocialIcon icon={Instagram} />
-                                    <SocialIcon icon={Youtube} />
+                                    <SocialIcon icon={Twitter} href={pageData?.socialLinks?.twitter} />
+                                    <SocialIcon icon={Instagram} href={pageData?.socialLinks?.instagram} />
+                                    <SocialIcon icon={Youtube} href={pageData?.socialLinks?.youtube} />
                                 </div>
                             </div>
                             <div>
                                 <h4 className="font-bold text-foreground mb-4">Quick Links</h4>
                                 <ul className="space-y-2 text-muted-foreground text-sm">
-                                    <li className="hover:text-primary cursor-pointer transition-colors">Tournaments</li>
-                                    <li className="hover:text-primary cursor-pointer transition-colors">Leaderboard</li>
-                                    <li className="hover:text-primary cursor-pointer transition-colors">About Us</li>
-                                    <li className="hover:text-primary cursor-pointer transition-colors">Contact Support</li>
+                                    <Link href="/login"><li className="hover:text-primary cursor-pointer transition-colors">Tournaments</li></Link>
+                                    <Link href="/login"><li className="hover:text-primary cursor-pointer transition-colors">Leaderboard</li></Link>
+                                    <Link href="/about"><li className="hover:text-primary cursor-pointer transition-colors">About Us</li></Link>
+                                    <Link href="/contact"><li className="hover:text-primary cursor-pointer transition-colors">Contact Support</li></Link>
                                 </ul>
                             </div>
                             <div>
                                 <h4 className="font-bold text-foreground mb-4">Legal</h4>
                                 <ul className="space-y-2 text-muted-foreground text-sm">
-                                    <li className="hover:text-primary cursor-pointer transition-colors">Privacy Policy</li>
-                                    <li className="hover:text-primary cursor-pointer transition-colors">Terms of Service</li>
-                                    <li className="hover:text-primary cursor-pointer transition-colors">Refund Policy</li>
+                                    <Link href="/privacy"><li className="hover:text-primary cursor-pointer transition-colors">Privacy Policy</li></Link>
+                                    <Link href="/terms"><li className="hover:text-primary cursor-pointer transition-colors">Terms of Service</li></Link>
+                                    <Link href="/refund"><li className="hover:text-primary cursor-pointer transition-colors">Refund Policy</li></Link>
                                 </ul>
                             </div>
                         </div>
@@ -474,9 +488,14 @@ function FaqItem({ q, a }: { q: string, a: string }) {
     );
 }
 
-function SocialIcon({ icon: Icon }: { icon: any }) {
+function SocialIcon({ icon: Icon, href }: { icon: any, href?: string }) {
     return (
-        <a href="#" className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-black transition-all duration-300">
+        <a 
+            href={href || "#"} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-black transition-all duration-300"
+        >
             <Icon className="w-5 h-5" />
         </a>
     );

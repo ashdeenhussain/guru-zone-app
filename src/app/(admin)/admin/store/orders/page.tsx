@@ -49,13 +49,19 @@ export default function OrderManagementPage() {
 
     const fetchOrders = async () => {
         try {
-            const res = await fetch('/api/admin/store/orders');
+            setLoading(true);
+            // We fetch all sources by default to ensure we see everything for now
+            const res = await fetch('/api/admin/store/orders?source=all');
             const data = await res.json();
             if (data.success) {
-                setOrders(data.orders);
+                setOrders(data.orders || []);
+            } else {
+                console.error('API Error:', data.message);
+                alert('Error: ' + (data.message || 'Unknown error'));
             }
         } catch (error) {
             console.error('Failed to fetch orders', error);
+            alert('Failed to connect to the server');
         } finally {
             setLoading(false);
         }
@@ -105,17 +111,19 @@ export default function OrderManagementPage() {
     const filteredOrders = orders.filter(order => {
         // 1. Tab Filter
         if (activeTab !== 'All') {
-            if (activeTab === 'Approved' && order.status !== 'Approved') return false;
-            if (activeTab === 'Rejected' && order.status !== 'Rejected') return false;
-            if (activeTab === 'Pending' && order.status !== 'Pending') return false;
+            const currentStatus = order.status?.toLowerCase() || '';
+            const targetStatus = activeTab.toLowerCase();
+            if (targetStatus === 'approved' && currentStatus !== 'approved') return false;
+            if (targetStatus === 'rejected' && currentStatus !== 'rejected') return false;
+            if (targetStatus === 'pending' && currentStatus !== 'pending') return false;
         }
 
         // 2. Search Filter
         const searchLower = searchQuery.toLowerCase();
         return (
-            order.userDetails?.inGameName.toLowerCase().includes(searchLower) ||
-            order.userDetails?.uid.includes(searchLower) ||
-            order.userId?.email?.toLowerCase().includes(searchLower)
+            (order.userDetails?.inGameName || "")?.toLowerCase().includes(searchLower) ||
+            (order.userDetails?.uid || "")?.includes(searchLower) ||
+            (order.userId?.email || "")?.toLowerCase().includes(searchLower)
         );
     });
 
@@ -156,9 +164,9 @@ export default function OrderManagementPage() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
                     { label: 'Total Orders', value: orders.length, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
-                    { label: 'Pending', value: orders.filter(o => o.status === 'Pending').length, color: 'text-yellow-500', bg: 'bg-yellow-500/5', border: 'border-yellow-500/20' },
-                    { label: 'Completed', value: orders.filter(o => o.status === 'Approved').length, color: 'text-green-500', bg: 'bg-green-500/5', border: 'border-green-500/20' },
-                    { label: 'Rejected', value: orders.filter(o => o.status === 'Rejected').length, color: 'text-red-500', bg: 'bg-red-500/5', border: 'border-red-500/20' }
+                    { label: 'Pending', value: orders.filter(o => o.status?.toLowerCase() === 'pending').length, color: 'text-yellow-500', bg: 'bg-yellow-500/5', border: 'border-yellow-500/20' },
+                    { label: 'Completed', value: orders.filter(o => o.status?.toLowerCase() === 'approved').length, color: 'text-green-500', bg: 'bg-green-500/5', border: 'border-green-500/20' },
+                    { label: 'Rejected', value: orders.filter(o => o.status?.toLowerCase() === 'rejected').length, color: 'text-red-500', bg: 'bg-red-500/5', border: 'border-red-500/20' }
                 ].map((stat, i) => (
                     <div key={i} className={`${stat.bg} ${stat.border} border p-5 rounded-2xl flex flex-col justify-center gap-2 shadow-sm transition-transform hover:scale-[1.02]`}>
                         <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">{stat.label}</span>
@@ -240,8 +248,8 @@ export default function OrderManagementPage() {
                                 <div className="flex justify-between items-start">
                                     <div className="flex items-center gap-3">
                                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg shadow-inner border border-white/5
-                                            ${order.status === 'Pending' ? 'bg-yellow-500/10 text-yellow-500' :
-                                                order.status === 'Approved' ? 'bg-green-500/10 text-green-500' :
+                                            ${order.status?.toLowerCase() === 'pending' ? 'bg-yellow-500/10 text-yellow-500' :
+                                                order.status?.toLowerCase() === 'approved' ? 'bg-green-500/10 text-green-500' :
                                                     'bg-red-500/10 text-red-500'}
                                         `}>
                                             <ShoppingBag size={20} />
@@ -254,8 +262,8 @@ export default function OrderManagementPage() {
                                             </p>
                                         </div>
                                     </div>
-                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border shadow-sm ${order.status === 'Pending' ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' :
-                                        order.status === 'Approved' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border shadow-sm ${order.status?.toLowerCase() === 'pending' ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' :
+                                        order.status?.toLowerCase() === 'approved' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
                                             'bg-red-500/10 text-red-500 border-red-500/20'
                                         }`}>
                                         {order.status}
@@ -286,7 +294,7 @@ export default function OrderManagementPage() {
                                     </div>
                                 </div>
 
-                                {order.status === 'Pending' && (
+                                {order.status?.toLowerCase() === 'pending' && (
                                     <div className="flex gap-3 pt-2">
                                         <button
                                             onClick={() => setRejectId(order._id)}
@@ -365,18 +373,18 @@ export default function OrderManagementPage() {
                                                 {new Date(order.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                             </td>
                                             <td className="p-5 text-center">
-                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border shadow-sm ${order.status === 'Pending' ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' :
-                                                    order.status === 'Approved' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border shadow-sm ${order.status?.toLowerCase() === 'pending' ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' :
+                                                    order.status?.toLowerCase() === 'approved' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
                                                         'bg-red-500/10 text-red-500 border-red-500/20'
                                                     }`}>
-                                                    <span className={`w-1.5 h-1.5 rounded-full ${order.status === 'Pending' ? 'bg-yellow-500 animate-pulse' :
-                                                        order.status === 'Approved' ? 'bg-green-500' : 'bg-red-500'
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${order.status?.toLowerCase() === 'pending' ? 'bg-yellow-500 animate-pulse' :
+                                                        order.status?.toLowerCase() === 'approved' ? 'bg-green-500' : 'bg-red-500'
                                                         }`}></span>
                                                     {order.status}
                                                 </span>
                                             </td>
                                             <td className="p-5 text-right relative">
-                                                {order.status === 'Pending' ? (
+                                                {order.status?.toLowerCase() === 'pending' ? (
                                                     <div className="flex justify-end gap-2 opacity-100 transition-opacity">
                                                         <button
                                                             onClick={() => handleProcessOrder(order._id, 'approve')}
@@ -395,12 +403,12 @@ export default function OrderManagementPage() {
                                                     </div>
                                                 ) : (
                                                     <div className="text-xs font-bold text-muted-foreground/50">
-                                                        {order.status === 'Approved' ? 'Completed' : 'Rejected'}
+                                                        {order.status?.toLowerCase() === 'approved' ? 'Completed' : 'Rejected'}
                                                     </div>
                                                 )}
 
                                                 {/* Inline Status Message if processed */}
-                                                {order.status === 'Rejected' && order.adminComment && (
+                                                {order.status?.toLowerCase() === 'rejected' && order.adminComment && (
                                                     <div className="absolute bottom-1 right-5 text-[10px] text-red-400 max-w-[200px] truncate opacity-70 hover:opacity-100 transition-opacity cursor-help" title={order.adminComment}>
                                                         Note: {order.adminComment}
                                                     </div>
