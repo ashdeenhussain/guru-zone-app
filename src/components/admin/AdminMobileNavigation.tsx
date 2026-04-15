@@ -26,6 +26,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSession, signOut } from "next-auth/react";
 import ThemeToggle from "@/components/ThemeToggle";
 
+import AdminNotificationDropdown from "@/components/admin/AdminNotificationDropdown";
+
 export default function AdminMobileNavigation() {
     const pathname = usePathname();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -56,6 +58,7 @@ export default function AdminMobileNavigation() {
                 </div>
 
                 <div className="flex items-center gap-3">
+                    <AdminNotificationDropdown />
                     <ThemeToggle />
                 </div>
             </div>

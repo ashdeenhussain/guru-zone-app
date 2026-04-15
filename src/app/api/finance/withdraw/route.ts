@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/db';
 import Transaction from '@/models/Transaction';
 import User from '@/models/User';
+import AdminNotification from '@/models/AdminNotification';
 
 import { startOfDay, endOfDay } from 'date-fns';
 
@@ -126,6 +127,14 @@ export async function POST(req: Request) {
             // However, pushing to array in separate update is risky if it fails.
             // But since money is deducted, transaction record is the most important.
             // We won't re-update user array to avoid complexity, query by user id is sufficient.
+
+            // Create Admin Notification
+            await AdminNotification.create({
+                title: 'New Withdrawal Request',
+                message: `User ${session.user.name || session.user.email} has requested a withdrawal of Rs ${amountNum} via ${method}.`,
+                type: 'withdraw',
+                link: '/admin/finance'
+            });
 
             return NextResponse.json({ message: 'Withdrawal request submitted successfully', transaction }, { status: 201 });
         } catch (txError) {

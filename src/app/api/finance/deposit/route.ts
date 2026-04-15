@@ -6,6 +6,7 @@ import connectDB from '@/lib/db';
 import Transaction from '@/models/Transaction';
 import User from '@/models/User';
 import Notification from '@/models/Notification';
+import AdminNotification from '@/models/AdminNotification';
 
 export async function POST(req: Request) {
     try {
@@ -45,6 +46,14 @@ export async function POST(req: Request) {
             title: 'Deposit Request Submitted',
             message: `Your deposit request of Rs ${amount} has been submitted and is pending approval.`,
             type: 'info'
+        });
+
+        // Create Admin Notification
+        await AdminNotification.create({
+            title: 'New Deposit Request',
+            message: `User ${session.user.name || session.user.email} has requested a deposit of Rs ${amount} via ${method}.`,
+            type: 'deposit',
+            link: '/admin/finance'
         });
 
         return NextResponse.json({ message: 'Deposit request submitted', transaction }, { status: 201 });

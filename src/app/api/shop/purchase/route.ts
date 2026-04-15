@@ -7,6 +7,7 @@ import Order from "@/models/Order";
 import Transaction from "@/models/Transaction";
 import Notification from "@/models/Notification";
 import mongoose from "mongoose";
+import AdminNotification from "@/models/AdminNotification";
 import { z } from "zod";
 import { rateLimit, getIP } from "@/lib/rate-limit";
 
@@ -116,6 +117,14 @@ export async function POST(req: Request) {
                 message: `You successfully purchased ${product.title}. It is now pending processing.`,
                 type: "success",
                 link: "/dashboard/shop"
+            }], { session: dbSession });
+
+            // 5. Create Admin Notification
+            await AdminNotification.create([{
+                title: "New Shop Order",
+                message: `User ${session.user.name || session.user.email} purchased ${product.title} for ${price} coins.`,
+                type: "order",
+                link: `/admin/store`
             }], { session: dbSession });
 
             await dbSession.commitTransaction();

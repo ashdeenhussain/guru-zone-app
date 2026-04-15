@@ -5,6 +5,7 @@ import connectToDB from "@/lib/db";
 import Transaction from "@/models/Transaction";
 import Order from "@/models/Order";
 import User from "@/models/User"; // Ensure User model is registered if populate needs it
+import StoreProduct from "@/models/StoreProduct"; // Must be imported so Mongoose can populate Order.productId
 
 export async function GET() {
     try {

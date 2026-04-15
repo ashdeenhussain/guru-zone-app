@@ -89,7 +89,7 @@ export default function DailyRewardPage() {
     const fetchSpinData = async () => {
         const [statusRes, itemsRes] = await Promise.all([
             fetch("/api/daily-reward/spin"),
-            fetch("/api/admin/finance/daily-spin/items"),
+            fetch("/api/daily-reward/spin-items"),
         ]);
         const s = await statusRes.json(); if (statusRes.ok) setSpinStatus(s);
         const i = await itemsRes.json(); if (i.success) setSpinItems(i.items || []);

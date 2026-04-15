@@ -1,5 +1,27 @@
 import mongoose from 'mongoose';
 
+// ─── Register all models here so they are always available for .populate() ───
+// This prevents "Schema hasn't been registered for model X" errors in Next.js
+// where each API route is an isolated module and may not import every ref model.
+import '@/models/User';
+import '@/models/StoreProduct';
+import '@/models/Order';
+import '@/models/Transaction';
+import '@/models/Notification';
+import '@/models/AdminNotification';
+import '@/models/AdminActivity';
+import '@/models/Tournament';
+import '@/models/SpinItem';
+import '@/models/DailyRewardSpinItem';
+import '@/models/SupportTicket';
+import '@/models/PaymentMethod';
+import '@/models/SystemSetting';
+import '@/models/LandingPageContent';
+import '@/models/Media';
+import '@/models/Message';
+import '@/models/ChatReport';
+// ─────────────────────────────────────────────────────────────────────────────
+
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {

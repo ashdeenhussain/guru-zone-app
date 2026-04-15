@@ -8,6 +8,7 @@ import AdminMobileNavigation from '@/components/admin/AdminMobileNavigation';
 import { ShieldAlert, Loader2, Home } from 'lucide-react';
 import Link from 'next/link';
 import { AdminPermission } from "@/lib/auth";
+import AdminNotificationDropdown from "@/components/admin/AdminNotificationDropdown";
 
 const PERMISSION_MAP: Record<string, AdminPermission | null> = {
     '/admin/dashboard': null,
@@ -115,6 +116,12 @@ export default function AdminLayoutShell({
             {/* Desktop Sidebar (Hidden on Mobile) */}
             <div className="hidden lg:block fixed h-full w-64 z-50">
                 <AdminSidebar />
+            </div>
+
+            {/* Desktop Top Right Actions (Hidden on Mobile) */}
+            <div className="hidden lg:flex fixed top-4 right-8 z-50 items-center gap-4 bg-background/50 backdrop-blur-md px-4 py-2 rounded-2xl border border-border">
+                <AdminNotificationDropdown />
+                <div className="w-px h-6 bg-border mx-1"></div>
             </div>
 
             {/* Content Area */}
