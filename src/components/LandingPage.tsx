@@ -8,9 +8,9 @@ import { useState, useEffect } from "react";
 import SplashScreen from "@/components/SplashScreen";
 import ThemeToggle from "@/components/ThemeToggle";
 
-export default function LandingPage() {
+export default function LandingPage({ initialData }: { initialData?: any }) {
     const [isLoading, setIsLoading] = useState(true);
-    const [pageData, setPageData] = useState<any>(null);
+    const [pageData, setPageData] = useState<any>(initialData || null);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -116,7 +116,7 @@ export default function LandingPage() {
                             </motion.div>
 
                             {/* Headline */}
-                            <motion.h2
+                            <motion.h1
                                 variants={itemVariants}
                                 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight mb-6 drop-shadow-2xl leading-[0.9] uppercase"
                             >
@@ -124,7 +124,7 @@ export default function LandingPage() {
                                 <span className="text-transparent bg-clip-text bg-gradient-to-b from-primary to-yellow-600 filter drop-shadow-sm">
                                     {pageData?.hero?.title?.split(' ').slice(-2).join(' ') || "THE BATTLEGROUND"}
                                 </span>
-                            </motion.h2>
+                            </motion.h1>
 
                             {/* Subheadline */}
                             <motion.p
