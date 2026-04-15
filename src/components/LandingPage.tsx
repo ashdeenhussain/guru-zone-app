@@ -131,7 +131,7 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                                 variants={itemVariants}
                                 className="text-lg md:text-2xl text-muted-foreground mb-10 leading-relaxed max-w-2xl mx-auto font-light"
                             >
-                                {pageData?.hero?.subtitle || "Join the elite arena where skill pays off. Compete in daily High-Stakes Tournaments, climbing the ranks to become a legend."}
+                                {pageData?.hero?.subtitle || "Experience the best Free Fire tournament app in Pakistan. Join the elite arena to play esports tournaments, earn real money, and climb the ranks to become a legend."}
                             </motion.p>
 
                             {/* CTAs */}
@@ -172,7 +172,7 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                     <div className="relative z-10 max-w-7xl mx-auto px-4 pb-16">
                         <div className="text-center mb-12">
                             <span className="text-primary font-bold tracking-wider uppercase text-sm">Why Choose Guru Zone?</span>
-                            <h2 className="text-3xl md:text-5xl font-black text-foreground mt-2">THE ELITE EXPERIENCE</h2>
+                            <h2 className="text-3xl md:text-5xl font-black text-foreground mt-2">PAKISTAN&apos;S BEST FREE FIRE TOURNAMENT APP</h2>
                         </div>
                         <div className="grid md:grid-cols-3 gap-6">
                             <FeatureCard
