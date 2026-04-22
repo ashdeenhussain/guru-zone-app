@@ -28,7 +28,7 @@ export async function PATCH(
             id,
             {
                 role,
-                permissions: role === 'admin' ? [] : permissions 
+                permissions: role === 'user' ? [] : permissions 
             },
             { new: true }
         ).select("-password");

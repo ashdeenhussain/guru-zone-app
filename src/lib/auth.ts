@@ -106,28 +106,42 @@ export const authOptions: AuthOptions = {
         signIn: '/login',
     },
     callbacks: {
-        async signIn({ user }) {
+        async signIn({ user, account }) {
             try {
-                const userId = user.id || (user as any)._id;
-                if (!userId) return true;
-
                 await connectToDatabase();
-                await User.findByIdAndUpdate(userId, { lastLogin: new Date() });
+                const dbUser = await User.findOne({ email: user.email });
+                if (dbUser) {
+                    await User.findByIdAndUpdate(dbUser._id, { 
+                        lastLogin: new Date() 
+                    });
+                }
                 return true;
             } catch (error) {
                 console.error("Error updating lastLogin", error);
                 return true;
             }
         },
-        async jwt({ token, user, trigger, session }) {
+        async jwt({ token, user, account, trigger, session }) {
+            // Initial sign-in
             if (user) {
-                token.id = user.id;
-                token.role = user.role;
-                token.permissions = user.permissions; // Add permissions to token
-                token.trustScore = user.trustScore;
-                token.status = user.status;
-                token.banReason = user.banReason;
+                await connectToDatabase();
+                const dbUser = await User.findOne({ email: user.email });
+                
+                if (dbUser) {
+                    token.id = dbUser._id.toString();
+                    token.role = dbUser.role;
+                    token.permissions = dbUser.permissions || [];
+                    token.trustScore = dbUser.trustScore;
+                    token.status = dbUser.status;
+                    token.banReason = dbUser.banReason;
+                } else {
+                    // Fallback to provider info if user not in DB (shouldn't happen for team members)
+                    token.id = user.id;
+                    token.role = (user as any).role || 'user';
+                    token.permissions = (user as any).permissions || [];
+                }
             }
+            
             if (trigger === "update" && session?.name) {
                 token.name = session.name;
             }
@@ -135,12 +149,12 @@ export const authOptions: AuthOptions = {
         },
         async session({ session, token }) {
             if (session.user) {
-                session.user.id = token.id;
-                session.user.role = token.role;
-                session.user.permissions = token.permissions; // Pass permissions to session
-                session.user.trustScore = token.trustScore;
-                session.user.status = token.status;
-                session.user.banReason = token.banReason;
+                session.user.id = token.id as string;
+                session.user.role = token.role as string;
+                session.user.permissions = (token.permissions as string[]) || [];
+                session.user.trustScore = token.trustScore as number;
+                session.user.status = token.status as string;
+                session.user.banReason = token.banReason as string;
             }
             return session;
         }
