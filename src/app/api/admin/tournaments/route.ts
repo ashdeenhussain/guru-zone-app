@@ -42,7 +42,7 @@ export async function POST(req: Request) {
 
         const tournament = await Tournament.create({ 
             ...body, 
-            createdBy: session.user.id 
+            createdBy: null // Official tournaments have no creator (System)
         });
 
         // Log Activity

@@ -35,8 +35,10 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
                     throw new Error('Tournament not found');
                 }
 
-                // Ownership Check: Only creator or Super Admin can finalize
-                const canManage = hasPermission(session, 'manage_system') || (tournament.createdBy?.toString() === (session as any)?.user?.id);
+                // Ownership Check: Only creator, anyone with manage_tournaments (for official ones), or Super Admin can finalize
+                const canManage = hasPermission(session, 'manage_system') || 
+                                 (tournament.createdBy === null && hasPermission(session, 'manage_tournaments')) ||
+                                 (tournament.createdBy?.toString() === (session as any)?.user?.id);
 
                 if (!canManage) {
                     throw new Error('Unauthorized: You can only finalize tournaments created by you.');

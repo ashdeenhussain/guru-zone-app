@@ -22,8 +22,10 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
             return NextResponse.json({ success: false, error: 'Tournament not found' }, { status: 404 });
         }
 
-        // Ownership Check: Only creator or Super Admin can edit
-        const canManage = hasPermission(session, 'manage_system') || (tournament.createdBy?.toString() === (session as any)?.user?.id);
+        // Ownership Check: Only creator, anyone with manage_tournaments (for official ones), or Super Admin can edit
+        const canManage = hasPermission(session, 'manage_system') || 
+                         (tournament.createdBy === null && hasPermission(session, 'manage_tournaments')) ||
+                         (tournament.createdBy?.toString() === (session as any)?.user?.id);
         
         if (!canManage) {
             return NextResponse.json({ 

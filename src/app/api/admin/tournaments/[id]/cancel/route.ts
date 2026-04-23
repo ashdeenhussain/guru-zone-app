@@ -31,8 +31,10 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
             return NextResponse.json({ success: false, error: 'Tournament not found' }, { status: 404 });
         }
 
-        // Ownership Check: Only creator or Super Admin can cancel
-        const canManage = hasPermission(authSession, 'manage_system') || (tournament.createdBy?.toString() === (authSession as any)?.user?.id);
+        // Ownership Check: Only creator, anyone with manage_tournaments (for official ones), or Super Admin can cancel
+        const canManage = hasPermission(authSession, 'manage_system') || 
+                         (tournament.createdBy === null && hasPermission(authSession, 'manage_tournaments')) ||
+                         (tournament.createdBy?.toString() === (authSession as any)?.user?.id);
         
         if (!canManage) {
             await session.abortTransaction();
