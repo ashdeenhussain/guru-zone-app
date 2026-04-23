@@ -386,7 +386,7 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
                                                  <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 bg-slate-500 text-white text-[7px] md:text-[9px] font-black px-2 md:px-3 py-0.5 md:py-1 rounded-full shadow-lg border border-white/10 uppercase tracking-tighter whitespace-nowrap">Silver</div>
                                              </div>
                                              <div className="w-full h-[100px] md:h-[200px] bg-slate-500/10 backdrop-blur-xl border-x border-t border-slate-500/20 rounded-t-[1.5rem] md:rounded-t-[2.5rem] flex flex-col items-center p-2 md:p-4 transition-all group-hover:bg-slate-500/20">
-                                                 <span className="text-[10px] md:text-base font-black text-foreground truncate w-full text-center">{(tournament.winners?.rank2 as any)?.name || "Challenger"}</span>
+                                                 <span className="text-[10px] md:text-base font-black text-foreground truncate w-full text-center">{(tournament.winners?.rank2 as any)?.inGameName || (tournament.winners?.rank2 as any)?.name || "Challenger"}</span>
                                                  <span className="text-[8px] md:text-[10px] text-muted-foreground font-bold mt-0.5 md:mt-1">ID: {(tournament.winners?.rank2 as any)?.freeFireUid || "—"}</span>
                                                  <div className="mt-auto px-2 md:px-4 py-1 md:py-2 bg-slate-500/20 rounded-xl md:rounded-2xl flex items-center gap-1 border border-slate-500/30">
                                                      <Coins size={10} className="text-slate-400 md:w-3.5 md:h-3.5" />
@@ -416,7 +416,7 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
                                                  <div className="absolute -bottom-2 md:-bottom-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[7px] md:text-xs font-black px-2 md:px-5 py-1 md:py-1.5 rounded-full shadow-2xl border md:border-2 border-white/20 whitespace-nowrap uppercase tracking-tighter">Grand Champion</div>
                                              </div>
                                              <div className="w-full h-[130px] md:h-[260px] bg-primary/10 backdrop-blur-3xl border-x border-t border-primary/30 rounded-t-[2rem] md:rounded-t-[3rem] flex flex-col items-center p-3 md:p-6 transition-all group-hover:bg-primary/15 shadow-[0_-20px_50px_-10px_rgba(var(--primary),0.1)]">
-                                                 <span className="text-[12px] md:text-2xl font-black text-foreground truncate w-full text-center">{(tournament.winners?.rank1 as any)?.name || "Alpha Player"}</span>
+                                                 <span className="text-[12px] md:text-2xl font-black text-foreground truncate w-full text-center">{(tournament.winners?.rank1 as any)?.inGameName || (tournament.winners?.rank1 as any)?.name || "Alpha Player"}</span>
                                                  <span className="text-[8px] md:text-xs text-primary/70 font-black mt-0.5 md:mt-1 tracking-wider uppercase">ID: {(tournament.winners?.rank1 as any)?.freeFireUid || "—"}</span>
                                                  <div className="mt-auto px-3 md:px-6 py-1.5 md:py-3 bg-primary text-primary-foreground rounded-xl md:rounded-[1.5rem] flex items-center gap-1 md:gap-2 shadow-[0_10px_20px_rgba(var(--primary),0.3)] border border-white/20">
                                                      <Coins size={12} className="md:w-4.5 md:h-4.5" />
@@ -445,7 +445,7 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
                                                  <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 bg-orange-600 text-white text-[7px] md:text-[9px] font-black px-2 md:px-3 py-0.5 md:py-1 rounded-full shadow-lg border border-white/10 uppercase tracking-tighter whitespace-nowrap">Bronze</div>
                                              </div>
                                              <div className="w-full h-[80px] md:h-[160px] bg-orange-500/10 backdrop-blur-xl border-x border-t border-orange-500/20 rounded-t-[1.5rem] md:rounded-t-[2.5rem] flex flex-col items-center p-2 md:p-4 transition-all group-hover:bg-orange-500/20">
-                                                 <span className="text-[10px] md:text-base font-black text-foreground truncate w-full text-center">{(tournament.winners?.rank3 as any)?.name || "Elite Pro"}</span>
+                                                 <span className="text-[10px] md:text-base font-black text-foreground truncate w-full text-center">{(tournament.winners?.rank3 as any)?.inGameName || (tournament.winners?.rank3 as any)?.name || "Elite Pro"}</span>
                                                  <span className="text-[8px] md:text-[10px] text-muted-foreground font-bold mt-0.5 md:mt-1">ID: {(tournament.winners?.rank3 as any)?.freeFireUid || "—"}</span>
                                                  <div className="mt-auto px-2 md:px-4 py-1 md:py-2 bg-orange-500/20 rounded-xl md:rounded-2xl flex items-center gap-1 border border-orange-500/30">
                                                      <Coins size={10} className="text-orange-400 md:w-3.5 md:h-3.5" />
@@ -487,7 +487,7 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
                                                  </div>
                                                  <div className="text-center">
                                                      <div className="text-[9px] font-black text-primary/70">{rank.label}</div>
-                                                     <div className="text-[10px] font-bold text-foreground truncate max-w-[80px]">{(winner as any)?.name || "Elite Player"}</div>
+                                                     <div className="text-[10px] font-bold text-foreground truncate max-w-[80px]">{(winner as any)?.inGameName || (winner as any)?.name || "Elite Player"}</div>
                                                  </div>
                                                  <div className="mt-auto px-2 py-1 bg-primary/10 rounded-lg flex items-center gap-1 border border-primary/10">
                                                      <Coins size={10} className="text-primary" />

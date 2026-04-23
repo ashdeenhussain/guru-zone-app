@@ -10,9 +10,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         const tournament = await Tournament.findById(id)
             .populate('createdBy', 'name')
             .populate('participants.userId', 'username inGameName freeFireUid image name')
-            .populate('winners.rank1', 'username inGameName freeFireUid image name')
-            .populate('winners.rank2', 'username inGameName freeFireUid image name')
-            .populate('winners.rank3', 'username inGameName freeFireUid image name');
+            .populate('winners.rank1 winners.rank2 winners.rank3 winners.rank4 winners.rank5 winners.rank6 winners.rank7 winners.rank8 winners.rank9 winners.rank10', 'username inGameName freeFireUid image name avatarId');
 
         if (!tournament) {
             return NextResponse.json({ success: false, error: 'Tournament not found' }, { status: 404 });

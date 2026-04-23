@@ -11,6 +11,7 @@ async function getTournament(id: string) {
     const tournament = await Tournament.findById(id)
         .select('+roomID') // Include to check existence
         .populate('participants.userId', 'username name email inGameName uid avatarId image')
+        .populate('winners.rank1 winners.rank2 winners.rank3 winners.rank4 winners.rank5 winners.rank6 winners.rank7 winners.rank8 winners.rank9 winners.rank10', 'username name inGameName freeFireUid avatarId image')
         .lean();
     if (!tournament) return null;
     
