@@ -9,7 +9,7 @@ const SpinItemSchema = new Schema(
         },
         type: {
             type: String,
-            enum: ['Coin', 'Product'],
+            enum: ['coins', 'product'],
             required: true,
         },
         value: {

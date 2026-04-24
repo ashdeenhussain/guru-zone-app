@@ -78,7 +78,9 @@ export async function POST(req: Request) {
             // Process Reward
             user.spinsAvailable -= 1;
 
-            if (winningItem.type === 'coins') {
+            const rewardType = winningItem.type?.toLowerCase();
+
+            if (rewardType === 'coins' || rewardType === 'coin') {
                 const amount = Number(winningItem.value);
                 if (isNaN(amount)) throw new Error("Invalid coin value in spin item");
 
@@ -92,7 +94,7 @@ export async function POST(req: Request) {
                     status: 'approved'
                 }], { session: sessionDB });
 
-            } else if (winningItem.type === 'product' || winningItem.type === 'Product') {
+            } else if (rewardType === 'product') {
                 // Create Order for Product Win
                 await Order.create([{
                     userId: user._id,

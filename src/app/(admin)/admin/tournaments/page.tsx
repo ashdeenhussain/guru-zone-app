@@ -162,7 +162,7 @@ export default function AdminTournamentsPage() {
         const isCreator = userId && t.createdBy === userId;
 
         if (!isSuperAdmin && !isCreator) {
-            setAuthError('You do not have permission to manage this tournament. Only the creator or a System Admin can perform management actions.');
+            setAuthError('Access Denied: You can only manage tournaments created by you. Official or system tournaments are restricted to Super Admins.');
             return;
         }
 

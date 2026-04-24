@@ -169,6 +169,10 @@ const TournamentSchema = new Schema(
                 default: false 
             },
         },
+        isOfficial: {
+            type: Boolean,
+            default: false,
+        },
     },
     { timestamps: true }
 );

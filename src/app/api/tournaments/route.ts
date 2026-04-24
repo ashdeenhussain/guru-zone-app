@@ -19,21 +19,37 @@ export async function GET(req: Request) {
 
         const query: any = {
             isVisible: { $ne: false },
-            $or: [
-                { status: { $in: ['Open', 'Live', 'upcoming', 'active'] } },
+            $and: [
                 {
-                    status: { $in: ['Completed', 'Cancelled'] },
-                    updatedAt: { $gte: cutoffTime }
+                    $or: [
+                        { status: { $in: ['Open', 'Live', 'upcoming', 'active', 'pending_verification'] } },
+                        {
+                            status: { $in: ['Completed', 'Cancelled'] },
+                            updatedAt: { $gte: cutoffTime }
+                        }
+                    ]
                 }
             ]
         };
-
+        
         // Filter based on type
         if (type === 'community') {
-            query.createdBy = { $ne: null };
+            // Community matches are NOT official AND have a creator
+            query.$and.push({ isOfficial: { $ne: true } });
+            query.$and.push({ createdBy: { $ne: null } });
         } else {
-            // Default to 'official' tourneys (Admin created -> createdBy is null or doesn't exist)
-            query.createdBy = null;
+            // Fetch all admin IDs to include their tournaments in official list
+            const admins = await User.find({ role: 'admin' }).select('_id');
+            const adminIds = admins.map(a => a._id);
+
+            // Official matches are marked as isOfficial OR have no creator (legacy) OR created by an admin
+            query.$and.push({
+                $or: [
+                    { isOfficial: true },
+                    { createdBy: null },
+                    { createdBy: { $in: adminIds } }
+                ]
+            });
         }
 
         const tournaments = await Tournament.find(query)

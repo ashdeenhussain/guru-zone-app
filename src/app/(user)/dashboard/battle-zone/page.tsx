@@ -91,7 +91,7 @@ export default function BattleZonePage() {
 
     return (
         <MaintenanceWrapper
-            isActive={true}
+            isActive={false}
             title="Match Center - Coming Soon"
             description="We're currently finalizing the Battle Zone with new features and a premium match center experience. Stay tuned!"
             improvementDetails={[
