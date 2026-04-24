@@ -19,7 +19,12 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
         await connectToDB();
         const params = await context.params;
         const { id } = params;
-        const { winners } = await req.json();
+        const body = await req.json();
+        
+        // Sanitize winners: convert empty strings to undefined
+        const winners = body.winners ? Object.fromEntries(
+            Object.entries(body.winners).map(([k, v]) => [k, v === '' ? undefined : v])
+        ) : {};
 
         const adminId = session.user.id;
         const adminName = session.user.name;
