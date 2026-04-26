@@ -12,10 +12,10 @@ import MaintenanceWrapper from '@/components/shared/MaintenanceWrapper';
 
 export default function BattleZonePage() {
     const searchParams = useSearchParams();
-    const router = useRouter();
     const initialTab = searchParams.get('tab') === 'my' ? 'my' : 'all';
 
     const { data: session } = useSession();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [tournaments, setTournaments] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [joinedIds, setJoinedIds] = useState<string[]>([]);
@@ -58,6 +58,7 @@ export default function BattleZonePage() {
         fetchJoinedTournaments();
     }, [session]);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userId = (session?.user as any)?.id;
 
     const filteredTournaments = tournaments.filter(t => {
@@ -71,9 +72,10 @@ export default function BattleZonePage() {
         return true; // Show all for 'Browse'
     });
 
-    const handleCreateSuccess = (tournamentId: string) => {
+    const handleCreateSuccess = () => {
         setIsHostModalOpen(false);
-        if (session?.user?.role === 'admin' || session?.user?.role === 'team_member') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((session?.user as any)?.role === 'admin' || (session?.user as any)?.role === 'team_member') {
             router.push('/tournaments');
         } else {
             fetchTournaments(); // Refresh list to show new match
@@ -83,7 +85,7 @@ export default function BattleZonePage() {
 
     return (
         <MaintenanceWrapper 
-            isActive={false} 
+            isActive={true} 
             title="Match Center - Coming Soon"
             description="We're currently finalizing the Battle Zone with new features and a premium match center experience. Stay tuned!"
             improvementDetails={[

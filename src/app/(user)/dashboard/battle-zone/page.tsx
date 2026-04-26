@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import PageHeader from '@/components/PageHeader';
 import { Swords, Plus, Users, Calendar, Trophy, Coins, Loader2 } from 'lucide-react';
 import Link from 'next/link';
@@ -13,12 +13,13 @@ import MaintenanceWrapper from '@/components/shared/MaintenanceWrapper';
 
 export default function BattleZonePage() {
     const searchParams = useSearchParams();
-    const router = useRouter();
     const initialTab = searchParams.get('tab') === 'my' ? 'my' : 'all';
 
     const { data: session } = useSession();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [tournaments, setTournaments] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [userStats, setUserStats] = useState<any>(null);
     const [joinedIds, setJoinedIds] = useState<string[]>([]);
     const [activeTab, setActiveTab] = useState<'all' | 'my'>(initialTab);
@@ -46,7 +47,7 @@ export default function BattleZonePage() {
                 const data = await res.json();
                 if (data.success) setUserStats(data);
             }
-        } catch (e) { }
+        } catch (err) { console.error(err); }
     };
 
     const fetchJoinedTournaments = async () => {
@@ -71,6 +72,7 @@ export default function BattleZonePage() {
 
     const isRestricted = userStats && (userStats.trustScore || 100) < 80;
     const trustScore = userStats?.trustScore || 100;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userId = (session?.user as any)?.id;
 
     const filteredTournaments = tournaments.filter(t => {
@@ -83,7 +85,7 @@ export default function BattleZonePage() {
         return true; // Show all for 'Browse'
     });
 
-    const handleCreateSuccess = (tournamentId: string) => {
+    const handleCreateSuccess = () => {
         setIsHostModalOpen(false);
         fetchTournaments(); // Refresh list to show new match
         setActiveTab('my'); // Switch to "My Battles"
@@ -91,7 +93,7 @@ export default function BattleZonePage() {
 
     return (
         <MaintenanceWrapper
-            isActive={false}
+            isActive={true}
             title="Match Center - Coming Soon"
             description="We're currently finalizing the Battle Zone with new features and a premium match center experience. Stay tuned!"
             improvementDetails={[
