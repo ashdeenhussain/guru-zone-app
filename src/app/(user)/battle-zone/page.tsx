@@ -12,6 +12,7 @@ import MaintenanceWrapper from '@/components/shared/MaintenanceWrapper';
 
 export default function BattleZonePage() {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const initialTab = searchParams.get('tab') === 'my' ? 'my' : 'all';
 
     const { data: session } = useSession();
