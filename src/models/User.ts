@@ -31,7 +31,7 @@ const UserSchema = new Schema(
         resetPasswordExpire: Date,
         role: {
             type: String,
-            enum: ['user', 'admin'],
+            enum: ['user', 'admin', 'team_member'],
             default: 'user',
         },
         // Role-Based Access Control

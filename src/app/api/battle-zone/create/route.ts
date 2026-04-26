@@ -86,6 +86,7 @@ export async function POST(req: Request) {
                 prizePool,
                 status: 'upcoming',
                 createdBy: user._id,
+                isOfficial: user.role === 'admin' || user.role === 'team_member',
                 maxSlots: 2, // Strictly 2 Captains
                 joinedCount: 1, // Host is the first participant
                 startTime: new Date(), // "Play Now"

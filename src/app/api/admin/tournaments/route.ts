@@ -17,7 +17,14 @@ export async function GET() {
         }
 
         await connectToDB();
-        const tournaments = await Tournament.find({})
+
+        // Rule: Team Members see only their own, Admins (Super) see all
+        const query: any = {};
+        if (!hasPermission(session, 'manage_system')) {
+            query.createdBy = (session as any).user.id;
+        }
+
+        const tournaments = await Tournament.find(query)
             .sort({ createdAt: -1 })
             .select('+roomID +roomPassword')
             .populate('participants.userId', 'username name email inGameName uid avatarId image');

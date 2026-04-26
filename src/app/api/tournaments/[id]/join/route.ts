@@ -155,7 +155,7 @@ export async function POST(
             user: userId,
             amount: -entryFee,
             type: 'entry_fee',
-            description: `Joined Battle Zone: ${tournament.title}`,
+            description: `${tournament.isOfficial ? 'Joined Tournament' : 'Joined Battle Zone'}: ${tournament.title}`,
             status: 'completed',
             referenceId: tournament._id
         });
@@ -168,8 +168,8 @@ export async function POST(
             const playerName = updatedUser.inGameName || updatedUser.username || updatedUser.name || 'A player';
             await sendPushNotification(tournament.createdBy.toString(), {
                 title: '🎮 Match Joined!',
-                body: `${playerName} joined your 1v1 match "${tournament.title}". Please provide the Room ID.`,
-                url: `/battle-zone/${tournament._id}`
+                body: `${playerName} joined your match "${tournament.title}".`,
+                url: tournament.isOfficial ? `/tournaments/${tournament._id}` : `/battle-zone/${tournament._id}`
             });
         } catch (pushErr) {
             console.error('[JoinAPI] Push notification failed:', pushErr);

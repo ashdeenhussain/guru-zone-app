@@ -56,6 +56,12 @@ export default function TournamentDetailsPage({ params }: { params: Promise<{ id
 
             const newTournament = data.data;
 
+            // Redirect if official tournament (should use premium layout)
+            if (newTournament.isOfficial) {
+                router.replace(`/tournaments/${id}`);
+                return;
+            }
+
             // Notification Logic (only if not initial load)
             if (!isInitial && tournament) {
                 // Check for new participants

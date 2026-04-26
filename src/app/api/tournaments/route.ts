@@ -32,22 +32,22 @@ export async function GET(req: Request) {
             ]
         };
         
+        // Fetch all admin and team member IDs to properly categorize tournaments
+        const staff = await User.find({ role: { $in: ['admin', 'team_member'] } }).select('_id');
+        const staffIds = staff.map(s => s._id);
+
         // Filter based on type
         if (type === 'community') {
-            // Community matches are NOT official AND have a creator
+            // Community matches are NOT official AND NOT created by staff AND have a creator
             query.$and.push({ isOfficial: { $ne: true } });
-            query.$and.push({ createdBy: { $ne: null } });
+            query.$and.push({ createdBy: { $ne: null, $nin: staffIds } });
         } else {
-            // Fetch all admin IDs to include their tournaments in official list
-            const admins = await User.find({ role: 'admin' }).select('_id');
-            const adminIds = admins.map(a => a._id);
-
-            // Official matches are marked as isOfficial OR have no creator (legacy) OR created by an admin
+            // Official matches are marked as isOfficial OR have no creator (legacy) OR created by staff
             query.$and.push({
                 $or: [
                     { isOfficial: true },
                     { createdBy: null },
-                    { createdBy: { $in: adminIds } }
+                    { createdBy: { $in: staffIds } }
                 ]
             });
         }
@@ -111,6 +111,7 @@ export async function POST(req: Request) {
         const tournamentData = {
             ...body,
             createdBy: (session.user as any).id,
+            isOfficial: (session.user as any).role === 'admin' || (session.user as any).role === 'team_member',
             teamSize: teamSize,
             status: 'Open', // Default status
             joinedCount: 1, // Host is already joined

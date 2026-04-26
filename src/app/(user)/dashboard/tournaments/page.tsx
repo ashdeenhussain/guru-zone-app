@@ -20,6 +20,7 @@ interface Tournament {
     startTime: string;
     status: 'Open' | 'Live' | 'Completed';
     map: string;
+    isOfficial?: boolean;
 }
 
 export default function TournamentsPage() {
@@ -203,8 +204,7 @@ export default function TournamentsPage() {
                 ) : filteredTournaments.length > 0 ? (
                     <div className="grid grid-cols-1 gap-6">
                         {filteredTournaments.map(tournament => {
-                            const isCommunity = (tournament as any).createdBy != null;
-                            const linkHref = isCommunity ? `/battle-zone/${tournament._id}` : `/tournaments/${tournament._id}`;
+                            const linkHref = tournament.isOfficial ? `/tournaments/${tournament._id}` : `/battle-zone/${tournament._id}`;
                             return (
                                 <Link key={tournament._id} href={linkHref} className="block h-full">
                                     <TournamentCard tournament={tournament} />

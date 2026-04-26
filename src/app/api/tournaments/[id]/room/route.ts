@@ -63,7 +63,7 @@ export async function POST(
                 sendPushNotification(pId, {
                     title: '🔥 Room is Ready!',
                     body: `The Host has provided the Room ID for "${tournament.title}". Join the game now!`,
-                    url: `/battle-zone/${tournament._id}`
+                    url: tournament.isOfficial ? `/tournaments/${tournament._id}` : `/battle-zone/${tournament._id}`
                 })
             ));
         } catch (pushErr) {

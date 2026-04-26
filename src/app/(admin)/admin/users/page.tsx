@@ -31,7 +31,7 @@ interface User {
     name: string;
     email: string;
     status: 'active' | 'banned';
-    role: 'user' | 'admin';
+    role: 'user' | 'admin' | 'team_member';
     walletBalance: number;
     inGameName?: string;
     freeFireUid?: string;
@@ -390,8 +390,9 @@ export default function UserManagementPage() {
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
                                         <span className="font-bold text-foreground truncate">{user.name}</span>
-                                        {user.role === 'admin' && <span className="bg-purple-500/10 text-purple-500 text-[10px] px-1.5 py-0.5 rounded border border-purple-500/20 font-bold">ADMIN</span>}
-                                        {user.role !== 'admin' && user.permissions && user.permissions.length > 0 && <span className="bg-blue-500/10 text-blue-500 text-[10px] px-1.5 py-0.5 rounded border border-blue-500/20 font-bold">STAFF</span>}
+                                        {user.role === 'admin' && <span className="bg-red-500/10 text-red-500 text-[10px] px-1.5 py-0.5 rounded border border-red-500/20 font-bold">ADMIN</span>}
+                                        {user.role === 'team_member' && <span className="bg-purple-500/10 text-purple-500 text-[10px] px-1.5 py-0.5 rounded border border-purple-500/20 font-bold">PARTNER</span>}
+                                        {user.role === 'user' && user.permissions && user.permissions.length > 0 && <span className="bg-blue-500/10 text-blue-500 text-[10px] px-1.5 py-0.5 rounded border border-blue-500/20 font-bold">STAFF</span>}
                                     </div>
                                     <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                                 </div>
@@ -487,8 +488,9 @@ export default function UserManagementPage() {
                                             <div>
                                                 <div className="font-bold flex items-center gap-2 text-foreground text-sm group-hover/link:text-primary transition-colors">
                                                     {user.name}
-                                                    {user.role === 'admin' && <span className="bg-purple-500/10 text-purple-500 text-[10px] px-2 py-0.5 rounded border border-purple-500/20 font-bold">ADMIN</span>}
-                                                    {user.role !== 'admin' && user.permissions && user.permissions.length > 0 && <span className="bg-blue-500/10 text-blue-500 text-[10px] px-2 py-0.5 rounded border border-blue-500/20 font-bold">STAFF</span>}
+                                                    {user.role === 'admin' && <span className="bg-red-500/10 text-red-500 text-[10px] px-2 py-0.5 rounded border border-red-500/20 font-bold">ADMIN</span>}
+                                                    {user.role === 'team_member' && <span className="bg-purple-500/10 text-purple-500 text-[10px] px-2 py-0.5 rounded border border-purple-500/20 font-bold">PARTNER</span>}
+                                                    {user.role === 'user' && user.permissions && user.permissions.length > 0 && <span className="bg-blue-500/10 text-blue-500 text-[10px] px-2 py-0.5 rounded border border-blue-500/20 font-bold">STAFF</span>}
                                                 </div>
                                                 <div className="text-xs text-muted-foreground opacity-70">{user.email}</div>
                                             </div>
@@ -666,6 +668,7 @@ export default function UserManagementPage() {
                                 }}
                             >
                                 <option value="user">User / Staff</option>
+                                <option value="team_member">Team Member (Partner/YouTuber)</option>
                                 <option value="admin">Super Admin (Full Access)</option>
                             </select>
                             <p className="text-xs text-muted-foreground mt-1">Super Admins have full access to all modules automatically.</p>

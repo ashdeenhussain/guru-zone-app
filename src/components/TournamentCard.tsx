@@ -28,6 +28,7 @@ interface Tournament {
     startTime: string; // Date string
     status: 'Open' | 'Live' | 'Completed';
     map: string;
+    isOfficial?: boolean;
 }
 
 const TournamentCard = ({ tournament }: { tournament: Tournament }) => {

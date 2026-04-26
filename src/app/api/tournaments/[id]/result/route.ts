@@ -75,7 +75,7 @@ export async function POST(
                 sendPushNotification(pId, {
                     title: '⏳ Result Declared!',
                     body: `The Host claims victory in "${tournament.title}". You have 30 minutes to verify or the prize will be auto-transferred.`,
-                    url: `/battle-zone/${tournament._id}`
+                    url: tournament.isOfficial ? `/tournaments/${tournament._id}` : `/battle-zone/${tournament._id}`
                 })
             ));
         } catch (pushErr) {
@@ -196,7 +196,7 @@ export async function PUT(
                     user: declaredWinnerId,
                     amount: netPrize,
                     type: 'prize_winnings',
-                    description: `Won Battle Zone: ${tournament.title} (10% platform fee applied — gross: ${grossPrize}, fee: ${platformFee})`,
+                    description: `${tournament.isOfficial ? 'Won Tournament' : 'Won Battle Zone'}: ${tournament.title} (10% platform fee applied — gross: ${grossPrize}, fee: ${platformFee})`,
                     status: 'completed',
                     referenceId: tournament._id
                 });

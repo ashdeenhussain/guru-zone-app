@@ -96,7 +96,7 @@ export async function POST(req: Request) {
                 await sendPushNotification(winnerIdStr, {
                     title: '✅ Dispute Resolved!',
                     body: `Admin resolved the dispute for "${tournament.title}" in your favor. ${netPrize} coins awarded.`,
-                    url: `/battle-zone/${tournament._id}`
+                    url: tournament.isOfficial ? `/tournaments/${tournament._id}` : `/battle-zone/${tournament._id}`
                 });
                 
                 // Also update trust score for host (+5 for being right)

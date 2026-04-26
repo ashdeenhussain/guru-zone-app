@@ -74,7 +74,12 @@ export default function CreateTournamentPage() {
             }
 
             toast.success('Tournament created successfully!');
-            router.push('/battle-zone'); // Redirecting to Battle Zone
+            
+            if (session?.user?.role === 'admin' || session?.user?.role === 'team_member') {
+                router.push('/tournaments');
+            } else {
+                router.push('/battle-zone');
+            }
 
         } catch (error: any) {
             toast.error(error.message);

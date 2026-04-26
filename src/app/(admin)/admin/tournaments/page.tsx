@@ -485,22 +485,36 @@ function CreateTournamentForm({ onBack, onSuccess }: { onBack: () => void, onSuc
             sixth: 0, seventh: 0, eighth: 0, ninth: 0, tenth: 0
         }
     });
+    const [isGiveaway, setIsGiveaway] = useState(false);
     const [loading, setLoading] = useState(false);
 
     // Auto-Calculate Prize Distribution
     useEffect(() => {
-        const totalCollected = formData.entryFee * (formData.maxSlots || 0);
-        const PLATFORM_FEE = 0.30; // 30% platform fee
-        const calculatedPool = Math.floor(totalCollected * (1 - PLATFORM_FEE));
-
         const PERCENT_TIERS: Record<string, number[]> = {
             'TOP 3': [50, 30, 20],
             'TOP 5': [40, 25, 15, 10, 10],
             'TOP 10': [30, 20, 15, 10, 8, 5, 4, 3, 3, 2]
         };
-
         const tiers = PERCENT_TIERS[formData.prizeType] || PERCENT_TIERS['TOP 3'];
         const keys = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'] as const;
+
+        if (isGiveaway) {
+            // For Giveaways: Redistribute current prize pool when prizeType changes
+            const newDistribution = { ...formData.prizeDistribution };
+            keys.forEach((key, i) => {
+                if (i < tiers.length) {
+                    (newDistribution as any)[key] = Math.floor((formData.prizePool * tiers[i]) / 100);
+                } else {
+                    (newDistribution as any)[key] = 0;
+                }
+            });
+            setFormData(prev => ({ ...prev, prizeDistribution: newDistribution }));
+            return;
+        }
+
+        const totalCollected = formData.entryFee * (formData.maxSlots || 0);
+        const PLATFORM_FEE = 0.30; // 30% platform fee
+        const calculatedPool = Math.floor(totalCollected * (1 - PLATFORM_FEE));
 
         const newDistribution = { ...formData.prizeDistribution };
         keys.forEach((key, i) => {
@@ -519,7 +533,36 @@ function CreateTournamentForm({ onBack, onSuccess }: { onBack: () => void, onSuc
             prizePool: finalPool,
             prizeDistribution: newDistribution
         }));
-    }, [formData.entryFee, formData.maxSlots, formData.prizeType]);
+    }, [formData.entryFee, formData.maxSlots, formData.prizeType, isGiveaway]);
+
+    // Handle Manual Prize Pool Change (for Giveaways)
+    const handlePrizePoolChange = (pool: number) => {
+        const PERCENT_TIERS: Record<string, number[]> = {
+            'TOP 3': [50, 30, 20],
+            'TOP 5': [40, 25, 15, 10, 10],
+            'TOP 10': [30, 20, 15, 10, 8, 5, 4, 3, 3, 2]
+        };
+
+        const tiers = PERCENT_TIERS[formData.prizeType] || PERCENT_TIERS['TOP 3'];
+        const keys = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'] as const;
+
+        const newDistribution = { ...formData.prizeDistribution };
+        keys.forEach((key, i) => {
+            if (i < tiers.length) {
+                (newDistribution as any)[key] = Math.floor((pool * tiers[i]) / 100);
+            } else {
+                (newDistribution as any)[key] = 0;
+            }
+        });
+
+        const finalPool = Object.values(newDistribution).reduce((a, b) => a + b, 0);
+
+        setFormData(prev => ({
+            ...prev,
+            prizePool: finalPool,
+            prizeDistribution: newDistribution
+        }));
+    };
 
     // Specific 15-char limit friendly names
     const PRESET_NAMES = [
@@ -663,25 +706,54 @@ function CreateTournamentForm({ onBack, onSuccess }: { onBack: () => void, onSuc
                 <div className="bg-card/80 dark:bg-card/30 backdrop-blur-md border border-border/50 dark:border-white/5 rounded-2xl p-5 space-y-5 relative overflow-hidden shadow-sm">
                     <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/10 rounded-bl-full blur-2xl pointer-events-none" />
 
-                    <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50 dark:border-white/5">
-                        <DollarSign size={14} className="text-green-500 dark:text-green-400" />
-                        <span className="text-xs font-bold text-green-600 dark:text-green-100">Economy & Stakes</span>
+                    <div className="flex items-center justify-between mb-2 pb-2 border-b border-border/50 dark:border-white/5">
+                        <div className="flex items-center gap-2">
+                            <DollarSign size={14} className="text-green-500 dark:text-green-400" />
+                            <span className="text-xs font-bold text-green-600 dark:text-green-100">Economy & Stakes</span>
+                        </div>
+
+                        {/* Giveaway Toggle */}
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase">Giveaway</span>
+                            <div
+                                className={`w-8 h-4 rounded-full p-0.5 transition-colors cursor-pointer ${isGiveaway ? 'bg-green-500' : 'bg-muted-foreground/30'}`}
+                                onClick={() => {
+                                    const nextValue = !isGiveaway;
+                                    setIsGiveaway(nextValue);
+                                    if (nextValue) {
+                                        setFormData(prev => ({ ...prev, entryFee: 0 }));
+                                    }
+                                }}
+                            >
+                                <div className={`w-3 h-3 bg-white rounded-full shadow transition-transform ${isGiveaway ? 'translate-x-4' : 'translate-x-0'}`} />
+                            </div>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <InputGroup label="Entry Fee (Coins)">
+                        <InputGroup label={`Entry Fee (${isGiveaway ? 'Locked' : 'Coins'})`}>
                             <div className="relative">
                                 <span className="absolute left-3 top-3 text-yellow-600 dark:text-yellow-500 font-bold">$</span>
-                                <input type="number" className={`${inputStyles} pl-8 font-mono`}
-                                    value={formData.entryFee} onChange={e => setFormData({ ...formData, entryFee: parseInt(e.target.value) || 0 })} />
+                                <input
+                                    type="number"
+                                    className={`${inputStyles} pl-8 font-mono ${isGiveaway ? 'opacity-50 cursor-not-allowed bg-muted/30' : ''}`}
+                                    value={formData.entryFee}
+                                    onChange={e => !isGiveaway && setFormData({ ...formData, entryFee: parseInt(e.target.value) || 0 })}
+                                    disabled={isGiveaway}
+                                />
                             </div>
                         </InputGroup>
 
-                        <InputGroup label="Prize Pool (Auto-calculated)">
+                        <InputGroup label={`Prize Pool (${isGiveaway ? 'Editable' : 'Auto'})`}>
                             <div className="relative">
                                 <span className="absolute left-3 top-3 text-emerald-600 dark:text-emerald-500 font-bold">$</span>
-                                <input type="number" className={`${inputStyles} pl-8 font-mono bg-muted/30`}
-                                    value={formData.prizePool} readOnly />
+                                <input
+                                    type="number"
+                                    className={`${inputStyles} pl-8 font-mono ${isGiveaway ? 'bg-background dark:bg-black/40 border-primary/30 ring-1 ring-primary/20' : 'bg-muted/30'}`}
+                                    value={formData.prizePool}
+                                    onChange={e => isGiveaway && handlePrizePoolChange(parseInt(e.target.value) || 0)}
+                                    readOnly={!isGiveaway}
+                                />
                                 <div className="absolute right-3 top-2.5 text-[10px] text-muted-foreground uppercase font-bold">Total Pool</div>
                             </div>
                         </InputGroup>
@@ -758,7 +830,7 @@ function CreateTournamentForm({ onBack, onSuccess }: { onBack: () => void, onSuc
                         <div className="mt-4 pt-3 border-t border-border/40 dark:border-white/10 flex justify-between items-center">
                             <div>
                                 <span className="text-xs text-muted-foreground block">Adjusted Prize Pool</span>
-                                <span className="text-[8px] text-muted-foreground font-bold uppercase tracking-wider italic">(-30% Platform Management Fee)</span>
+                                {!isGiveaway && <span className="text-[8px] text-muted-foreground font-bold uppercase tracking-wider italic">(-30% Platform Management Fee)</span>}
                             </div>
                             <span className="text-lg font-bold text-green-600 dark:text-green-400 font-mono tracking-tight">${formData.prizePool}</span>
                         </div>

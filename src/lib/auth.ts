@@ -20,7 +20,7 @@ export function hasPermission(
     permission: AdminPermission | null
 ): session is Session & { user: { id: string; name: string; role: string; permissions: string[] } } {
     if (!session?.user) return false;
-    if (session.user.role !== 'admin') return false;
+    if (session.user.role !== 'admin' && session.user.role !== 'team_member') return false;
 
     const permissions = session.user.permissions || [];
 

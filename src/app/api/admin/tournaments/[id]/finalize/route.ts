@@ -22,9 +22,9 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
         const body = await req.json();
         
         // Sanitize winners: convert empty strings to undefined
-        const winners = body.winners ? Object.fromEntries(
+        const winners = (body.winners ? Object.fromEntries(
             Object.entries(body.winners).map(([k, v]) => [k, v === '' ? undefined : v])
-        ) : {};
+        ) : {}) as Record<string, any>;
 
         const adminId = session.user.id;
         const adminName = session.user.name;

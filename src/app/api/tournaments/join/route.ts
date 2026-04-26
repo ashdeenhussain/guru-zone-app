@@ -152,7 +152,7 @@ export async function POST(req: Request) {
             title: "Tournament Joined!",
             message: `You successfully joined ${tournament.title}. Good luck!`,
             type: "success",
-            link: tournament.createdBy ? `/battle-zone/${tournament._id}` : `/tournaments/${tournament._id}`
+            link: tournament.isOfficial ? `/tournaments/${tournament._id}` : `/battle-zone/${tournament._id}`
         });
         await notification.save({ session });
 

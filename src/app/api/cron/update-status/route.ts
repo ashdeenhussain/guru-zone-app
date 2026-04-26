@@ -57,7 +57,7 @@ export async function GET(req: Request) {
                                 title: 'Match Started!',
                                 message: `${t.title} has started! Join the room now.`,
                                 type: 'info',
-                                link: t.createdBy ? `/battle-zone/${t._id}` : `/tournaments/${t._id}`
+                                link: t.isOfficial ? `/tournaments/${t._id}` : `/battle-zone/${t._id}`
                             });
                         });
                         await Promise.all(notifyArr);
@@ -69,7 +69,7 @@ export async function GET(req: Request) {
                                 await sendPushNotification(pId.toString(), {
                                     title: '🎮 Match Started!',
                                     body: `${t.title} has started! Join now.`,
-                                    url: t.createdBy ? `/battle-zone/${t._id}` : `/tournaments/${t._id}`
+                                    url: t.isOfficial ? `/tournaments/${t._id}` : `/battle-zone/${t._id}`
                                 });
                             } catch (e) {}
                         }

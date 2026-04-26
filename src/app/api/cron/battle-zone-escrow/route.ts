@@ -76,7 +76,7 @@ export async function GET(req: Request) {
                     await sendPushNotification(winnerIdStr, {
                         title: '⚡ Match Auto-Resolved',
                         body: `Your win in "${tournament.title}" was auto-confirmed after 30 mins. ${netPrize} coins added.`,
-                        url: `/battle-zone/${tournament._id}`
+                        url: tournament.isOfficial ? `/tournaments/${tournament._id}` : `/battle-zone/${tournament._id}`
                     });
 
                     // ── Push Notification (To Opponents who didn't respond) ──
@@ -89,7 +89,7 @@ export async function GET(req: Request) {
                             sendPushNotification(pId, {
                                 title: '⚡ Match Auto-Resolved',
                                 body: `The result for "${tournament.title}" was auto-confirmed as you did not respond within 30 minutes.`,
-                                url: `/battle-zone/${tournament._id}`
+                                url: tournament.isOfficial ? `/tournaments/${tournament._id}` : `/battle-zone/${tournament._id}`
                             })
                         ));
 

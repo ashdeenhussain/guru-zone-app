@@ -73,8 +73,12 @@ export default function BattleZonePage() {
 
     const handleCreateSuccess = (tournamentId: string) => {
         setIsHostModalOpen(false);
-        fetchTournaments(); // Refresh list to show new match
-        setActiveTab('my'); // Switch to "My Battles"
+        if (session?.user?.role === 'admin' || session?.user?.role === 'team_member') {
+            router.push('/tournaments');
+        } else {
+            fetchTournaments(); // Refresh list to show new match
+            setActiveTab('my'); // Switch to "My Battles"
+        }
     };
 
     return (
@@ -228,7 +232,10 @@ export default function BattleZonePage() {
                                         </div>
                                     </div>
 
-                                    <button onClick={() => router.push(`/battle-zone/${tournament._id}`)} className="w-full mt-3 bg-foreground text-background font-bold py-2.5 rounded-lg text-sm hover:opacity-90 transition-opacity relative z-10 flex items-center justify-center gap-2">
+                                    <button 
+                                        onClick={() => router.push(tournament.isOfficial ? `/tournaments/${tournament._id}` : `/battle-zone/${tournament._id}`)} 
+                                        className="w-full mt-3 bg-foreground text-background font-bold py-2.5 rounded-lg text-sm hover:opacity-90 transition-opacity relative z-10 flex items-center justify-center gap-2"
+                                    >
                                         Enter Battle Center
                                         <Trophy className="w-3.5 h-3.5" />
                                     </button>

@@ -225,7 +225,11 @@ export default async function DashboardPage() {
                     ) : (
                         <div className="space-y-4 relative z-10">
                             {tournamentsPlayed.slice(0, 3).map((t: any, i: number) => (
-                                <div key={i} className="bg-muted/10 backdrop-blur-sm border border-border rounded-2xl p-4 relative overflow-hidden hover:bg-muted/20 transition-colors group">
+                                <Link 
+                                    key={i} 
+                                    href={t.isOfficial ? `/tournaments/${t._id}` : `/battle-zone/${t._id}`}
+                                    className="bg-muted/10 backdrop-blur-sm border border-border rounded-2xl p-4 relative overflow-hidden hover:bg-muted/20 transition-colors group block"
+                                >
                                     <div className="flex justify-between items-start mb-2">
                                         <div>
                                             <h3 className="font-bold text-foreground group-hover:text-primary transition-colors text-lg">{t.title || `Tournament #${i + 1}`}</h3>
@@ -242,7 +246,7 @@ export default async function DashboardPage() {
                                         <span className="w-1 h-1 bg-border rounded-full"></span>
                                         <span className={t.status === 'Open' ? 'text-green-500' : 'text-yellow-500'}>{t.status || 'Upcoming'}</span>
                                     </div>
-                                </div>
+                                </Link>
                             ))}
                             <div className="mt-4 text-center">
                                 <Link href="/dashboard/tournaments?tab=my" className="text-sm text-muted-foreground hover:text-primary transition-colors">
