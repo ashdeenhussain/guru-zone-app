@@ -488,52 +488,21 @@ function CreateTournamentForm({ onBack, onSuccess }: { onBack: () => void, onSuc
     const [isGiveaway, setIsGiveaway] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    // Auto-Calculate Prize Distribution
+    // 1. Recalculate total pool when base economy changes (Standard Tournaments Only)
     useEffect(() => {
-        const PERCENT_TIERS: Record<string, number[]> = {
-            'TOP 3': [50, 30, 20],
-            'TOP 5': [40, 25, 15, 10, 10],
-            'TOP 10': [30, 20, 15, 10, 8, 5, 4, 3, 3, 2]
-        };
-        const tiers = PERCENT_TIERS[formData.prizeType] || PERCENT_TIERS['TOP 3'];
-        const keys = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'] as const;
-
-        if (isGiveaway) {
-            // For Giveaways: Redistribute current prize pool when prizeType changes
-            const newDistribution = { ...formData.prizeDistribution };
-            keys.forEach((key, i) => {
-                if (i < tiers.length) {
-                    (newDistribution as any)[key] = Math.floor((formData.prizePool * tiers[i]) / 100);
-                } else {
-                    (newDistribution as any)[key] = 0;
-                }
-            });
-            setFormData(prev => ({ ...prev, prizeDistribution: newDistribution }));
-            return;
-        }
-
+        if (isGiveaway) return;
+        
         const totalCollected = formData.entryFee * (formData.maxSlots || 0);
         const PLATFORM_FEE = 0.30; // 30% platform fee
         const calculatedPool = Math.floor(totalCollected * (1 - PLATFORM_FEE));
+        
+        handlePrizePoolChange(calculatedPool);
+    }, [formData.entryFee, formData.maxSlots, isGiveaway]);
 
-        const newDistribution = { ...formData.prizeDistribution };
-        keys.forEach((key, i) => {
-            if (i < tiers.length) {
-                (newDistribution as any)[key] = Math.floor((calculatedPool * tiers[i]) / 100);
-            } else {
-                (newDistribution as any)[key] = 0;
-            }
-        });
-
-        // Sum up the distribution to get the actual pool (due to rounding)
-        const finalPool = Object.values(newDistribution).reduce((a, b) => a + b, 0);
-
-        setFormData(prev => ({
-            ...prev,
-            prizePool: finalPool,
-            prizeDistribution: newDistribution
-        }));
-    }, [formData.entryFee, formData.maxSlots, formData.prizeType, isGiveaway]);
+    // 2. Redistribute when prize type changes
+    useEffect(() => {
+        handlePrizePoolChange(formData.prizePool);
+    }, [formData.prizeType]);
 
     // Handle Manual Prize Pool Change (for Giveaways)
     const handlePrizePoolChange = (pool: number) => {
@@ -744,15 +713,14 @@ function CreateTournamentForm({ onBack, onSuccess }: { onBack: () => void, onSuc
                             </div>
                         </InputGroup>
 
-                        <InputGroup label={`Prize Pool (${isGiveaway ? 'Editable' : 'Auto'})`}>
+                        <InputGroup label={`Prize Pool (Coins)`}>
                             <div className="relative">
                                 <span className="absolute left-3 top-3 text-emerald-600 dark:text-emerald-500 font-bold">$</span>
                                 <input
                                     type="number"
-                                    className={`${inputStyles} pl-8 font-mono ${isGiveaway ? 'bg-background dark:bg-black/40 border-primary/30 ring-1 ring-primary/20' : 'bg-muted/30'}`}
+                                    className={`${inputStyles} pl-8 font-mono bg-background dark:bg-black/40 border-primary/30 ring-1 ring-primary/20`}
                                     value={formData.prizePool}
-                                    onChange={e => isGiveaway && handlePrizePoolChange(parseInt(e.target.value) || 0)}
-                                    readOnly={!isGiveaway}
+                                    onChange={e => handlePrizePoolChange(parseInt(e.target.value) || 0)}
                                 />
                                 <div className="absolute right-3 top-2.5 text-[10px] text-muted-foreground uppercase font-bold">Total Pool</div>
                             </div>
