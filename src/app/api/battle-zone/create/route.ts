@@ -80,7 +80,6 @@ export async function POST(req: Request) {
                     type: 'entry_fee',
                     description: `Host created Battle Match: ${title}`,
                     status: 'completed',
-                    balanceAfter: user.walletBalance
                 }], { session: dbSession });
             }
 
