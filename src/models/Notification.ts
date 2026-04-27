@@ -21,11 +21,15 @@ const NotificationSchema = new Schema(
         },
         type: {
             type: String,
-            enum: ['info', 'success', 'warning', 'error'],
+            enum: ['info', 'success', 'warning', 'error', 'Tournament'],
             default: 'info',
         },
         link: {
             type: String,
+            required: false,
+        },
+        data: {
+            type: Schema.Types.Mixed,
             required: false,
         },
     },

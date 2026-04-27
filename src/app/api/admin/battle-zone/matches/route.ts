@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import connectMongo from '@/lib/db';
-import Tournament from '@/models/Tournament';
+import BattleMatch from '@/models/BattleMatch';
 import User from '@/models/User';
 
 export async function GET(req: Request) {
@@ -24,14 +24,14 @@ export async function GET(req: Request) {
         const limit = parseInt(searchParams.get('limit') || '50', 10);
         const skip = (page - 1) * limit;
 
-        const matches = await Tournament.find({ gameType: 'CS' }) // Filter by Battle Zone types if needed.
+        const matches = await BattleMatch.find({})
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
             .populate('createdBy', 'name inGameName email')
             .populate('participants.userId', 'name inGameName email');
 
-        const total = await Tournament.countDocuments({ gameType: 'CS' });
+        const total = await BattleMatch.countDocuments({});
 
         return NextResponse.json({
             success: true,

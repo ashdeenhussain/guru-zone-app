@@ -56,7 +56,7 @@ export default function HostControls({ tournament, onUpdate }: HostControlsProps
         
         setIsUpdating(true);
         try {
-            const res = await fetch(`/api/tournaments/${tournament._id}/room`, {
+            const res = await fetch(`/api/battle-zone/matches/${tournament._id}/room`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ roomID: roomId, roomPassword: roomPass }),
@@ -81,7 +81,7 @@ export default function HostControls({ tournament, onUpdate }: HostControlsProps
 
         setIsDeclaring(true);
         try {
-            const res = await fetch(`/api/tournaments/${tournament._id}/result`, {
+            const res = await fetch(`/api/battle-zone/matches/${tournament._id}/result`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
@@ -110,7 +110,7 @@ export default function HostControls({ tournament, onUpdate }: HostControlsProps
 
         setIsSubmittingDispute(true);
         try {
-            const res = await fetch(`/api/tournaments/${tournament._id}/result`, {
+            const res = await fetch(`/api/battle-zone/matches/${tournament._id}/result`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -385,7 +385,7 @@ export default function HostControls({ tournament, onUpdate }: HostControlsProps
                         onClick={async () => {
                             if (!confirm("Are you sure? This will refund all players immediately.")) return;
                             try {
-                                const res = await fetch(`/api/tournaments/${tournament._id}/cancel`, { method: 'POST' });
+                                const res = await fetch(`/api/battle-zone/matches/${tournament._id}/cancel`, { method: 'POST' });
                                 const data = await res.json();
                                 if (data.success) {
                                     toast.success("Tournament cancelled and refunded");

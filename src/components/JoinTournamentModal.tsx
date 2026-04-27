@@ -20,9 +20,10 @@ interface JoinTournamentModalProps {
         freeFireUid?: string;
     };
     onJoinSuccess?: () => void;
+    joinApiUrl?: string;
 }
 
-export default function JoinTournamentModal({ isOpen, onClose, tournament, user, onJoinSuccess }: JoinTournamentModalProps) {
+export default function JoinTournamentModal({ isOpen, onClose, tournament, user, onJoinSuccess, joinApiUrl }: JoinTournamentModalProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -80,7 +81,8 @@ export default function JoinTournamentModal({ isOpen, onClose, tournament, user,
                 if (formData.player4Name) payload.teammates.push({ name: formData.player4Name, uid: formData.player4Uid });
             }
 
-            const res = await fetch('/api/tournaments/join', {
+            const apiUrl = joinApiUrl || '/api/tournaments/join';
+            const res = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)

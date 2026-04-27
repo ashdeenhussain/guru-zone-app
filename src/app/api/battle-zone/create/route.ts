@@ -3,19 +3,19 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import connectMongo from '@/lib/db';
 import User from '@/models/User';
-import Tournament from '@/models/Tournament';
-import Transaction from '@/models/Transaction'; // Assuming a Transaction model exists or is used for logs
+import BattleMatch from '@/models/BattleMatch';
+import Transaction from '@/models/Transaction';
 import mongoose from 'mongoose';
 
 export async function POST(req: Request) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session?.user?.email) {
+        if (!session?.user) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
         const body = await req.json();
-        const { format, entryFee } = body;
+        const { format, entryFee, gameMode, mapName, advancedRules } = body;
 
         // Input Validation
         if (!['1v1', '2v2', '4v4'].includes(format)) {
@@ -32,9 +32,18 @@ export async function POST(req: Request) {
 
         await connectMongo();
 
-        const user = await User.findOne({ email: session.user.email });
+        const userId = (session.user as any).id;
+        const user = await User.findById(userId);
         if (!user) {
             return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
+        }
+
+        // Trust Score Check
+        if ((user.trustScore ?? 100) < 80) {
+            return NextResponse.json({ 
+                success: false, 
+                error: `Trust Score too low (${user.trustScore ?? 100}%). You need at least 80% to host matches.` 
+            }, { status: 403 });
         }
 
         // Check wallet balance
@@ -48,61 +57,64 @@ export async function POST(req: Request) {
         // Auto-calculate Prize Pool
         const totalPot = fee * totalPlayers;
         const platformFeePercentage = 0.10; // 10%
-        const prizePool = Math.floor(totalPot - (totalPot * platformFeePercentage)); // Keeping it integer based or 2 decimals
+        const prizePool = Math.floor(totalPot - (totalPot * platformFeePercentage));
 
         // Auto-generate Title
         const hostName = user.inGameName || user.name || 'Anonymous';
-        const title = `${hostName}'s ${format} Clash`;
+        const title = `${hostName}'s ${format} ${gameMode || 'Clash'}`;
 
         // Start a session for atomic operations
         const dbSession = await mongoose.startSession();
         dbSession.startTransaction();
 
         try {
-            // Deduct entry fee
+            // 1. Deduct entry fee
             if (fee > 0) {
                 user.walletBalance -= fee;
                 await user.save({ session: dbSession });
 
-                // Create a transaction record if the model exists, otherwise this can be omitted depending on current system
-                if (mongoose.models.Transaction) {
-                    await mongoose.models.Transaction.create([{
-                        userId: user._id,
-                        amount: fee,
-                        type: 'Tournament Entry',
-                        description: `Host created tournament: ${title}`,
-                        status: 'completed',
-                        balanceAfter: user.walletBalance
-                    }], { session: dbSession });
-                }
+                // Create a transaction record
+                await Transaction.create([{
+                    user: user._id,
+                    amount: -fee,
+                    type: 'entry_fee',
+                    description: `Host created Battle Match: ${title}`,
+                    status: 'completed',
+                    balanceAfter: user.walletBalance
+                }], { session: dbSession });
             }
 
-            // Create Tournament
-            const newTournament = await Tournament.create([{
+            // 2. Create BattleMatch (STRICTLY separate from Tournaments)
+            const newMatch = await BattleMatch.create([{
                 title,
                 format,
-                gameType: 'CS', // Default to Clash Squad for Battle Zone, or let users choose later
+                gameMode: gameMode || 'Clash Squad',
+                mapName: mapName || 'Bermuda',
                 entryFee: fee,
                 prizePool,
-                status: 'upcoming',
+                status: 'open',
                 createdBy: user._id,
-                isOfficial: user.role === 'admin' || user.role === 'team_member',
-                maxSlots: 2, // Strictly 2 Captains
-                joinedCount: 1, // Host is the first participant
-                startTime: new Date(), // "Play Now"
+                isOfficial: false, // ALWAYS false for Battle Zone, regardless of user role
+                maxSlots: 2, 
+                joinedCount: 1,
                 participants: [{
                     userId: user._id,
                     inGameName: user.inGameName,
                     uid: user.freeFireUid
-                }]
+                }],
+                advancedRules: advancedRules || {
+                    rounds: 7,
+                    limitedAmmo: true,
+                    headshotOnly: false
+                }
             }], { session: dbSession });
 
             await dbSession.commitTransaction();
 
             return NextResponse.json({
                 success: true,
-                message: 'Tournament created successfully',
-                data: newTournament[0]
+                message: 'Battle match created successfully',
+                data: newMatch[0]
             });
         } catch (error) {
             await dbSession.abortTransaction();
@@ -112,7 +124,8 @@ export async function POST(req: Request) {
         }
 
     } catch (error: any) {
-        console.error('Error creating battle zone tournament:', error);
+        console.error('Error creating battle match:', error);
         return NextResponse.json({ success: false, error: error.message || 'Internal Server Error' }, { status: 500 });
     }
 }
+

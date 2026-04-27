@@ -58,26 +58,21 @@ export default function HostTournamentModal({ isOpen, onClose, onSuccess }: Host
     const prizePool = calculatePrizePool(parsedFee, formatDetails[format].players);
 
     const handleCreate = async () => {
-        if (parsedFee < 0) return;
+        if (parsedFee < 10 || parsedFee > 100) return;
 
         setIsLoading(true);
         setError(null);
 
         try {
-            const res = await fetch('/api/tournaments', {
+            const res = await fetch('/api/battle-zone/create', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     format, 
-                    gameType: gameMode === 'Clash Squad' ? 'CS' : 'BR', // Map lone wolf to BR or update model
                     entryFee: parsedFee,
-                    prizePool: parsedFee * formatDetails[format].players, // Pass GROSS total; server handles 10% rake at payout
-                    title: `${format} ${gameMode} on ${mapName}`,
-                    startTime: new Date(Date.now() + 15 * 60 * 1000).toISOString(), // 15 mins from now
-                    maxSlots: format === '1v1' ? 2 : (format === '2v2' ? 4 : 8),
+                    gameMode,
+                    mapName,
                     advancedRules: {
-                        gameMode,
-                        mapName,
                         rounds,
                         limitedAmmo,
                         headshotOnly
@@ -92,6 +87,7 @@ export default function HostTournamentModal({ isOpen, onClose, onSuccess }: Host
             }
 
             if (data.success) {
+                // Return the ID to the caller which will handle redirection
                 onSuccess(data.data._id);
             }
         } catch (err: any) {

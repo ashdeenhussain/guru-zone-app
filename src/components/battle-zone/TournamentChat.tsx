@@ -41,7 +41,7 @@ export default function TournamentChat({ tournamentId, isHost, isParticipant, is
 
     const fetchMessages = async () => {
         try {
-            const res = await fetch(`/api/tournaments/${tournamentId}/chat`);
+            const res = await fetch(`/api/battle-zone/matches/${tournamentId}/chat`);
             const data = await res.json();
             if (data.success) {
                 const newMessages = data.data;
@@ -87,7 +87,7 @@ export default function TournamentChat({ tournamentId, isHost, isParticipant, is
 
         setIsSending(true);
         try {
-            const res = await fetch(`/api/tournaments/${tournamentId}/chat`, {
+            const res = await fetch(`/api/battle-zone/matches/${tournamentId}/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ content: newMessage }),

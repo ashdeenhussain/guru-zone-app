@@ -39,7 +39,7 @@ export async function GET(req: Request) {
             if (!existingNotification) {
                 await AdminNotification.create({
                     title: reminderTitle,
-                    message: `The tournament "${tournament.title}" is starting at ${tournament.startTime.toLocaleTimeString()}. Please prepare the room credentials.`,
+                    message: `The tournament "${tournament.title}" is starting at ${tournament.startTime.toISOString()}. Please prepare the room credentials.`,
                     type: 'request',
                     link: reminderLink
                 });

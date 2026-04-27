@@ -38,8 +38,35 @@ export default function AdminNotificationDropdown() {
     const [notifications, setNotifications] = useState<AdminNotificationType[]>([]);
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [mounted, setMounted] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const userId = (session?.user as any)?.id;
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const fixDate = (dateStr: string) => {
+        const date = new Date(dateStr);
+        const now = new Date();
+        // If date is more than 1 minute in the future, it's likely a double offset (+5 hours)
+        if (date.getTime() > now.getTime() + 60000) {
+            return new Date(date.getTime() - 5 * 60 * 60 * 1000);
+        }
+        return date;
+    };
+
+    const formatMessage = (message: string) => {
+        // Regex to find ISO date strings: 2026-04-26T12:00:00.000Z or similar
+        const isoRegex = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z/g;
+        return message.replace(isoRegex, (match) => {
+            try {
+                return fixDate(match).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } catch (e) {
+                return match;
+            }
+        });
+    };
 
     const fetchNotifications = async () => {
         try {
@@ -212,11 +239,11 @@ export default function AdminNotificationDropdown() {
                                                                 {notification.title}
                                                             </h4>
                                                             <span className="text-[10px] text-muted-foreground whitespace-nowrap font-medium shrink-0 mt-0.5">
-                                                                {new Date(notification.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                {mounted ? fixDate(notification.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
                                                             </span>
                                                         </div>
                                                         <p className="text-[12px] text-muted-foreground leading-relaxed line-clamp-2">
-                                                            {notification.message}
+                                                            {formatMessage(notification.message)}
                                                         </p>
                                                         <div className="flex items-center gap-3 mt-2.5">
                                                             {notification.link && (

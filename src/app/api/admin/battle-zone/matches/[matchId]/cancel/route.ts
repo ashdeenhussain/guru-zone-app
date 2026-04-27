@@ -4,7 +4,8 @@ import { authOptions } from '@/lib/auth';
 import connectMongo from '@/lib/db';
 import Tournament from '@/models/Tournament';
 import User from '@/models/User';
-import Transaction from '@/models/Transaction'; // Assuming a Transaction model
+import Transaction from '@/models/Transaction';
+import Notification from '@/models/Notification';
 import mongoose from 'mongoose';
 
 export async function POST(req: Request, { params }: { params: Promise<{ matchId: string }> }) {
@@ -54,18 +55,25 @@ export async function POST(req: Request, { params }: { params: Promise<{ matchId
                         userToRefund.walletBalance += refundAmount;
                         await userToRefund.save({ session: sessionDB });
 
-                        if (mongoose.models.Transaction) {
-                            await mongoose.models.Transaction.create([{
-                                userId: userToRefund._id,
+                        if (Transaction) {
+                            await Transaction.create([{
+                                user: userToRefund._id,
                                 amount: refundAmount,
-                                type: 'Refund',
+                                type: 'refund',
                                 description: `Refund for cancelled match: ${match.title}`,
                                 status: 'completed',
-                                balanceAfter: userToRefund.walletBalance,
-                                // Provide an admin ref if model supports
-                                adminId: adminUser._id
+                                referenceId: match._id
                             }], { session: sessionDB });
                         }
+
+                        // Send Notification
+                        await Notification.create([{
+                            userId: userToRefund._id,
+                            type: 'Tournament',
+                            title: 'Match Cancelled',
+                            message: `The match "${match.title}" has been cancelled. ${refundAmount} coins have been refunded to your wallet.`,
+                            data: { matchId: match._id }
+                        }], { session: sessionDB });
                     }
                 }
             }

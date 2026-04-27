@@ -71,7 +71,7 @@ export default function PlayerControls({ tournament, userId, onUpdate }: PlayerC
 
         setIsLoadingCreds(true);
         try {
-            const res = await fetch(`/api/tournaments/${tournament._id}/room`);
+            const res = await fetch(`/api/battle-zone/matches/${tournament._id}/room`);
             const data = await res.json();
             if (data.success) {
                 setCreds(data.data);
@@ -91,7 +91,7 @@ export default function PlayerControls({ tournament, userId, onUpdate }: PlayerC
 
         setIsVerifying(true);
         try {
-            const res = await fetch(`/api/tournaments/${tournament._id}/result`, {
+            const res = await fetch(`/api/battle-zone/matches/${tournament._id}/result`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action }),
@@ -118,7 +118,7 @@ export default function PlayerControls({ tournament, userId, onUpdate }: PlayerC
 
         setIsSubmittingDispute(true);
         try {
-            const res = await fetch(`/api/tournaments/${tournament._id}/result`, {
+            const res = await fetch(`/api/battle-zone/matches/${tournament._id}/result`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

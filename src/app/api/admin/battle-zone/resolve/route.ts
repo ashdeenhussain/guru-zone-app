@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/db';
-import Tournament from '@/models/Tournament';
+import BattleMatch from '@/models/BattleMatch';
 import User from '@/models/User';
 import Transaction from '@/models/Transaction';
 import Notification from '@/models/Notification';
@@ -21,27 +21,26 @@ export async function POST(req: Request) {
         const { tournamentId, action, adminNote } = await req.json();
 
         if (!tournamentId) {
-            return NextResponse.json({ success: false, error: 'Tournament ID required' }, { status: 400 });
+            return NextResponse.json({ success: false, error: 'Match ID required' }, { status: 400 });
         }
 
-        // Fetch full tournament with all relevant fields
-        const tournament = await Tournament.findById(tournamentId)
+        const match = await BattleMatch.findById(tournamentId)
             .select('+roomID +roomPassword');
 
-        if (!tournament) {
-            return NextResponse.json({ success: false, error: 'Tournament not found' }, { status: 404 });
+        if (!match) {
+            return NextResponse.json({ success: false, error: 'Match not found' }, { status: 404 });
         }
 
-        if (!['Disputed', 'Verifying'].includes(tournament.status)) {
+        if (!['disputed', 'pending_verification', 'active'].includes(match.status)) {
             return NextResponse.json({
                 success: false,
-                error: `Match is not in a disputable state (current: ${tournament.status})`
+                error: `Match is not in a resolvable state (current: ${match.status})`
             }, { status: 400 });
         }
 
         // Identify the two players
-        const hostId = tournament.createdBy?.toString();
-        const joinerParticipant = tournament.participants.find((p: any) => {
+        const hostId = match.createdBy?.toString();
+        const joinerParticipant = match.participants.find((p: any) => {
             const pId = (p.userId._id || p.userId).toString();
             return pId !== hostId;
         });
@@ -49,11 +48,11 @@ export async function POST(req: Request) {
             ? (joinerParticipant.userId._id || joinerParticipant.userId).toString()
             : null;
 
-        const grossPrize = tournament.prizeDistribution?.first || tournament.prizePool;
+        const grossPrize = match.prizePool;
         const platformFee = Math.floor(grossPrize * PLATFORM_FEE_PCT);
         const netPrize = grossPrize - platformFee;
 
-        // --- Helper for Trust Score Updates ---
+        // Trust Score Helper
         const updateTrustScore = async (userId: string, change: number, reason: string) => {
             const user = await User.findById(userId);
             if (user) {
@@ -76,26 +75,23 @@ export async function POST(req: Request) {
             }
         };
 
-        // ── ACTION: FORCE WIN (Host OR Joiner) ────────────────────────────────────
+        // ACTION: FORCE WIN
         if (action === 'force_win_host' || action === 'force_win_joiner') {
             const winnerId = action === 'force_win_host' ? hostId : joinerId;
             const loserId = action === 'force_win_host' ? joinerId : hostId;
             const winnerLabel = action === 'force_win_host' ? 'Host' : 'Joiner';
-            const loserLabel = action === 'force_win_host' ? 'Joiner' : 'Host';
 
             if (!winnerId) {
-                return NextResponse.json({ success: false, error: `${winnerLabel} not identified in match` }, { status: 400 });
+                return NextResponse.json({ success: false, error: `${winnerLabel} not identified` }, { status: 400 });
             }
 
-            // --- Atomic-style: update tournament first, then users ---
-            tournament.winners = { rank1: winnerId };
-            tournament.status = 'Completed';
-            tournament.verificationStatus = 'Confirmed';
-            tournament.adminNote = adminNote || `Admin force-resolved: ${winnerLabel} wins.`;
-            tournament.resolvedAt = new Date();
-            await tournament.save();
+            match.winners = { rank1: winnerId };
+            match.status = 'completed';
+            match.verificationStatus = 'Confirmed';
+            match.adminNote = adminNote || `Admin force-resolved: ${winnerLabel} wins.`;
+            match.resolvedAt = new Date();
+            await match.save();
 
-            // Pay Winner
             const winner = await User.findById(winnerId);
             if (winner) {
                 winner.walletBalance += netPrize;
@@ -107,39 +103,33 @@ export async function POST(req: Request) {
                     user: winnerId,
                     amount: netPrize,
                     type: 'winning',
-                    description: `Admin Resolved (${winnerLabel} wins): ${tournament.title} — gross: ${grossPrize}, 10% fee: ${platformFee}, net payout: ${netPrize}`,
+                    description: `Admin Resolved: ${match.title} (${winnerLabel} wins)`,
                     status: 'completed',
-                    referenceId: tournament._id
+                    referenceId: match._id
                 });
             }
 
-            // Trust Score Updates
             await updateTrustScore(winnerId, 5, 'Won an admin-resolved dispute');
             if (loserId) {
                 await updateTrustScore(loserId, -10, 'Lost an admin-resolved dispute');
             }
 
-            return NextResponse.json({
-                success: true,
-                message: `${winnerLabel} declared winner. Trust Scores updated (+5 winner, -10 loser).`
-            });
+            return NextResponse.json({ success: true, message: `${winnerLabel} declared winner.` });
         }
 
-        // ── ACTION: CANCEL & REFUND BOTH (Draw / Invalid) ──────────────────────────
+        // ACTION: CANCEL & REFUND
         if (action === 'cancel_refund_both') {
-            const entryFee = tournament.entryFee || 0;
+            const entryFee = match.entryFee || 0;
 
-            tournament.status = 'Cancelled';
-            tournament.verificationStatus = 'Rejected';
-            tournament.adminNote = adminNote || 'Admin cancelled: full refund issued to both players.';
-            tournament.resolvedAt = new Date();
-            await tournament.save();
+            match.status = 'cancelled';
+            match.adminNote = adminNote || 'Admin cancelled: full refund issued.';
+            match.resolvedAt = new Date();
+            await match.save();
 
             const refundIds: string[] = [];
             if (hostId) refundIds.push(hostId);
             if (joinerId) refundIds.push(joinerId);
 
-            // Refund each player their exact entry fee (no rake on cancellations)
             await Promise.all(refundIds.map(async (uid) => {
                 const user = await User.findById(uid);
                 if (user && entryFee > 0) {
@@ -150,26 +140,17 @@ export async function POST(req: Request) {
                         user: uid,
                         amount: entryFee,
                         type: 'refund',
-                        description: `Admin Cancelled & Refunded: ${tournament.title} (Draw/Invalid — full refund, no fee)`,
+                        description: `Admin Cancelled: ${match.title}`,
                         status: 'completed',
-                        referenceId: tournament._id
+                        referenceId: match._id
                     });
-
-                    sendPushNotification(uid.toString(), {
-                        title: 'Match Cancelled by Admin',
-                        body: `The match "${tournament.title}" was cancelled by an admin. Your entry fee has been refunded.`,
-                        url: '/dashboard'
-                    }).catch(console.error);
                 }
             }));
 
-            return NextResponse.json({
-                success: true,
-                message: `Match cancelled. ${entryFee} coins refunded to each player (no fee on cancellations).`
-            });
+            return NextResponse.json({ success: true, message: `Match cancelled and refunded.` });
         }
 
-        return NextResponse.json({ success: false, error: 'Invalid action. Use force_win_host, force_win_joiner, or cancel_refund_both.' }, { status: 400 });
+        return NextResponse.json({ success: false, error: 'Invalid action.' }, { status: 400 });
 
     } catch (error: any) {
         console.error('Admin resolve error:', error);
