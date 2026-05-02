@@ -1,0 +1,13 @@
+﻿
+> guru-zone@0.1.0 build
+> next build
+
+node.exe : Γ¿» Unable to acquire lock at C:\Users\ashde\Downloads\ashi\clon of zp\guru-zone\.next\lock, is another 
+instance of next build running?
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Γ¿» Unable to a... build running?:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  Suggestion: If you intended to restart next build, terminate the other process, and then try again.

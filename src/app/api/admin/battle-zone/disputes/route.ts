@@ -126,7 +126,7 @@ export async function POST(req: Request) {
                         await joiner.save();
 
                         await Notification.create({
-                            userId: lyingJoinerId,
+                            userId: lyingJoinerId as any,
                             title: '🛑 Trust Score Penalty',
                             message: `Admin determined your dispute for "${tournament.title}" was invalid. -10 Trust Score penalty.`,
                             type: 'error'
@@ -160,7 +160,7 @@ export async function POST(req: Request) {
                         await user.save();
 
                         await Transaction.create({
-                            user: pId,
+                            user: pId as any,
                             amount: entryFee,
                             type: 'refund',
                             description: `Refund for Battle Zone (Admin Resolved): ${tournament.title}`,
@@ -169,7 +169,7 @@ export async function POST(req: Request) {
                         });
 
                         await Notification.create({
-                            userId: pId,
+                            userId: pId as any,
                             title: 'Tournament Refunded',
                             message: `The dispute for "${tournament.title}" was resolved with a refund. ${entryFee} coins returned to wallet.`,
                             type: 'info'
