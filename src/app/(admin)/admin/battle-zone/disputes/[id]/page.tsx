@@ -23,7 +23,6 @@ interface MatchDetail {
     prizePool: number;
     status: string;
     disputeReason: string;
-    disputeProof: string;
     adminNote?: string;
     createdAt: string;
     updatedAt: string;
