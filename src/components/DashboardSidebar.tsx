@@ -41,7 +41,7 @@ export default function DashboardSidebar() {
         { icon: Gift, label: "Daily Reward", href: "/dashboard/daily-reward", special: true },
         { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
         { icon: Trophy, label: "My Tournaments", href: "/dashboard/tournaments" },
-        { icon: Swords, label: "Battle Zone", href: "/dashboard/battle-zone" },
+        { icon: Swords, label: "Battle Zone", href: "/battle-zone" },
         { icon: ShoppingBag, label: "Diamond Shop", href: "/dashboard/shop" },
         { icon: Crown, label: "Leaderboard", href: "/dashboard/leaderboard" },
         { icon: Wallet, label: "Wallet", href: "/dashboard/wallet" },

@@ -30,6 +30,8 @@ interface MatchDetail {
     createdBy: { _id: string; name: string; username: string; inGameName: string; freeFireUid: string; image?: string };
     participants: Participant[];
     winners: { rank1?: { _id: string; name: string; inGameName: string; freeFireUid: string; image?: string } };
+    winnerScreenshot?: string;
+    disputeProof?: string;
 }
 
 interface ChatMessage {
@@ -57,8 +59,8 @@ export default function DisputeDetailPage() {
         async function load() {
             try {
                 const [matchRes, chatRes] = await Promise.all([
-                    fetch(`/api/tournaments/${id}`),
-                    fetch(`/api/tournaments/${id}/chat`)
+                    fetch(`/api/battle-zone/matches/${id}`),
+                    fetch(`/api/battle-zone/matches/${id}/chat`)
                 ]);
                 const matchData = await matchRes.json();
                 const chatData = await chatRes.json();
@@ -219,68 +221,125 @@ export default function DisputeDetailPage() {
                         </div>
                     </div>
 
-                    {/* Dispute Evidence */}
-                    <div className="bg-card border border-red-500/20 rounded-xl p-4 space-y-3">
-                        <h3 className="font-bold text-sm flex items-center gap-2 text-red-500">
-                            <AlertTriangle className="w-4 h-4" />
-                            Dispute Evidence
-                        </h3>
+                    {/* Dispute Evidence — Side-by-Side Comparison */}
+                    <div className="bg-card border border-border rounded-[2rem] p-6 space-y-6 shadow-xl shadow-black/5">
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-black text-xs uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                <Shield className="w-4 h-4 text-primary" />
+                                Evidence Comparison
+                            </h3>
+                            <div className="bg-destructive/10 text-destructive text-[10px] font-black px-3 py-1 rounded-full border border-destructive/20 uppercase tracking-widest">
+                                Conflict Review
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Host Side */}
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2 px-1">
+                                    <div className="w-2 h-2 rounded-full bg-green-500" />
+                                    <h4 className="text-[10px] font-black uppercase text-muted-foreground">Host's Victory Claim</h4>
+                                </div>
+                                {match.winnerScreenshot ? (
+                                    <div className="group relative aspect-video rounded-3xl border-2 border-border overflow-hidden bg-muted shadow-2xl">
+                                        <img 
+                                            src={match.winnerScreenshot} 
+                                            alt="Host Proof" 
+                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                                        />
+                                        <a 
+                                            href={match.winnerScreenshot} 
+                                            target="_blank" 
+                                            className="absolute inset-0 bg-black/60 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2"
+                                        >
+                                            <div className="p-3 bg-white/20 rounded-full border border-white/40">
+                                                <FileText className="w-6 h-6 text-white" />
+                                            </div>
+                                            <span className="text-[10px] font-black text-white uppercase tracking-widest">View Full Proof</span>
+                                        </a>
+                                    </div>
+                                ) : (
+                                    <div className="aspect-video rounded-3xl border-2 border-dashed border-border flex items-center justify-center bg-muted/30 text-xs font-bold text-muted-foreground italic px-6 text-center">
+                                        Host provided no victory screenshot
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Joiner Side */}
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2 px-1">
+                                    <div className="w-2 h-2 rounded-full bg-destructive" />
+                                    <h4 className="text-[10px] font-black uppercase text-muted-foreground">Joiner's Dispute Proof</h4>
+                                </div>
+                                {match.disputeProof ? (
+                                    <div className="group relative aspect-video rounded-3xl border-2 border-border overflow-hidden bg-muted shadow-2xl">
+                                        <img 
+                                            src={match.disputeProof} 
+                                            alt="Joiner Proof" 
+                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                                        />
+                                        <a 
+                                            href={match.disputeProof} 
+                                            target="_blank" 
+                                            className="absolute inset-0 bg-black/60 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2"
+                                        >
+                                            <div className="p-3 bg-white/20 rounded-full border border-white/40">
+                                                <FileText className="w-6 h-6 text-white" />
+                                            </div>
+                                            <span className="text-[10px] font-black text-white uppercase tracking-widest">View Counter Proof</span>
+                                        </a>
+                                    </div>
+                                ) : (
+                                    <div className="aspect-video rounded-3xl border-2 border-dashed border-border flex items-center justify-center bg-muted/30 text-xs font-bold text-muted-foreground italic px-6 text-center">
+                                        Joiner provided no counter-evidence
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
                         {match.disputeReason && (
-                            <div className="bg-muted/30 rounded-lg p-3 border border-border/50">
-                                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold mb-1">Dispute Reason</p>
-                                <p className="text-sm">{match.disputeReason}</p>
-                            </div>
-                        )}
-                        {match.disputeProof ? (
-                            <div className="space-y-2">
-                                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Proof Screenshot</p>
-                                <a href={match.disputeProof} target="_blank" rel="noreferrer" className="block">
-                                    <img
-                                        src={match.disputeProof}
-                                        alt="Dispute proof"
-                                        className="w-full rounded-lg border border-border object-contain max-h-80 hover:opacity-90 transition-opacity cursor-zoom-in bg-muted"
-                                    />
-                                </a>
-                                <a
-                                    href={match.disputeProof}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="text-xs text-primary underline"
-                                >
-                                    Open Full Image ↗
-                                </a>
-                            </div>
-                        ) : (
-                            <div className="bg-muted/20 rounded-lg p-4 text-center text-muted-foreground text-sm border border-dashed border-border">
-                                No proof screenshot uploaded
+                            <div className="bg-destructive/5 border border-destructive/10 rounded-2xl p-5 space-y-2">
+                                <p className="text-[10px] font-black text-destructive uppercase tracking-widest flex items-center gap-2">
+                                    <MessageSquare className="w-3 h-3" /> Dispute Statement
+                                </p>
+                                <p className="text-sm font-medium leading-relaxed">{match.disputeReason}</p>
                             </div>
                         )}
                     </div>
 
                     {/* Chat Logs */}
-                    <div className="bg-card border border-border rounded-xl overflow-hidden">
-                        <div className="bg-muted/50 px-4 py-2.5 border-b border-border flex items-center gap-2">
-                            <MessageSquare className="w-4 h-4 text-primary" />
-                            <h3 className="font-bold text-sm">Match Chat Log</h3>
-                            <span className="ml-auto text-xs text-muted-foreground">{chats.length} messages</span>
+                    <div className="bg-card border border-border rounded-[2rem] overflow-hidden shadow-xl shadow-black/5">
+                        <div className="bg-muted/30 px-6 py-4 border-b border-border flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <MessageSquare className="w-4 h-4 text-primary" />
+                                <h3 className="font-black text-xs uppercase tracking-widest text-muted-foreground">Match Chat Log</h3>
+                            </div>
+                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest bg-background px-3 py-1 rounded-full border border-border">
+                                {chats.length} Messages
+                            </span>
                         </div>
-                        <div className="p-4 max-h-80 overflow-y-auto space-y-3">
+                        <div className="p-6 max-h-[400px] overflow-y-auto space-y-4 bg-muted/10">
                             {chats.length === 0 ? (
-                                <p className="text-sm text-muted-foreground text-center py-4">No chat messages</p>
+                                <div className="text-center py-12 space-y-3 opacity-40">
+                                    <MessageSquare className="w-12 h-12 mx-auto" />
+                                    <p className="text-xs font-black uppercase">No communication history</p>
+                                </div>
                             ) : (
                                 chats.map(msg => (
-                                    <div key={msg._id} className="flex gap-2">
-                                        <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+                                    <div key={msg._id} className="flex gap-3">
+                                        <div className="w-8 h-8 rounded-xl bg-background border border-border flex items-center justify-center text-xs font-black shrink-0 shadow-sm">
                                             {msg.senderName?.[0]?.toUpperCase() || '?'}
                                         </div>
-                                        <div className="flex-1 bg-muted/30 rounded-lg px-3 py-2">
-                                            <div className="flex items-center gap-2 mb-0.5">
-                                                <span className="text-xs font-bold">{msg.senderName || 'Unknown'}</span>
-                                                <span className="text-[10px] text-muted-foreground">
-                                                    {format(new Date(msg.createdAt), 'HH:mm')}
+                                        <div className="flex-1 space-y-1">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[10px] font-black uppercase tracking-tight text-primary">{msg.senderName || 'System'}</span>
+                                                <span className="text-[9px] font-bold text-muted-foreground uppercase">
+                                                    {format(new Date(msg.createdAt), 'HH:mm:ss')}
                                                 </span>
                                             </div>
-                                            <p className="text-sm">{msg.content}</p>
+                                            <div className="bg-background border border-border/50 rounded-2xl rounded-tl-none px-4 py-2.5 shadow-sm">
+                                                <p className="text-sm font-medium">{msg.content}</p>
+                                            </div>
                                         </div>
                                     </div>
                                 ))

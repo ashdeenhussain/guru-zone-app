@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/db';
-import Tournament from '@/models/Tournament';
+import BattleMatch from '@/models/BattleMatch';
 import User from '@/models/User';
 import Transaction from '@/models/Transaction';
 import Notification from '@/models/Notification';
@@ -17,7 +17,7 @@ export async function GET() {
         }
 
         await connectToDatabase();
-        const disputes = await Tournament.find({ status: 'disputed' })
+        const disputes = await BattleMatch.find({ status: 'disputed' })
             .populate({
                 path: 'createdBy',
                 select: 'username name'
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
         const { tournamentId, action } = await req.json();
         
         await connectToDatabase();
-        const tournament = await Tournament.findById(tournamentId);
+        const tournament = await BattleMatch.findById(tournamentId);
 
         if (!tournament) return NextResponse.json({ success: false, error: 'Tournament not found' }, { status: 404 });
         if (tournament.status !== 'disputed') {
@@ -83,6 +83,8 @@ export async function POST(req: Request) {
                 winner.walletBalance += netPrize;
                 winner.totalWins = (winner.totalWins || 0) + 1;
                 winner.netEarnings = (winner.netEarnings || 0) + netPrize;
+                winner.battleZoneWins = (winner.battleZoneWins || 0) + 1;
+                winner.battleZoneEarnings = (winner.battleZoneEarnings || 0) + netPrize;
                 await winner.save();
 
                 await Notification.create({
@@ -138,7 +140,7 @@ export async function POST(req: Request) {
                 }
             }
 
-            tournament.status = 'Completed';
+            tournament.status = 'completed';
             tournament.verificationStatus = 'Confirmed';
             await tournament.save();
 
@@ -196,7 +198,7 @@ export async function POST(req: Request) {
                 });
             }
 
-            tournament.status = 'Cancelled';
+            tournament.status = 'cancelled';
             tournament.verificationStatus = 'Rejected';
             await tournament.save();
 

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/db';
 import BattleMatch from '@/models/BattleMatch';
-import User from '@/models/User';
+import mongoose from 'mongoose';
+import { runExpiredMatchesCleanup } from '@/lib/battle-zone-cleanup';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,24 +10,41 @@ export async function GET(req: Request) {
     try {
         await connectToDatabase();
 
+        // On-Demand Cleanup Safety Net: 
+        // Ensure any expired matches are cancelled/refunded immediately when anyone views the list
+        await runExpiredMatchesCleanup();
+
         const { searchParams } = new URL(req.url);
         const type = searchParams.get('type'); // 'all' | 'my'
         const userId = searchParams.get('userId');
 
         const query: any = {};
 
-        if (type === 'my' && userId) {
-            query.$or = [
-                { createdBy: userId },
-                { 'participants.userId': userId }
-            ];
+        // If userId is provided, we want to see matches where the user is host or participant
+        // regardless of the 'type' parameter, but especially if type='my'
+        if (userId && mongoose.Types.ObjectId.isValid(userId)) {
+            const userObjId = new mongoose.Types.ObjectId(userId);
+            if (type === 'my') {
+                // For 'my battles', show everything I'm involved in
+                query.$or = [
+                    { createdBy: userObjId },
+                    { 'participants.userId': userObjId }
+                ];
+            } else {
+                // For 'all', show open/active matches OR matches I'm involved in
+                // We now include 'cancelled' for the user's history
+                query.$or = [
+                    { status: { $in: ['open', 'full', 'active', 'pending_verification', 'disputed', 'cancelled'] } },
+                    { createdBy: userObjId },
+                    { 'participants.userId': userObjId }
+                ];
+            }
+        } else {
+            // Public view: only show open/active matches (exclude cancelled)
+            query.status = { $in: ['open', 'full', 'active', 'pending_verification', 'disputed'] };
         }
 
-        // Only show matches that are not cancelled or very old completed ones
-        // But for now, let's just return all active/open ones
-        if (!type || type === 'all') {
-             query.status = { $in: ['open', 'full', 'active', 'pending_verification', 'disputed'] };
-        }
+        console.log("BattleMatch Query:", JSON.stringify(query));
 
         const matches = await BattleMatch.find(query)
             .populate('createdBy', 'name inGameName')

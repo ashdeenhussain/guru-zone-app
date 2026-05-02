@@ -194,7 +194,7 @@ export default function MobileNavigation() {
                                 </Link>
 
                                 <Link
-                                    href="/dashboard/battle-zone"
+                                    href="/battle-zone"
                                     onClick={() => setIsMenuOpen(false)}
                                     className="flex items-center gap-4 p-4 rounded-2xl bg-card border border-border/50 hover:bg-muted/50 active:scale-[0.98] transition-all"
                                 >

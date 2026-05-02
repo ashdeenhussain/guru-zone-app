@@ -41,6 +41,7 @@ export async function POST(
 
         match.roomID = roomID;
         match.roomPassword = roomPassword;
+        match.roomIDAt = new Date();
 
         if (match.status === 'open' || match.status === 'full') {
             match.status = 'active';

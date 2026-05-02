@@ -14,12 +14,12 @@ import {
     ArrowUpRight,
     ArrowDownLeft,
     Clock,
-    CheckCircle,
     Activity,
     CreditCard,
     TrendingUp,
     ShoppingBag
 } from 'lucide-react';
+import ActivityItemClient from '@/components/admin/ActivityItemClient';
 
 // Force dynamic rendering to ensure real-time data
 export const dynamic = 'force-dynamic';
@@ -39,7 +39,7 @@ async function getAdminStats() {
         financials,
         todaysActivity,
         recentTransactions,
-        pendingDeposits // Add this to the destructuring list
+        pendingDeposits
     ] = await Promise.all([
         // 1. Total Users
         User.countDocuments(),
@@ -102,7 +102,8 @@ async function getAdminStats() {
             .sort({ createdAt: -1 })
             .limit(5)
             .populate('user', 'name email image')
-            .lean(),
+            .lean()
+            .then(docs => JSON.parse(JSON.stringify(docs))),
 
         // 9. Pending Deposits (New)
         Transaction.countDocuments({
@@ -136,9 +137,6 @@ async function getAdminStats() {
         pendingDeposits
     };
 }
-// I will rewrite the getAdminStats in full to fix the destructuring error properly in the next step or this one if allowed.
-// For now, let me fix the specific block I messed up in thought.
-// I will assume I need to fix the entire Promise.all block to include pendingDeposits in the destructuring.
 
 
 export default async function AdminDashboard() {
@@ -280,7 +278,7 @@ export default async function AdminDashboard() {
                             <p className="text-muted-foreground text-sm text-center py-4">No recent activity.</p>
                         ) : (
                             stats.recentTransactions.map((trx: any) => (
-                                <ActivityItem key={trx._id} transaction={trx} />
+                                <ActivityItemClient key={trx._id} transaction={trx} />
                             ))
                         )}
                     </div>
@@ -338,54 +336,5 @@ function ActionItem({ title, count, label, href, urgent, icon: Icon }: any) {
                 {title} <span className="text-xs opacity-70">({label})</span>
             </p>
         </a>
-    );
-}
-
-function ActivityItem({ transaction }: any) {
-    const isCredit = ['deposit', 'prize_winnings'].includes(transaction.type);
-
-    let icon = Wallet;
-    let colorClass = "text-muted-foreground";
-    let bgClass = "bg-muted";
-
-    if (transaction.type === 'deposit') {
-        icon = ArrowUpRight;
-        colorClass = "text-green-500";
-        bgClass = "bg-green-500/10";
-    } else if (transaction.type === 'withdrawal') {
-        icon = ArrowDownLeft;
-        colorClass = "text-red-500";
-        bgClass = "bg-red-500/10";
-    } else if (transaction.type === 'entry_fee') {
-        icon = Trophy;
-        colorClass = "text-yellow-600 dark:text-yellow-400";
-        bgClass = "bg-yellow-500/10";
-    }
-
-    const IconComp = icon;
-
-    return (
-        <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors border border-transparent hover:border-border">
-            <div className={`p-2 rounded-lg ${bgClass}`}>
-                <IconComp className={`w-4 h-4 ${colorClass}`} />
-            </div>
-            <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">
-                    <span className="font-semibold">{transaction.user?.name || "Unknown User"}</span>
-                    {" "}
-                    <span className="text-muted-foreground font-normal">
-                        {transaction.type === 'entry_fee' ? 'joined contest' :
-                            transaction.type === 'prize_winnings' ? 'won prize' :
-                                transaction.type}
-                    </span>
-                </p>
-                <p className="text-xs text-muted-foreground">
-                    {new Date(transaction.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </p>
-            </div>
-            <div className={`text-sm font-bold ${isCredit ? 'text-green-500' : 'text-foreground'}`}>
-                {isCredit ? '+' : '-'} {transaction.amount}
-            </div>
-        </div>
     );
 }

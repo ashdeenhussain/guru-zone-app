@@ -34,6 +34,10 @@ export function hasPermission(
     return permissions.includes(permission);
 }
 
+if (!process.env.NEXTAUTH_SECRET) {
+    console.warn("Warning: NEXTAUTH_SECRET is not defined in environment variables");
+}
+
 export const authOptions: AuthOptions = {
     debug: true,
     // adapter: MongoDBAdapter(clientPromise),

@@ -72,20 +72,35 @@ export async function POST(
             referenceId: match._id
         }], { session });
 
-        // Create/Update Escrow
-        let escrow = await Escrow.findOne({ matchId: match._id }).session(session);
+        // Link to existing Escrow or create if missing (for legacy matches)
+        const totalPot = match.entryFee * 2;
+        const platformFeePercentage = 0.10;
+        const platformFee = Math.floor(totalPot * platformFeePercentage);
+        const netPrize = totalPot - platformFee;
+
+        let escrow;
+        if (match.escrowId) {
+            escrow = await Escrow.findById(match.escrowId).session(session);
+        }
+
+        if (!escrow) {
+            // Check if escrow already exists for this matchId
+            escrow = await Escrow.findOne({ matchId: match._id }).session(session);
+        }
+
         if (!escrow) {
             escrow = new Escrow({
                 matchId: match._id,
-                totalAmount: match.entryFee, // Host's fee is already in prizePool if created? No, host paid on create.
-                participants: [{ userId: match.createdBy, amount: match.entryFee }, { userId, amount: match.entryFee }],
+                totalAmount: totalPot,
+                platformFee,
+                netPrize,
                 status: 'held'
             });
-            // Actually host already paid, so prizePool should be entryFee * 2 for 1v1.
-            // Let's just track the total held.
         } else {
-            escrow.totalAmount += match.entryFee;
-            escrow.participants.push({ userId, amount: match.entryFee });
+            // Ensure fields are updated/present
+            escrow.totalAmount = totalPot;
+            escrow.platformFee = platformFee;
+            escrow.netPrize = netPrize;
         }
         await escrow.save({ session });
 
@@ -102,18 +117,46 @@ export async function POST(
 
         if (match.joinedCount >= match.maxSlots) {
             match.status = 'active';
+            match.activatedAt = new Date();
         }
         await match.save({ session });
 
         await Notification.create([{
             userId,
-            title: "Battle Joined!",
-            message: `Joined ${match.title}. Check Match Room for details.`,
+            title: "🎮 Match Joined!",
+            message: `Joined ${match.title}. Waiting for the Host to provide the Free Fire Room ID.`,
             type: "success",
             link: `/battle-zone/${match._id}`
         }], { session });
 
+        // Notification for Host
+        await Notification.create([{
+            userId: match.createdBy,
+            title: "⚔️ Opponent Found!",
+            message: `${inGameName || 'Someone'} has joined your match. Provide Room ID within 15 minutes!`,
+            type: "warning",
+            link: `/battle-zone/${match._id}`
+        }], { session });
+
         await session.commitTransaction();
+
+        // Push Notifications
+        try {
+            sendPushNotification(userId, {
+                title: '🎮 Match Joined!',
+                body: `You joined "${match.title}". Waiting for Host to provide Room ID.`,
+                url: `/battle-zone/${match._id}`
+            }).catch(console.error);
+
+            sendPushNotification(match.createdBy.toString(), {
+                title: '⚔️ Opponent Found!',
+                body: `${inGameName || 'Someone'} joined your match. Provide Room ID now!`,
+                url: `/battle-zone/${match._id}`
+            }).catch(console.error);
+        } catch (pushErr) {
+            console.error('[JoinBattlePush] Failed:', pushErr);
+        }
+
         return NextResponse.json({ success: true, message: 'Joined battle successfully' });
 
     } catch (error: any) {

@@ -23,6 +23,7 @@ export default function HostTournamentModal({ isOpen, onClose, onSuccess }: Host
     const [rounds, setRounds] = useState(7);
     const [limitedAmmo, setLimitedAmmo] = useState(true);
     const [headshotOnly, setHeadshotOnly] = useState(false);
+    const [availabilityDuration, setAvailabilityDuration] = useState(60); // minutes
 
     // Dynamic Logic for Advanced Rules
     useEffect(() => {
@@ -76,7 +77,8 @@ export default function HostTournamentModal({ isOpen, onClose, onSuccess }: Host
                         rounds,
                         limitedAmmo,
                         headshotOnly
-                    }
+                    },
+                    availabilityDuration
                 })
             });
 
@@ -375,6 +377,29 @@ export default function HostTournamentModal({ isOpen, onClose, onSuccess }: Host
                                                     className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-md"
                                                 />
                                             </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Availability Duration */}
+                                    <div className="col-span-2 space-y-1.5 mt-2">
+                                        <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block">Availability Duration</label>
+                                        <div className="relative group">
+                                            <select 
+                                                value={availabilityDuration}
+                                                onChange={(e) => setAvailabilityDuration(parseInt(e.target.value))}
+                                                className="w-full bg-muted/40 border border-border rounded-xl px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-primary/50 font-bold transition-all"
+                                            >
+                                                <option value={15}>15 Minutes</option>
+                                                <option value={30}>30 Minutes</option>
+                                                <option value={60}>1 Hour</option>
+                                                <option value={90}>1.5 Hours</option>
+                                                <option value={120}>2 Hours</option>
+                                                <option value={180}>3 Hours</option>
+                                                <option value={300}>5 Hours</option>
+                                            </select>
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-primary">
+                                                <ArrowRight className="w-4 h-4 rotate-90" />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

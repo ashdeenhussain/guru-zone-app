@@ -23,6 +23,7 @@ interface LeaderboardUser {
     totalWins: number;
     netEarnings: number;
     tournamentsPlayed: number;
+    trustScore?: number;
     rank?: number;
 }
 
@@ -32,14 +33,16 @@ interface LeaderboardResponse {
 }
 
 export default function LeaderboardPage() {
+    const [activeTab, setActiveTab] = useState<'official' | 'battlezone'>('official');
     const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
     const [currentUser, setCurrentUser] = useState<(LeaderboardUser & { rank: number }) | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function fetchLeaderboard() {
+            setLoading(true);
             try {
-                const response = await fetch('/api/leaderboard');
+                const response = await fetch(`/api/leaderboard?type=${activeTab}`);
                 const data: LeaderboardResponse = await response.json();
                 setLeaderboard(data.leaderboard);
                 setCurrentUser(data.currentUser);
@@ -51,7 +54,7 @@ export default function LeaderboardPage() {
         }
 
         fetchLeaderboard();
-    }, []);
+    }, [activeTab]);
 
     // Podium Logic
     const topThree = leaderboard.slice(0, 3);
@@ -91,6 +94,30 @@ export default function LeaderboardPage() {
 
             <div className="max-w-5xl mx-auto px-4 py-8 space-y-10">
 
+                {/* Tabs Selector */}
+                <div className="flex justify-center mb-8">
+                    <div className="grid grid-cols-2 p-1.5 bg-muted/40 rounded-2xl border border-border/50 backdrop-blur-xl w-full max-w-md">
+                        <button
+                            onClick={() => setActiveTab('official')}
+                            className={`py-3 text-sm font-black rounded-xl transition-all duration-300 tracking-wider uppercase ${activeTab === 'official'
+                                ? 'bg-primary text-primary-foreground shadow-xl shadow-primary/25 scale-[1.02]'
+                                : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                                }`}
+                        >
+                            Official Pro League
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('battlezone')}
+                            className={`py-3 text-sm font-black rounded-xl transition-all duration-300 tracking-wider uppercase flex items-center justify-center gap-2 ${activeTab === 'battlezone'
+                                ? 'bg-primary text-primary-foreground shadow-xl shadow-primary/25 scale-[1.02]'
+                                : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                                }`}
+                        >
+                            Battle Zone Kings
+                        </button>
+                    </div>
+                </div>
+
                 {/* Empty State */}
                 {leaderboard.length === 0 && (
                     <div className="text-center py-20 bg-card/50 rounded-2xl border border-border">
@@ -100,120 +127,123 @@ export default function LeaderboardPage() {
                     </div>
                 )}
 
-                {/* Podium Section */}
+                {/* Podium Section - Redesigned Unified 2-1-3 Horizontal Layout */}
                 {leaderboard.length > 0 && (
-                    <div className="flex flex-col md:flex-row justify-center items-end gap-6 md:gap-8 mt-8 mb-16 relative">
-
-                        {/* Rank 2 (Silver) */}
+                    <div className="flex justify-center items-end gap-1 sm:gap-4 md:gap-8 mt-16 mb-20 px-1 sm:px-4">
+                        
+                        {/* Rank 2 (Silver) - Left */}
                         {rank2 && (
                             <motion.div
-                                initial={{ opacity: 0, y: 50 }}
+                                initial={{ opacity: 0, y: 30 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.2 }}
-                                className="order-2 md:order-1 flex flex-col items-center w-full md:w-1/3"
+                                className="flex flex-col items-center w-[32%] sm:w-1/3 max-w-[180px]"
                             >
-                                <div className="relative">
-                                    <div className="w-24 h-24 rounded-full border-4 border-slate-400 p-1 bg-card relative z-10 overflow-hidden shadow-[0_0_20px_rgba(148,163,184,0.3)]">
+                                <div className="relative mb-2">
+                                    <div className="w-14 h-14 sm:w-24 sm:h-24 md:w-24 md:h-24 rounded-full border-2 sm:border-4 border-slate-400 p-0.5 sm:p-1 bg-card relative z-10 overflow-hidden shadow-[0_0_15px_rgba(148,163,184,0.2)]">
                                         {(getAvatarSrc(rank2)) ? (
                                             <Image src={getAvatarSrc(rank2)!} alt={rank2.name} fill className="object-cover" />
                                         ) : (
-                                            <div className="w-full h-full bg-muted flex items-center justify-center text-xl font-bold text-muted-foreground">{getInitials(rank2.name)}</div>
+                                            <div className="w-full h-full bg-muted flex items-center justify-center text-xs sm:text-xl font-bold text-muted-foreground">{getInitials(rank2.name)}</div>
                                         )}
                                     </div>
-                                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-slate-400 text-slate-900 text-xs font-bold px-2 py-0.5 rounded-full z-20 shadow-md">
+                                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-slate-400 text-slate-900 text-[10px] sm:text-xs font-black px-1.5 sm:px-2 py-0.5 rounded-full z-20 shadow-md">
                                         #2
                                     </div>
                                 </div>
 
-                                <div className="mt-4 text-center w-full bg-card/50 p-4 rounded-xl border border-border backdrop-blur-sm">
-                                    <h3 className="font-bold text-lg text-foreground truncate">{rank2.name}</h3>
-                                    <div className="flex justify-center items-center gap-2 mt-2">
-                                        <div className="text-center">
-                                            <p className="text-xs text-muted-foreground uppercase">Wins</p>
-                                            <p className="text-lg font-bold text-primary">{rank2.totalWins}</p>
+                                <div className="w-full bg-card/40 backdrop-blur-xl p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-white/5 shadow-xl relative overflow-hidden flex flex-col items-center h-28 sm:h-40 justify-center">
+                                    <div className="absolute top-0 left-0 w-full h-0.5 bg-slate-400/50"></div>
+                                    {activeTab === 'battlezone' && rank2.trustScore !== undefined && (
+                                        <div className="mb-1 bg-background/50 border border-border/30 px-1.5 py-0.5 rounded-full text-[8px] font-bold text-muted-foreground flex items-center gap-1">
+                                            <Shield className="w-2 h-2 sm:w-3 sm:h-3" /> {rank2.trustScore}%
                                         </div>
-                                        <div className="w-px h-8 bg-border"></div>
-                                        <div className="text-center">
-                                            <p className="text-xs text-muted-foreground uppercase">Earnings</p>
-                                            <p className="text-sm font-bold text-green-500">🪙 {rank2.netEarnings}</p>
-                                        </div>
+                                    )}
+                                    <h3 className="font-bold text-[10px] sm:text-base text-foreground truncate w-full text-center px-1">{rank2.name}</h3>
+                                    <div className="mt-1 sm:mt-3 flex flex-col items-center gap-0.5 sm:gap-1">
+                                        <p className="text-[8px] sm:text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Earnings</p>
+                                        <p className="text-[10px] sm:text-lg font-black text-green-500 flex items-center gap-0.5 sm:gap-1">
+                                            <span className="text-[8px] sm:text-sm">🪙</span> {rank2.netEarnings}
+                                        </p>
+                                        <p className="text-[8px] sm:text-[10px] text-muted-foreground font-medium mt-0.5 sm:mt-1">{rank2.totalWins} Wins</p>
                                     </div>
                                 </div>
                             </motion.div>
                         )}
 
-                        {/* Rank 1 (Gold) */}
+                        {/* Rank 1 (Gold) - Center */}
                         {rank1 && (
                             <motion.div
-                                initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                                initial={{ opacity: 0, y: 30, scale: 0.95 }}
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                 transition={{ delay: 0.1, type: "spring" }}
-                                className="order-1 md:order-2 flex flex-col items-center w-full md:w-1/3 z-10 -mt-10 md:-mt-0"
+                                className="flex flex-col items-center w-[36%] sm:w-1/3 max-w-[220px] z-10 -mb-2 sm:-mb-4"
                             >
-                                <div className="relative mb-2">
-                                    <Crown className="w-10 h-10 text-yellow-500 absolute -top-12 left-1/2 -translate-x-1/2 animate-bounce" />
-                                    <div className="w-32 h-32 rounded-full border-4 border-yellow-500 p-1 bg-card relative z-10 overflow-hidden shadow-[0_0_30px_rgba(234,179,8,0.4)]">
+                                <div className="relative mb-3 sm:mb-4">
+                                    <Crown className="w-6 h-6 sm:w-10 sm:h-10 text-yellow-500 absolute -top-7 sm:-top-12 left-1/2 -translate-x-1/2 animate-bounce drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]" />
+                                    <div className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full border-4 border-yellow-500 p-0.5 sm:p-1.5 bg-card relative z-10 overflow-hidden shadow-[0_0_30px_rgba(234,179,8,0.3)]">
                                         {(getAvatarSrc(rank1)) ? (
                                             <Image src={getAvatarSrc(rank1)!} alt={rank1.name} fill className="object-cover" />
                                         ) : (
-                                            <div className="w-full h-full bg-muted flex items-center justify-center text-3xl font-bold text-yellow-500">{getInitials(rank1.name)}</div>
+                                            <div className="w-full h-full bg-muted flex items-center justify-center text-xl sm:text-3xl font-bold text-yellow-500">{getInitials(rank1.name)}</div>
                                         )}
                                     </div>
-                                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-yellow-500 text-yellow-950 text-sm font-bold px-3 py-0.5 rounded-full z-20 shadow-md flex items-center gap-1">
-                                        <Trophy className="w-3 h-3" /> #1
+                                    <div className="absolute -bottom-2 sm:-bottom-3 left-1/2 -translate-x-1/2 bg-yellow-500 text-yellow-950 text-[10px] sm:text-sm font-black px-2 sm:px-3 py-0.5 sm:py-1 rounded-full z-20 shadow-lg flex items-center gap-1">
+                                        <Trophy className="w-2 h-2 sm:w-3 sm:h-3" /> #1
                                     </div>
                                 </div>
 
-                                <div className="mt-4 text-center w-full bg-gradient-to-b from-card to-background p-6 rounded-xl border border-yellow-500/30 shadow-lg relative overflow-hidden">
+                                <div className="w-full bg-gradient-to-b from-yellow-500/10 to-card/60 backdrop-blur-2xl p-3 sm:p-6 rounded-2xl sm:rounded-3xl border border-yellow-500/30 shadow-[0_20px_50px_rgba(234,179,8,0.15)] relative overflow-hidden flex flex-col items-center h-36 sm:h-52 justify-center">
                                     <div className="absolute top-0 left-0 w-full h-1 bg-yellow-500"></div>
-                                    <h3 className="font-bold text-xl text-yellow-600 dark:text-yellow-400 truncate">{rank1.name}</h3>
-                                    <div className="mt-3 grid grid-cols-2 gap-2">
-                                        <div className="bg-muted/50 p-2 rounded-lg">
-                                            <p className="text-xs text-muted-foreground uppercase">Total Wins</p>
-                                            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{rank1.totalWins}</p>
-                                        </div>
-                                        <div className="bg-muted/50 p-2 rounded-lg">
-                                            <p className="text-xs text-muted-foreground uppercase">Earnings</p>
-                                            <p className="text-xl font-bold text-green-500">🪙 {rank1.netEarnings}</p>
+                                    <h3 className="font-black text-xs sm:text-xl text-yellow-500 truncate w-full text-center uppercase tracking-tight">{rank1.name}</h3>
+                                    <div className="mt-2 sm:mt-4 flex flex-col items-center">
+                                        <p className="text-[8px] sm:text-[10px] text-yellow-500/70 uppercase tracking-[0.2em] font-black">King's Bounty</p>
+                                        <p className="text-sm sm:text-3xl font-black text-green-500 flex items-center gap-1 sm:gap-2 mt-0.5 sm:mt-1 drop-shadow-[0_0_15px_rgba(34,197,94,0.3)]">
+                                            <span className="text-xs sm:text-2xl">🪙</span> {rank1.netEarnings}
+                                        </p>
+                                        <div className="mt-2 sm:mt-4 px-2 sm:px-3 py-0.5 sm:py-1 bg-white/5 rounded-full border border-white/10">
+                                            <p className="text-[8px] sm:text-xs font-bold text-foreground/80">{rank1.totalWins} Victories</p>
                                         </div>
                                     </div>
                                 </div>
                             </motion.div>
                         )}
 
-                        {/* Rank 3 (Bronze) */}
+                        {/* Rank 3 (Bronze) - Right */}
                         {rank3 && (
                             <motion.div
-                                initial={{ opacity: 0, y: 50 }}
+                                initial={{ opacity: 0, y: 30 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.3 }}
-                                className="order-3 flex flex-col items-center w-full md:w-1/3"
+                                className="flex flex-col items-center w-[32%] sm:w-1/3 max-w-[180px]"
                             >
-                                <div className="relative">
-                                    <div className="w-24 h-24 rounded-full border-4 border-orange-700/80 p-1 bg-card relative z-10 overflow-hidden shadow-[0_0_20px_rgba(194,65,12,0.3)]">
+                                <div className="relative mb-2">
+                                    <div className="w-14 h-14 sm:w-24 sm:h-24 md:w-24 md:h-24 rounded-full border-2 sm:border-4 border-orange-700/80 p-0.5 sm:p-1 bg-card relative z-10 overflow-hidden shadow-[0_0_15px_rgba(194,65,12,0.2)]">
                                         {(getAvatarSrc(rank3)) ? (
                                             <Image src={getAvatarSrc(rank3)!} alt={rank3.name} fill className="object-cover" />
                                         ) : (
-                                            <div className="w-full h-full bg-muted flex items-center justify-center text-xl font-bold text-orange-400">{getInitials(rank3.name)}</div>
+                                            <div className="w-full h-full bg-muted flex items-center justify-center text-xs sm:text-xl font-bold text-muted-foreground">{getInitials(rank3.name)}</div>
                                         )}
                                     </div>
-                                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-orange-700 text-orange-100 text-xs font-bold px-2 py-0.5 rounded-full z-20 shadow-md">
+                                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-orange-700 text-orange-100 text-[10px] sm:text-xs font-black px-1.5 sm:px-2 py-0.5 rounded-full z-20 shadow-md">
                                         #3
                                     </div>
                                 </div>
 
-                                <div className="mt-4 text-center w-full bg-card/50 p-4 rounded-xl border border-border backdrop-blur-sm">
-                                    <h3 className="font-bold text-lg text-foreground truncate">{rank3.name}</h3>
-                                    <div className="flex justify-center items-center gap-2 mt-2">
-                                        <div className="text-center">
-                                            <p className="text-xs text-muted-foreground uppercase">Wins</p>
-                                            <p className="text-lg font-bold text-primary">{rank3.totalWins}</p>
+                                <div className="w-full bg-card/40 backdrop-blur-xl p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-white/5 shadow-xl relative overflow-hidden flex flex-col items-center h-28 sm:h-40 justify-center">
+                                    <div className="absolute top-0 left-0 w-full h-0.5 bg-orange-700/50"></div>
+                                    {activeTab === 'battlezone' && rank3.trustScore !== undefined && (
+                                        <div className="mb-1 bg-background/50 border border-border/30 px-1.5 py-0.5 rounded-full text-[8px] font-bold text-muted-foreground flex items-center gap-1">
+                                            <Shield className="w-2 h-2 sm:w-3 sm:h-3" /> {rank3.trustScore}%
                                         </div>
-                                        <div className="w-px h-8 bg-border"></div>
-                                        <div className="text-center">
-                                            <p className="text-xs text-muted-foreground uppercase">Earnings</p>
-                                            <p className="text-sm font-bold text-green-500">🪙 {rank3.netEarnings}</p>
-                                        </div>
+                                    )}
+                                    <h3 className="font-bold text-[10px] sm:text-base text-foreground truncate w-full text-center px-1">{rank3.name}</h3>
+                                    <div className="mt-1 sm:mt-3 flex flex-col items-center gap-0.5 sm:gap-1">
+                                        <p className="text-[8px] sm:text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Earnings</p>
+                                        <p className="text-[10px] sm:text-lg font-black text-green-500 flex items-center gap-0.5 sm:gap-1">
+                                            <span className="text-[8px] sm:text-sm">🪙</span> {rank3.netEarnings}
+                                        </p>
+                                        <p className="text-[8px] sm:text-[10px] text-muted-foreground font-medium mt-0.5 sm:mt-1">{rank3.totalWins} Wins</p>
                                     </div>
                                 </div>
                             </motion.div>
@@ -225,8 +255,11 @@ export default function LeaderboardPage() {
                 {restOfList.length > 0 && (
                     <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
                         <div className="p-4 border-b border-border bg-muted/30 flex justify-between items-center">
-                            <span className="text-muted-foreground text-sm font-medium uppercase tracking-wider">Rank</span>
-                            <span className="text-muted-foreground text-sm font-medium uppercase tracking-wider text-right flex-1 pr-4">Player</span>
+                            <span className="text-muted-foreground text-sm font-medium uppercase tracking-wider w-8">Rank</span>
+                            <span className="text-muted-foreground text-sm font-medium uppercase tracking-wider flex-1 pl-4">Player</span>
+                            {activeTab === 'battlezone' && (
+                                <span className="text-muted-foreground text-sm font-medium uppercase tracking-wider w-20 text-center hidden sm:block">Trust</span>
+                            )}
                             <span className="text-muted-foreground text-sm font-medium uppercase tracking-wider w-20 text-center">Wins</span>
                             <span className="text-muted-foreground text-sm font-medium uppercase tracking-wider w-24 text-right">Earned</span>
                         </div>
@@ -254,6 +287,11 @@ export default function LeaderboardPage() {
                                         </div>
                                         <span className="font-semibold text-foreground truncate">{user.name}</span>
                                     </div>
+                                    {activeTab === 'battlezone' && (
+                                        <div className="w-20 text-center font-bold text-muted-foreground hidden sm:flex justify-center items-center gap-1 text-sm">
+                                            <Shield className="w-3 h-3 text-primary" /> {user.trustScore}%
+                                        </div>
+                                    )}
                                     <div className="w-20 text-center font-bold text-primary">{user.totalWins}</div>
                                     <div className="w-24 text-right font-medium text-green-500">🪙 {user.netEarnings}</div>
                                 </motion.div>

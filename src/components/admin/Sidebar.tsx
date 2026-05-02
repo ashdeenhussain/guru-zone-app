@@ -48,7 +48,7 @@ export default function Sidebar({ onClose }: AdminSidebarProps) {
     const [isStoreOpen, setIsStoreOpen] = useState(true);
 
     const isActive = (path: string) => pathname === path;
-    const isStoreActive = pathname.startsWith('/admin/store');
+    const isStoreActive = pathname?.startsWith('/admin/store');
 
     const navItems = [
         { name: 'Command Center', href: '/admin/dashboard', icon: LayoutDashboard, permission: null },

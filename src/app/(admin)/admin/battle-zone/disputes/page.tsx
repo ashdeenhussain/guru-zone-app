@@ -43,34 +43,6 @@ export default function AdminDisputesPage() {
         fetchDisputes();
     }, []);
 
-    const handleResolve = async (tournamentId: string, action: 'force_win_host' | 'force_refund') => {
-        const confirmMsg = action === 'force_win_host' 
-            ? 'Are you sure you want to award the prize to the Host\'s declared winner?' 
-            : 'Are you sure you want to refund all participants and cancel this match?';
-            
-        if (!confirm(confirmMsg)) return;
-
-        setIsResolving(tournamentId);
-        try {
-            const res = await fetch('/api/admin/battle-zone/disputes', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tournamentId, action }),
-            });
-            const data = await res.json();
-            if (data.success) {
-                toast.success(data.message);
-                fetchDisputes(); // Refresh list
-            } else {
-                toast.error(data.error);
-            }
-        } catch (error) {
-            toast.error('Failed to resolve dispute');
-        } finally {
-            setIsResolving(null);
-        }
-    };
-
     if (isLoading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
@@ -220,30 +192,14 @@ export default function AdminDisputesPage() {
                             </div>
 
                             {/* Actions Footer */}
-                            <div className="bg-muted/20 p-4 border-t border-border flex justify-end gap-3">
+                            <div className="bg-muted/20 p-4 border-t border-border flex justify-end">
                                 <Link
                                     href={`/admin/battle-zone/disputes/${dispute._id}`}
-                                    className="flex items-center gap-2 text-xs font-bold bg-primary/10 text-primary hover:bg-primary/20 px-4 py-2.5 rounded-xl border border-primary/20 transition-all"
+                                    className="flex items-center gap-2 text-xs font-black bg-primary text-primary-foreground hover:opacity-90 px-8 py-3 rounded-xl shadow-lg shadow-primary/20 transition-all uppercase tracking-widest"
                                 >
-                                    <Eye className="w-3.5 h-3.5" />
-                                    Review Case
+                                    <Eye className="w-4 h-4" />
+                                    Review Case & Resolve
                                 </Link>
-                                <button
-                                    onClick={() => handleResolve(dispute._id, 'force_refund')}
-                                    disabled={!!isResolving}
-                                    className="flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors bg-muted/50 px-4 py-2.5 rounded-xl border border-border/50"
-                                >
-                                    {isResolving === dispute._id ? <Loader2 className="w-3 h-3 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
-                                    Force Refund
-                                </button>
-                                <button
-                                    onClick={() => handleResolve(dispute._id, 'force_win_host')}
-                                    disabled={!!isResolving}
-                                    className="flex items-center gap-2 text-xs font-bold bg-green-500 text-white hover:bg-green-600 px-6 py-2.5 rounded-xl shadow-lg shadow-green-500/20 transition-all border border-green-400/20"
-                                >
-                                    {isResolving === dispute._id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
-                                    Force Win Host
-                                </button>
                             </div>
                         </div>
                     ))}

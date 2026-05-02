@@ -183,7 +183,7 @@ export default function Navbar() {
                             </Link>
 
                             <Link
-                                href="/dashboard/battle-zone"
+                                href="/battle-zone"
                                 className="flex items-center space-x-3 p-2 text-foreground/80 hover:text-primary transition-colors"
                                 onClick={() => setIsOpen(false)}
                             >

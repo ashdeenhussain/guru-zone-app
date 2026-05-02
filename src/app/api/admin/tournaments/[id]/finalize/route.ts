@@ -85,13 +85,23 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
                     else pointsToAdd = 10; // For ranks 4-10
 
                     // 1. Update User Wallet & Stats
+                    const updateFields: any = {
+                        walletBalance: amount,
+                        totalWins: 1,
+                        netEarnings: amount,
+                        rankPoints: pointsToAdd
+                    };
+                    
+                    if (tournament.isOfficial) {
+                        updateFields.officialWins = 1;
+                        updateFields.officialEarnings = amount;
+                    } else {
+                        updateFields.battleZoneWins = 1;
+                        updateFields.battleZoneEarnings = amount;
+                    }
+
                     await User.findByIdAndUpdate(userId, {
-                        $inc: {
-                            walletBalance: amount,
-                            totalWins: 1,
-                            netEarnings: amount,
-                            rankPoints: pointsToAdd
-                        }
+                        $inc: updateFields
                     }).session(dbSession);
 
                     // 2. Create Transaction Record

@@ -93,11 +93,34 @@ const BattleMatchSchema = new Schema(
         isOfficial: {
             type: Boolean,
             default: false, // BattleMatch is always community-based/P2P
+        },
+        expiresAt: {
+            type: Date,
+        },
+        activatedAt: {
+            type: Date,
+        },
+        roomIDAt: {
+            type: Date,
+        },
+        resolutionComment: {
+            type: String,
+        },
+        resolvedAt: {
+            type: Date,
+        },
+        escrowId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Escrow',
         }
     },
     { timestamps: true }
 );
 
-const BattleMatch = models.BattleMatch || model('BattleMatch', BattleMatchSchema);
+if (models.BattleMatch) {
+    delete models.BattleMatch;
+}
+
+const BattleMatch = model('BattleMatch', BattleMatchSchema);
 
 export default BattleMatch;

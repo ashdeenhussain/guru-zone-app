@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import connectMongo from '@/lib/db';
-import Tournament from '@/models/Tournament';
+import BattleMatch from '@/models/BattleMatch';
 import User from '@/models/User';
 import Transaction from '@/models/Transaction';
 import Notification from '@/models/Notification';
@@ -29,7 +29,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ matchId
         sessionDB.startTransaction();
 
         try {
-            const match = await Tournament.findById(matchId).session(sessionDB);
+            const match = await BattleMatch.findById(matchId).session(sessionDB);
             if (!match) {
                 return NextResponse.json({ success: false, error: 'Match not found' }, { status: 404 });
             }

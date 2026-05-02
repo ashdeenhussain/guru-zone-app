@@ -6,7 +6,8 @@ import { useSession } from 'next-auth/react';
 import PageHeader from '@/components/PageHeader';
 import { 
     Swords, Trophy, Users, Calendar, Coins, Loader2, MapPin, 
-    Shield, Crosshair, ArrowLeft, MessageSquare, Gamepad2, Info 
+    Shield, Crosshair, ArrowLeft, MessageSquare, Gamepad2, Info,
+    User, Crown, AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -16,25 +17,62 @@ import TournamentChat from '@/components/battle-zone/TournamentChat';
 import HostControls from '@/components/battle-zone/HostControls';
 import PlayerControls from '@/components/battle-zone/PlayerControls';
 import JoinTournamentModal from '@/components/JoinTournamentModal';
-import MaintenanceWrapper from '@/components/shared/MaintenanceWrapper';
+
+const MatchCountdown = ({ expiresAt }: { expiresAt: string }) => {
+    const [timeLeft, setTimeLeft] = useState<string>('');
+
+    useEffect(() => {
+        if (!expiresAt) return;
+
+        const updateCountdown = () => {
+            const now = Date.now();
+            const expiryTime = new Date(expiresAt).getTime();
+            const diff = expiryTime - now;
+
+            if (diff <= 0) {
+                setTimeLeft('Expired');
+                return;
+            }
+
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            if (hours > 0) {
+                setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
+            } else {
+                setTimeLeft(`${minutes}m ${seconds}s`);
+            }
+        };
+
+        updateCountdown();
+        const interval = setInterval(updateCountdown, 1000);
+
+        return () => clearInterval(interval);
+    }, [expiresAt]);
+
+    if (!timeLeft) return null;
+
+    return (
+        <div className={`mt-4 px-4 py-3 rounded-xl border flex items-center justify-center gap-2 font-black uppercase tracking-widest text-sm ${timeLeft === 'Expired' ? 'bg-destructive/10 border-destructive/20 text-destructive' : 'bg-primary/10 border-primary/20 text-primary'}`}>
+            {timeLeft === 'Expired' ? 'Match Expired' : `Expires in: ${timeLeft}`}
+        </div>
+    );
+};
 
 type TabType = 'info' | 'teams' | 'room' | 'chat';
 
-export default function TournamentDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+export default function BattleMatchDetailsPage({ params }: { params: Promise<{ id: string }> }) {
     const router = useRouter();
     const { id } = use(params);
     const { data: session } = useSession();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [tournament, setTournament] = useState<any>(null);
+    const [match, setMatch] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [userData, setUserData] = useState<any>(null);
     const [activeTab, setActiveTab] = useState<TabType>('info');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [prevTournament, setPrevTournament] = useState<any>(null);
     const [notifications, setNotifications] = useState({
         info: false,
         teams: false,
@@ -42,55 +80,64 @@ export default function TournamentDetailsPage({ params }: { params: Promise<{ id
         chat: false
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userId = (session?.user as any)?.id;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const isJoined = !!(session?.user && userId && tournament?.participants?.some((p: any) =>
+    const isJoined = !!(session?.user && userId && match?.participants?.some((p: any) =>
         (p.userId?._id || p.userId)?.toString() === userId?.toString()
     ));
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const isHost = !!(session?.user && userId && tournament?.createdBy && (tournament?.createdBy?._id || tournament?.createdBy)?.toString() === userId?.toString());
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const isHost = !!(session?.user && userId && match?.createdBy && (match?.createdBy?._id || match?.createdBy)?.toString() === userId?.toString());
     const isAdmin = (session?.user as any)?.role === 'admin';
 
-    const fetchTournament = async (isInitial = false) => {
+    // Extract current user participant data for WhatsApp message
+    const currentUserParticipant = match?.participants?.find((p: any) => 
+        (p.userId?._id || p.userId)?.toString() === userId?.toString()
+    );
+    const inGameName = currentUserParticipant?.inGameName || userData?.inGameName || (session?.user as any)?.name || "N/A";
+    const uid = currentUserParticipant?.uid || userData?.freeFireUid || "N/A";
+
+    // WhatsApp Message Formatting
+    const adminWhatsapp = "923306414313"; // Target admin number
+    const matchDetails = `${match?.title} (${match?.gameMode} ${match?.format})`;
+    const whatsappMessage = `Hello Admin, I am reporting a Disputed Match.
+
+Match Name: ${matchDetails}
+Match ID: ${match?._id}
+My Role: ${isHost ? 'Host' : 'Joiner'}
+My In-Game Name/UID: ${inGameName} / ${uid}
+
+Here is my video proof:`;
+
+    const whatsappUrl = `https://wa.me/${adminWhatsapp}?text=${encodeURIComponent(whatsappMessage)}`;
+
+    const fetchMatch = async (isInitial = false) => {
         try {
-            const res = await fetch(`/api/tournaments/${id}`);
+            const res = await fetch(`/api/battle-zone/matches/${id}`);
             const data = await res.json();
 
             if (!res.ok) {
-                throw new Error(data.error || 'Failed to fetch tournament details');
+                throw new Error(data.error || 'Failed to fetch match details');
             }
 
-            const newTournament = data.data;
+            const newMatch = data.data;
 
-            // Redirect if official tournament (should use premium layout)
-            if (newTournament.isOfficial) {
+            if (newMatch.isOfficial) {
                 router.replace(`/tournaments/${id}`);
                 return;
             }
 
-            // Notification Logic (only if not initial load)
-            if (!isInitial && tournament) {
-                // Check for new participants
-                if (newTournament.participants?.length > (tournament.participants?.length || 0) && activeTab !== 'teams') {
+            if (!isInitial && match) {
+                if (newMatch.participants?.length > (match.participants?.length || 0) && activeTab !== 'teams') {
                     setNotifications(prev => ({ ...prev, teams: true }));
                 }
-
-                // Check for Room IDs or Result declarations
-                const roomDetailsReleased = (newTournament.roomID && !tournament.roomID);
-                const resultDeclared = newTournament.results?.declaredAt && !tournament.results?.declaredAt;
-                
-                if ((roomDetailsReleased || resultDeclared) && activeTab !== 'room') {
+                const roomDetailsReleased = (newMatch.roomID && !match.roomID);
+                if (roomDetailsReleased && activeTab !== 'room') {
                     setNotifications(prev => ({ ...prev, room: true }));
                 }
             }
 
-            setTournament(newTournament);
+            setMatch(newMatch);
         } catch (err: any) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            setError((err as any).message);
+            setError(err.message);
         } finally {
             if (isInitial) setIsLoading(false);
         }
@@ -110,20 +157,17 @@ export default function TournamentDetailsPage({ params }: { params: Promise<{ id
     };
 
     useEffect(() => {
-        fetchTournament(true);
+        fetchMatch(true);
         fetchUserProfile();
-
-        // Polling for real-time updates
-        const interval = setInterval(() => fetchTournament(), 3000);
+        const interval = setInterval(() => fetchMatch(), 5000);
         return () => clearInterval(interval);
-    }, [id, session, tournament?.participants?.length, activeTab]); // Include length and tab in deps for correct comparison
+    }, [id, session]);
 
-    // Handle initial auto-tab switching
     useEffect(() => {
-        if (isJoined && activeTab === 'info' && tournament?.status !== 'Completed') {
+        if (isJoined && activeTab === 'info' && match?.status !== 'completed') {
             setActiveTab('room');
         }
-    }, [isJoined, tournament?.status]);
+    }, [isJoined, match?.status]);
 
     const handleJoinClick = () => {
         if (!session) {
@@ -136,26 +180,26 @@ export default function TournamentDetailsPage({ params }: { params: Promise<{ id
 
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-background">
+            <div className="min-h-screen flex items-center justify-center bg-[#0B0F1A]">
                 <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                    <p className="text-sm text-muted-foreground animate-pulse">Loading Battle Zone...</p>
+                    <Loader2 className="w-12 h-12 animate-spin text-[#F5C518]" />
+                    <p className="text-sm text-muted-foreground animate-pulse font-bold tracking-widest uppercase">Loading Battle...</p>
                 </div>
             </div>
         );
     }
 
-    if (error || !tournament) {
+    if (error || !match) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 text-center">
+            <div className="min-h-screen flex flex-col items-center justify-center bg-[#0B0F1A] p-4 text-center">
                 <div className="bg-destructive/10 p-4 rounded-full mb-4">
                     <Shield className="w-8 h-8 text-destructive" />
                 </div>
-                <h2 className="text-xl font-bold mb-2">Error Loading Match</h2>
-                <p className="text-muted-foreground mb-6">{error || 'Tournament not found'}</p>
+                <h2 className="text-xl font-bold mb-2 text-white">Match Not Found</h2>
+                <p className="text-muted-foreground mb-6">{error || 'This battle does not exist or has been removed.'}</p>
                 <Link 
                     href="/battle-zone" 
-                    className="bg-primary text-primary-foreground px-6 py-2 rounded-lg font-bold hover:opacity-90 transition-all"
+                    className="bg-[#F5C518] text-black px-8 py-3 rounded-xl font-black uppercase tracking-wider hover:scale-105 transition-all shadow-lg shadow-[#F5C518]/20"
                 >
                     Back to Battle Zone
                 </Link>
@@ -163,379 +207,412 @@ export default function TournamentDetailsPage({ params }: { params: Promise<{ id
         );
     }
 
-    const isFull = tournament?.participants?.length >= tournament?.maxSlots;
+    const isFull = match?.joinedCount >= match?.maxSlots;
     const canChat = isJoined || isAdmin;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tabs: { id: TabType, label: string, icon: any, disabled?: boolean, hasNotification?: boolean }[] = [
-        { id: 'info', label: 'Match Info', icon: Info, hasNotification: notifications.info },
-        { id: 'teams', label: 'Teams', icon: Users, hasNotification: notifications.teams },
-        { id: 'room', label: 'Match Room', icon: Gamepad2, disabled: !isJoined && !isAdmin, hasNotification: notifications.room },
-        { id: 'chat', label: 'Lobby Chat', icon: MessageSquare, disabled: !canChat, hasNotification: notifications.chat }
+        { id: 'info', label: 'MATCH INFO', icon: Info, hasNotification: notifications.info },
+        { id: 'teams', label: 'TEAMS', icon: Users, hasNotification: notifications.teams },
+        { id: 'room', label: 'MATCH ROOM', icon: Gamepad2, disabled: !isJoined && !isAdmin, hasNotification: notifications.room },
+        { id: 'chat', label: 'LOBBY CHAT', icon: MessageSquare, disabled: !canChat, hasNotification: notifications.chat }
     ];
 
     return (
-        <MaintenanceWrapper 
-            isActive={true} 
-            title="Battle Center - Coming Soon"
-            description="The real-time match center and room management systems are currently being upgraded for a more premium experience."
-        >
-            <div className="min-h-screen bg-background pb-24 lg:pb-8 flex flex-col">
-                <div className="pt-2 pb-3 px-4 border-b border-border/40 bg-background/50 backdrop-blur-md sticky top-0 z-30 mb-6 flex items-center gap-3">
-                    <Link href="/battle-zone" className="p-2 hover:bg-muted rounded-xl transition-colors">
-                        <ArrowLeft className="w-5 h-5" />
-                    </Link>
-                    <div className="flex-1 min-w-0">
-                        <h1 className="font-bold text-base leading-tight truncate">{tournament.title}</h1>
-                        <div className="flex items-center gap-2">
-                            <span className={`w-2 h-2 rounded-full ${tournament.status === 'Open' ? 'bg-green-500' : 'bg-yellow-500'}`} />
-                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
-                                {tournament.status} • {tournament.format}
-                            </span>
-                        </div>
-                    </div>
-                        <div className="flex items-center gap-1.5 bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-full">
-                            <Shield className="w-3 h-3 text-primary" />
-                        <span className="text-[10px] font-bold text-primary italic uppercase tracking-tighter">
-                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                            {(tournament.createdBy as any)?.name || 'ADMIN'}
+        <div className="min-h-screen bg-[#0B0F1A] text-white pb-24 lg:pb-8 flex flex-col">
+            {/* Navbar Header */}
+            <div className="pt-4 pb-4 px-4 border-b border-white/5 bg-[#0F172A]/80 backdrop-blur-xl sticky top-0 z-50 flex items-center gap-4 shadow-2xl">
+                <Link href="/battle-zone" className="p-2 hover:bg-white/10 rounded-xl transition-all group">
+                    <ArrowLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
+                </Link>
+                <div className="flex-1 min-w-0">
+                    <h1 className="font-black text-lg leading-tight truncate tracking-tight">{match.title}</h1>
+                    <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full animate-pulse ${match.status === 'open' ? 'bg-green-500' : 'bg-yellow-500'}`} />
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] leading-none">
+                            {match.status} • {match.format}
                         </span>
                     </div>
                 </div>
+                <div className="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 px-4 py-1.5 rounded-full">
+                    <Crown className="w-4 h-4 text-yellow-500" />
+                    <span className="text-[11px] font-black text-yellow-500 uppercase tracking-tighter">
+                        {match.createdBy?.name || 'HOST'}
+                    </span>
+                </div>
+            </div>
 
-                <main className="flex-1 max-w-2xl mx-auto w-full p-4 space-y-6">
-                    
-                    {/* Visual Stats Banner */}
-                    <div className="relative overflow-hidden bg-gradient-to-br from-card to-muted rounded-3xl border border-border p-6 shadow-xl shadow-primary/5">
-                        <div className="absolute top-0 right-0 p-8 opacity-10">
-                            <Trophy className="w-32 h-32" />
+            <main className="flex-1 max-w-2xl mx-auto w-full p-4 space-y-6">
+                
+                {/* Admin Resolution Comment */}
+                {match.resolutionComment && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-blue-500/10 border border-blue-500/20 rounded-[2.5rem] p-8 space-y-4 shadow-xl shadow-blue-500/5"
+                    >
+                        <div className="flex items-center gap-3 text-blue-500">
+                            <Shield className="w-6 h-6" />
+                            <span className="text-sm font-black uppercase tracking-[0.2em]">Admin Decision</span>
                         </div>
-                        
-                        <div className="flex flex-col md:flex-row items-center gap-6 relative z-10">
-                            <div className="grid grid-cols-2 gap-8 flex-1 w-full">
-                                <div className="space-y-1 text-center md:text-left">
-                                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Prize Pool</span>
-                                    <div className="flex items-center justify-center md:justify-start gap-2">
-                                        <Trophy className="w-6 h-6 text-yellow-500" />
-                                        <span className="text-3xl font-black text-foreground">{tournament.prizePool}</span>
-                                    </div>
-                                </div>
-                                <div className="space-y-1 text-center md:text-left">
-                                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Entry Fee</span>
-                                    <div className="flex items-center justify-center md:justify-start gap-2">
-                                        <Coins className="w-6 h-6 text-primary" />
-                                        <span className="text-3xl font-black text-foreground">{tournament.entryFee || 'FREE'}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {!isJoined && !isFull && (
-                                <button
-                                    onClick={handleJoinClick}
-                                    className="group bg-foreground text-background w-full md:w-auto px-8 py-4 rounded-2xl font-black uppercase tracking-wider text-sm flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-foreground/10"
-                                >
-                                    <Swords className="w-5 h-5" />
-                                    Join Match
-                                </button>
-                            )}
-                            {isJoined && (
-                                <div className="bg-green-500/10 border border-green-500/20 px-6 py-3 rounded-2xl flex items-center gap-2">
-                                    <Shield className="w-5 h-5 text-green-500" />
-                                    <span className="text-sm font-bold text-green-500 uppercase tracking-wide">Joined Successfully</span>
-                                </div>
-                            )}
-                            {isFull && !isJoined && (
-                                <div className="bg-muted px-8 py-4 rounded-2xl flex items-center gap-2 grayscale border border-border">
-                                    <span className="text-sm font-bold text-muted-foreground uppercase tracking-wide italic">Tournament Full</span>
-                                </div>
-                            )}
+                        <div className="bg-white/5 p-6 rounded-2xl border border-white/5">
+                            <p className="text-base font-bold text-gray-200 leading-relaxed italic">
+                                "{match.resolutionComment}"
+                            </p>
                         </div>
-                    </div>
-
-                    {/* Tab Switcher */}
-                    <div className="grid grid-cols-4 bg-muted/40 p-1.5 rounded-2xl border border-border sticky top-[4.5rem] z-40 backdrop-blur-xl">
-                        {tabs.map((tab) => {
-                            const Icon = tab.icon;
-                            const isActive = activeTab === tab.id;
-                            return (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => {
-                                        if (!tab.disabled) {
-                                            setActiveTab(tab.id);
-                                            setNotifications(prev => ({ ...prev, [tab.id]: false }));
-                                        }
-                                    }}
-                                    disabled={tab.disabled}
-                                    className={`
-                                        relative flex flex-col items-center gap-1.5 py-3 rounded-xl transition-all duration-300
-                                        ${isActive ? 'text-primary' : tab.disabled ? 'text-muted-foreground opacity-30 grayscale' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'}
-                                    `}
-                                >
-                                    {isActive && (
-                                        <motion.div 
-                                            layoutId="activeTabBg"
-                                            className="absolute inset-0 bg-background border border-border rounded-xl shadow-sm"
-                                        />
-                                    )}
-                                    <Icon className={`w-5 h-5 relative z-10 transition-transform ${isActive ? 'scale-110' : ''}`} />
-                                    <span className="text-[10px] font-black uppercase tracking-tighter relative z-10 leading-none text-center">
-                                        {tab.label}
-                                    </span>
-
-                                    {tab.hasNotification && (
-                                        <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-background animate-pulse z-20" />
-                                    )}
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    {/* Content Sections */}
-                    <div className="relative min-h-[400px]">
-                        <AnimatePresence mode="wait">
-                            
-                            {/* Tab 1: Match Info */}
-                            {activeTab === 'info' && (
-                                <motion.div
-                                    key="info"
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
-                                    className="space-y-6"
-                                >
-                                    {/* Rules Grid */}
-                                    <section className="grid grid-cols-2 gap-4">
-                                        <div className="bg-card border border-border p-4 rounded-2xl space-y-1">
-                                            <div className="flex items-center gap-2 text-muted-foreground">
-                                                <MapPin className="w-3.5 h-3.5" />
-                                                <span className="text-[10px] font-bold uppercase tracking-wider">Map</span>
-                                            </div>
-                                            <p className="font-extrabold text-sm">{tournament.customRules?.map || tournament.map || 'Bermuda'}</p>
-                                        </div>
-                                        <div className="bg-card border border-border p-4 rounded-2xl space-y-1">
-                                            <div className="flex items-center gap-2 text-muted-foreground">
-                                                <Crosshair className="w-3.5 h-3.5" />
-                                                <span className="text-[10px] font-bold uppercase tracking-wider">Mode</span>
-                                            </div>
-                                            <p className="font-extrabold text-sm">{tournament.customRules?.mode || 'Classic'}</p>
-                                        </div>
-                                        <div className="bg-card border border-border p-4 rounded-2xl space-y-1">
-                                            <div className="flex items-center gap-2 text-muted-foreground">
-                                                <Shield className="w-3.5 h-3.5" />
-                                                <span className="text-[10px] font-bold uppercase tracking-wider">Gloo Wall</span>
-                                            </div>
-                                            <p className="font-extrabold text-sm">{tournament.customRules?.glooWall || 'Limited'}</p>
-                                        </div>
-                                        <div className="bg-card border border-border p-4 rounded-2xl space-y-1">
-                                            <div className="flex items-center gap-2 text-muted-foreground">
-                                                <Swords className="w-3.5 h-3.5" />
-                                                <span className="text-[10px] font-bold uppercase tracking-wider">Gun Specs</span>
-                                            </div>
-                                            <p className="font-extrabold text-sm">
-                                                {tournament.customRules?.gunProperties ? 'Skins ON' : 'Skins OFF'}
-                                            </p>
-                                        </div>
-                                    </section>
-
-                                    {/* Host Description */}
-                                    {tournament.customRules?.description && (
-                                        <div className="bg-primary/5 border border-primary/10 p-5 rounded-2xl space-y-2">
-                                            <h3 className="font-black text-[10px] text-primary uppercase tracking-[0.2em] flex items-center gap-2">
-                                                <Info className="w-4 h-4" />
-                                                Host Instructions
-                                            </h3>
-                                            <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">
-                                                {tournament.customRules.description}
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    {/* System Rules */}
-                                    <div className="bg-card border border-border p-5 rounded-2xl">
-                                        <h3 className="font-black text-[10px] text-muted-foreground uppercase tracking-[0.2em] mb-4">Match Protocols</h3>
-                                        <ul className="space-y-3">
-                                            {[
-                                                'No Hacking / Scripts / Third-party tools.',
-                                                'Respect the Host and other Captains.',
-                                                'Wait for the Host to start the match.'
-                                            ].map((rule, i) => (
-                                                <li key={i} className="flex items-start gap-3">
-                                                    <div className="mt-1 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                                                    <span className="text-[13px] text-muted-foreground font-medium">{rule}</span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                </motion.div>
-                            )}
-
-                            {/* Tab 2: Teams */}
-                            {activeTab === 'teams' && (
-                                <motion.div
-                                    key="teams"
-                                    initial={{ opacity: 0, scale: 0.98 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 1.02 }}
-                                    className="space-y-4"
-                                >
-                                    <div className="flex items-center justify-between mb-2">
-                                        <h3 className="font-black text-xs uppercase tracking-widest text-muted-foreground">Joined Participants</h3>
-                                        <span className="bg-primary/10 text-primary text-[10px] font-black px-2.5 py-1 rounded-lg">
-                                            {tournament.participants.length} / {tournament.maxSlots} SLOTS
-                                        </span>
-                                    </div>
-                                    
-                                    {tournament.participants.length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center p-12 bg-card rounded-2xl border border-dashed border-border text-center space-y-4">
-                                            <div className="p-4 bg-muted rounded-full">
-                                                <Users className="w-8 h-8 opacity-20" />
-                                            </div>
-                                            <p className="text-sm font-bold text-muted-foreground">No teams joined yet.</p>
-                                        </div>
-                                    ) : (
-                                        <div className="grid grid-cols-1 gap-3">
-                                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                                        {tournament.participants.map((p: any, i: number) => {
-                                                const pName = p.inGameName || p.userId?.inGameName || p.userId?.username || 'Player';
-                                                const pUid = p.uid || p.userId?.uid || 'N/A';
-                                                const isMe = String(p.userId?._id || p.userId) === String(userId);
-
-                                                return (
-                                                    <motion.div 
-                                                        key={i}
-                                                        initial={{ opacity: 0, x: -10 }}
-                                                        animate={{ opacity: 1, x: 0 }}
-                                                        transition={{ delay: i * 0.05 }}
-                                                        className={`
-                                                            flex items-center gap-4 p-4 rounded-2xl border transition-all
-                                                            ${isMe ? 'bg-primary/10 border-primary shadow-lg shadow-primary/10' : 'bg-card border-border hover:border-muted-foreground/30'}
-                                                        `}
-                                                    >
-                                                        <div className={`
-                                                            w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg
-                                                            ${isMe ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}
-                                                        `}>
-                                                            {pName[0]?.toUpperCase()}
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center gap-2">
-                                                                <p className="font-extrabold truncate text-sm">{pName}</p>
-                                                                {isMe && <span className="bg-primary/20 text-primary text-[8px] font-black px-1.5 py-0.5 rounded uppercase">You</span>}
-                                                            </div>
-                                                            <p className="text-[10px] font-bold text-muted-foreground font-mono">UID: {pUid}</p>
-                                                        </div>
-                                                        <div className="w-2 h-2 rounded-full bg-green-500/40" />
-                                                    </motion.div>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </motion.div>
-                            )}
-
-                            {/* Tab 3: Room & Actions */}
-                            {activeTab === 'room' && (
-                                <motion.div
-                                    key="room"
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
-                                    className="space-y-6"
-                                >
-                                    {/* Host Controls Section */}
-                                    {isHost && (
-                                        <div className="animate-in slide-in-from-top duration-500">
-                                            <HostControls
-                                                tournament={tournament}
-                                                onUpdate={fetchTournament}
-                                            />
-                                        </div>
-                                    )}
-
-                                    {/* Player Action Section */}
-                                    {isJoined && !isHost && (
-                                        <div className="animate-in slide-in-from-top duration-500">
-                                            <PlayerControls
-                                            tournament={tournament}
-                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                            userId={(session?.user as any).id}
-                                            onUpdate={fetchTournament}
-                                        />
-                                        </div>
-                                    )}
-                                    
-                                    {/* Admin specific controls could go here if needed, or handled via components */}
-                                    {isAdmin && !isJoined && (
-                                        <p className="text-center text-xs text-muted-foreground italic py-8 border border-dashed rounded-2xl">
-                                            Admin view enabled. No player actions available for this match.
-                                        </p>
-                                    )}
-                                </motion.div>
-                            )}
-
-                            {/* Tab 4: Chat */}
-                            {activeTab === 'chat' && (
-                                <motion.div
-                                    key="chat"
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.95 }}
-                                    className="h-full"
-                                >
-                                    <TournamentChat
-                                        tournamentId={id}
-                                        isHost={isHost}
-                                        isParticipant={isJoined}
-                                        isAdmin={isAdmin}
-                                        onNewMessage={() => {
-                                            if (activeTab !== 'chat') {
-                                                setNotifications(prev => ({ ...prev, chat: true }));
-                                            }
-                                        }}
-                                    />
-                                </motion.div>
-                            )}
-
-                        </AnimatePresence>
-                    </div>
-                </main>
-
-                {/* Bottom Floating Join Prompt (Mobile Only) */}
-                {!isJoined && !isFull && (
-                    <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-xl border-t border-border z-40 animate-in slide-in-from-bottom flex gap-3 items-center">
-                        <div className="flex-1">
-                            <p className="text-[10px] font-black text-muted-foreground uppercase opacity-70">Entry Required</p>
-                            <p className="text-xl font-black">{tournament.entryFee || 'FREE'}</p>
-                        </div>
-                        <button
-                            onClick={handleJoinClick}
-                            className="bg-primary text-primary-foreground px-8 py-3 rounded-xl font-black text-sm shadow-xl shadow-primary/20 active:scale-95 transition-all"
-                        >
-                            JOIN NOW
-                        </button>
-                    </div>
+                        {match.resolvedAt && (
+                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">
+                                Verdict issued on {format(new Date(match.resolvedAt), "MMMM d, yyyy 'at' h:mm a")}
+                            </p>
+                        )}
+                    </motion.div>
                 )}
 
-                {/* Modals */}
-                {(isModalOpen && session?.user) && (
-                    <JoinTournamentModal
-                        isOpen={isModalOpen}
-                        onClose={() => setIsModalOpen(false)}
-                        tournament={tournament}
-                        user={{
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                {/* Disputed Match Alert Banner */}
+                {match.status?.toLowerCase() === 'disputed' && !match.resolutionComment && (
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="relative overflow-hidden bg-gradient-to-br from-orange-500/20 to-red-500/10 border-2 border-orange-500/30 rounded-[2.5rem] p-8 shadow-2xl"
+                    >
+                        <div className="absolute top-0 right-0 p-8 opacity-10">
+                            <AlertCircle className="w-24 h-24 text-orange-500" />
+                        </div>
+                        
+                        <div className="relative z-10 flex flex-col items-center text-center space-y-6">
+                            <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/40 rotate-3">
+                                <AlertCircle className="w-10 h-10 text-white" />
+                            </div>
+                            
+                            <div className="space-y-2">
+                                <h2 className="text-2xl font-black text-white uppercase tracking-tight">Match Disputed</h2>
+                                <p className="text-sm font-bold text-gray-400 max-w-sm mx-auto leading-relaxed">
+                                    Our administrators are reviewing this match. To speed up the process, please send your video proof via WhatsApp.
+                                </p>
+                            </div>
+
+                            <a 
+                                href={whatsappUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group relative w-full md:w-auto flex items-center justify-center gap-4 bg-[#25D366] hover:bg-[#128C7E] text-white px-10 py-5 rounded-2xl font-black uppercase tracking-wider text-sm transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-green-500/30"
+                            >
+                                <svg viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7 group-hover:rotate-12 transition-transform">
+                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.937 3.659 1.432 5.623 1.433h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.415-8.423"/>
+                                </svg>
+                                Send Video Proof to Admin
+                            </a>
+                        </div>
+                    </motion.div>
+                )}
+                
+                {/* Created At Display */}
+                <div className="flex justify-center -mt-2 mb-2">
+                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest bg-[#1E293B]/50 px-4 py-2 rounded-xl border border-white/5 flex items-center gap-2">
+                        <Calendar className="w-3 h-3" />
+                        Created on: {match.createdAt ? format(new Date(match.createdAt), "MMMM d, yyyy, 'at' h:mm a") : 'Unknown'}
+                    </span>
+                </div>
+
+                {/* Expiry Countdown */}
+                {['open'].includes(match.status?.toLowerCase()) && (
+                    <MatchCountdown expiresAt={match.expiresAt || new Date(new Date(match.createdAt).getTime() + 60 * 60 * 1000).toISOString()} />
+                )}
+
+                {/* Prize & Entry Stats */}
+                <div className="relative overflow-hidden bg-gradient-to-br from-[#1E293B] to-[#0F172A] rounded-[2.5rem] border border-white/5 p-8 shadow-2xl">
+                    <div className="absolute -top-10 -right-10 opacity-5">
+                        <Trophy className="w-64 h-64 rotate-12 text-yellow-500" />
+                    </div>
+                    
+                    <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
+                        <div className="grid grid-cols-2 gap-12 flex-1 w-full">
+                            <div className="space-y-2 text-center md:text-left">
+                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Prize Pool</span>
+                                <div className="flex items-center justify-center md:justify-start gap-3">
+                                    <Trophy className="w-8 h-8 text-yellow-500 drop-shadow-[0_0_10px_rgba(245,197,24,0.4)]" />
+                                    <span className="text-4xl font-black text-white">{match.prizePool}</span>
+                                </div>
+                            </div>
+                            <div className="space-y-2 text-center md:text-left">
+                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Entry Fee</span>
+                                <div className="flex items-center justify-center md:justify-start gap-3">
+                                    <Coins className="w-8 h-8 text-[#F5C518]" />
+                                    <span className="text-4xl font-black text-white">{match.entryFee || 'FREE'}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {!isJoined && !isFull && (
+                            <button
+                                onClick={handleJoinClick}
+                                className="group bg-[#F5C518] text-black w-full md:w-auto px-10 py-5 rounded-2xl font-black uppercase tracking-[0.1em] text-sm flex items-center justify-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-yellow-500/20"
+                            >
+                                <Swords className="w-6 h-6" />
+                                Join Match
+                            </button>
+                        )}
+                        {isJoined && (
+                            <div className="bg-green-500/10 border border-green-500/20 px-8 py-4 rounded-2xl flex items-center gap-3">
+                                <Shield className="w-6 h-6 text-green-500" />
+                                <span className="text-sm font-black text-green-500 uppercase tracking-widest">Enrolled</span>
+                            </div>
+                        )}
+                        {isFull && !isJoined && (
+                            <div className="bg-white/5 px-8 py-4 rounded-2xl flex items-center gap-3 border border-white/10 opacity-50">
+                                <AlertCircle className="w-6 h-6 text-gray-400" />
+                                <span className="text-sm font-black text-gray-400 uppercase tracking-widest italic">Full Match</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Battle Zone Tab Switcher */}
+                <div className="grid grid-cols-4 bg-[#0F172A]/50 p-1.5 rounded-[2rem] border border-white/5 sticky top-24 z-40 backdrop-blur-xl shadow-2xl">
+                    {tabs.map((tab) => {
+                        const Icon = tab.icon;
+                        const isActive = activeTab === tab.id;
+                        return (
+                            <button
+                                key={tab.id}
+                                onClick={() => {
+                                    if (!tab.disabled) {
+                                        setActiveTab(tab.id);
+                                        setNotifications(prev => ({ ...prev, [tab.id]: false }));
+                                    }
+                                }}
+                                disabled={tab.disabled}
+                                className={`
+                                    relative flex flex-col items-center gap-2 py-4 rounded-2xl transition-all duration-500
+                                    ${isActive ? 'text-black' : tab.disabled ? 'text-gray-600 opacity-20' : 'text-gray-400 hover:text-white hover:bg-white/5'}
+                                `}
+                            >
+                                {isActive && (
+                                    <motion.div 
+                                        layoutId="activeTabBg"
+                                        className="absolute inset-0 bg-[#F5C518] rounded-2xl shadow-[0_0_20px_rgba(245,197,24,0.3)]"
+                                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                    />
+                                )}
+                                <Icon className={`w-5 h-5 relative z-10 transition-transform ${isActive ? 'scale-110' : ''}`} />
+                                <span className="text-[9px] font-black uppercase tracking-widest relative z-10 leading-none text-center">
+                                    {tab.label}
+                                </span>
+
+                                {tab.hasNotification && !isActive && (
+                                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-[#0B0F1A] animate-ping z-20" />
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Content Sections */}
+                <div className="relative min-h-[500px]">
+                    <AnimatePresence mode="wait">
+                        
+                        {/* Tab 1: MATCH INFO */}
+                        {activeTab === 'info' && (
+                            <motion.div
+                                key="info"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -20 }}
+                                className="space-y-6"
+                            >
+                                <section className="grid grid-cols-2 gap-4">
+                                    {[
+                                        { icon: MapPin, label: 'Map', value: match.mapName || 'Bermuda' },
+                                        { icon: Crosshair, label: 'Mode', value: match.gameMode || 'Clash Squad' },
+                                        { icon: Shield, label: 'Gloo Wall', value: match.advancedRules?.limitedAmmo === false ? 'Unlimited' : 'Limited' },
+                                        { icon: Swords, label: 'Gun Specs', value: match.advancedRules?.headshotOnly ? 'HS Only' : 'Skins ON' }
+                                    ].map((item, i) => (
+                                        <div key={i} className="bg-[#1E293B]/30 border border-white/5 p-5 rounded-3xl space-y-2 hover:bg-[#1E293B]/50 transition-colors">
+                                            <div className="flex items-center gap-3 text-gray-500">
+                                                <item.icon className="w-4 h-4" />
+                                                <span className="text-[10px] font-black uppercase tracking-widest">{item.label}</span>
+                                            </div>
+                                            <p className="font-black text-base text-white tracking-tight">{item.value}</p>
+                                        </div>
+                                    ))}
+                                </section>
+
+                                <div className="bg-[#1E293B]/20 border border-white/5 p-6 rounded-3xl space-y-4">
+                                    <h3 className="font-black text-[10px] text-gray-400 uppercase tracking-[0.3em] flex items-center gap-3">
+                                        <Info className="w-4 h-4 text-yellow-500" />
+                                        Match Protocols
+                                    </h3>
+                                    <ul className="space-y-4">
+                                        {[
+                                            { text: 'Winner MUST upload screenshot within 15 minutes of completion.', highlight: true },
+                                            { text: 'Using emulator or third-party scripts is strictly prohibited.', highlight: false },
+                                            { text: 'Wait for the host to provide Room ID/Password in the Match Room tab.', highlight: false },
+                                            { text: 'Entry fee is held in Escrow and will be released to the winner.', highlight: true }
+                                        ].map((protocol, i) => (
+                                            <li key={i} className="flex items-start gap-4 group">
+                                                <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${protocol.highlight ? 'bg-yellow-500 shadow-[0_0_5px_rgba(245,197,24,0.5)]' : 'bg-gray-700'}`} />
+                                                <span className={`text-[13px] font-medium leading-relaxed ${protocol.highlight ? 'text-gray-200' : 'text-gray-400'}`}>
+                                                    {protocol.text}
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {/* Tab 2: TEAMS (VS Layout) */}
+                        {activeTab === 'teams' && (
+                            <motion.div
+                                key="teams"
+                                initial={{ opacity: 0, scale: 0.98 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 1.02 }}
+                                className="space-y-12 py-8"
+                            >
+                                <div className="flex flex-col items-center gap-8 relative">
+                                    <div className="absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-y-1/2" />
+                                    <div className="bg-[#0B0F1A] border border-white/10 px-6 py-2 rounded-full relative z-10">
+                                        <span className="text-4xl font-black italic tracking-tighter text-yellow-500 opacity-20">VS</span>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 w-full">
+                                        {/* Team A: Host */}
+                                        <div className="flex flex-col items-center space-y-6">
+                                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Host / Team A</span>
+                                            <div className="relative group">
+                                                <div className="absolute -inset-4 bg-yellow-500/10 rounded-full blur-2xl group-hover:bg-yellow-500/20 transition-all duration-500" />
+                                                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-yellow-500 to-yellow-700 p-[2px] shadow-2xl relative">
+                                                    <div className="w-full h-full bg-[#0B0F1A] rounded-[calc(1.5rem-2px)] flex items-center justify-center overflow-hidden">
+                                                        <User className="w-12 h-12 text-yellow-500/50" />
+                                                    </div>
+                                                </div>
+                                                <Crown className="absolute -top-3 -right-3 w-8 h-8 text-yellow-500 drop-shadow-lg" />
+                                            </div>
+                                            <div className="text-center">
+                                                <h4 className="font-black text-xl text-white tracking-tight">{match.createdBy?.name || 'Waiting...'}</h4>
+                                                <p className="text-[10px] font-black text-yellow-500/50 uppercase tracking-widest mt-1">Match Captain</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Team B: Opponent */}
+                                        <div className="flex flex-col items-center space-y-6">
+                                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Opponent / Team B</span>
+                                            <div className="relative group">
+                                                {match.participants?.length > 1 ? (
+                                                    <>
+                                                        <div className="absolute -inset-4 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all duration-500" />
+                                                        <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-blue-500 to-indigo-700 p-[2px] shadow-2xl relative">
+                                                            <div className="w-full h-full bg-[#0B0F1A] rounded-[calc(1.5rem-2px)] flex items-center justify-center overflow-hidden">
+                                                                <User className="w-12 h-12 text-blue-500/50" />
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <div className="w-24 h-24 rounded-3xl border-2 border-dashed border-white/5 flex items-center justify-center">
+                                                        <Loader2 className="w-8 h-8 text-gray-700 animate-spin" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="text-center">
+                                                <h4 className="font-black text-xl text-white tracking-tight">
+                                                    {match.participants?.length > 1 ? match.participants[1].inGameName : 'Searching...'}
+                                                </h4>
+                                                <p className="text-[10px] font-black text-blue-500/50 uppercase tracking-widest mt-1">Challenger</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {/* Tab 3: MATCH ROOM */}
+                        {activeTab === 'room' && (
+                            <motion.div
+                                key="room"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -20 }}
+                                className="space-y-6"
+                            >
+                                {isHost ? (
+                                    <HostControls
+                                        tournament={match}
+                                        onUpdate={fetchMatch}
+                                    />
+                                ) : isJoined ? (
+                                    <PlayerControls
+                                        tournament={match}
+                                        userId={userId}
+                                        onUpdate={fetchMatch}
+                                    />
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center p-12 bg-[#1E293B]/10 rounded-[3rem] border border-white/5 text-center space-y-6">
+                                        <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center">
+                                            <Gamepad2 className="w-10 h-10 text-gray-600" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <h3 className="text-xl font-black text-white">Private Room Details</h3>
+                                            <p className="text-sm text-gray-500 max-w-xs mx-auto">
+                                                Only match participants can access the Room ID and Password once the host releases them.
+                                            </p>
+                                        </div>
+                                        <button 
+                                            onClick={handleJoinClick}
+                                            className="bg-white/10 hover:bg-white/20 text-white px-8 py-3 rounded-2xl font-black uppercase text-xs transition-all"
+                                        >
+                                            Join Battle to Unlock
+                                        </button>
+                                    </div>
+                                )}
+                            </motion.div>
+                        )}
+
+                        {/* Tab 4: LOBBY CHAT */}
+                        {activeTab === 'chat' && (
+                            <motion.div
+                                key="chat"
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="h-full min-h-[500px]"
+                            >
+                                <TournamentChat
+                                    tournamentId={id}
+                                    isHost={isHost}
+                                    isParticipant={isJoined}
+                                    isAdmin={isAdmin}
+                                    onNewMessage={() => {
+                                        if (activeTab !== 'chat') {
+                                            setNotifications(prev => ({ ...prev, chat: true }));
+                                        }
+                                    }}
+                                />
+                            </motion.div>
+                        )}
+
+                    </AnimatePresence>
+                </div>
+            </main>
+
+            {/* Modals */}
+            {isModalOpen && session?.user && (
+                <JoinTournamentModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    tournament={match}
+                    joinApiUrl={`/api/battle-zone/matches/${id}/join`}
+                    user={{
                         walletBalance: (session.user as any).walletBalance || userData?.walletBalance || 0,
                         inGameName: userData?.inGameName || '',
                         freeFireUid: userData?.freeFireUid || '',
                     }}
-                        onJoinSuccess={() => {
-                            fetchTournament();
-                            setActiveTab('room');
-                        }}
-                    />
-                )}
-            </div>
-        </MaintenanceWrapper>
+                    onJoinSuccess={() => {
+                        fetchMatch();
+                        setActiveTab('room');
+                    }}
+                />
+            )}
+        </div>
     );
 }
+

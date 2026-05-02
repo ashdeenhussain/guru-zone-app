@@ -4,6 +4,7 @@ import BattleMatch from '@/models/BattleMatch';
 import User from '@/models/User';
 import Transaction from '@/models/Transaction';
 import Notification from '@/models/Notification';
+import Escrow from '@/models/Escrow';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { sendPushNotification } from '@/lib/webpush';
@@ -65,21 +66,29 @@ export async function POST(
 
         await match.save();
 
-        // Push Notification
+        // ── TRIGGER NOTIFICATION (Joiner) ──
         try {
             const opponentIds = match.participants
                 .map((p: any) => p.userId?._id?.toString() || p.userId?.toString())
                 .filter((pId: string) => pId && pId !== winnerId.toString());
 
-            await Promise.all(opponentIds.map((pId: string) => 
+            await Promise.all(opponentIds.map(async (pId: string) => {
+                await Notification.create({
+                    userId: pId,
+                    title: '🏆 Result Declared!',
+                    message: `The Host has announced the winner in "${match.title}". You have 30 minutes to Accept or Dispute.`,
+                    type: 'warning',
+                    link: `/battle-zone/${match._id}`
+                });
+
                 sendPushNotification(pId, {
-                    title: '⏳ Result Declared!',
-                    body: `The Host claims victory in "${match.title}". You have 30 minutes to verify or the prize will be auto-transferred.`,
+                    title: '🏆 Result Declared!',
+                    body: `Host claims victory in "${match.title}". Verify now or it auto-resolves in 30 mins.`,
                     url: `/battle-zone/${match._id}`
-                })
-            ));
-        } catch (pushErr) {
-            console.error('[BattleResultAPI] Push notification failed:', pushErr);
+                }).catch(console.error);
+            }));
+        } catch (notifyErr) {
+            console.error('[ResultDeclareNotify] Failed:', notifyErr);
         }
 
         return NextResponse.json({ success: true, message: 'Winner declared. Pending verification.' });
@@ -173,10 +182,9 @@ export async function PUT(
             const winner = await User.findById(declaredWinnerId);
             if (!winner) return NextResponse.json({ success: false, error: 'Winner not found' }, { status: 404 });
 
-            const grossPrize = match.prizePool;
-            const PLATFORM_FEE_PCT = 0.10; // 10% rake
-            const platformFee = Math.floor(grossPrize * PLATFORM_FEE_PCT);
-            const netPrize = grossPrize - platformFee;
+            // Note: match.prizePool already has the platform fee deducted in create/route.ts
+            // We distribute the full prizePool to the winner.
+            const netPrize = match.prizePool;
 
             try {
                 await Transaction.create({
@@ -191,11 +199,22 @@ export async function PUT(
                 winner.walletBalance += netPrize;
                 winner.totalWins = (winner.totalWins || 0) + 1;
                 winner.netEarnings = (winner.netEarnings || 0) + netPrize;
+                winner.battleZoneWins = (winner.battleZoneWins || 0) + 1;
+                winner.battleZoneEarnings = (winner.battleZoneEarnings || 0) + netPrize;
                 await winner.save();
 
                 match.status = 'completed';
                 match.verificationStatus = 'Confirmed';
                 await match.save();
+
+                // Update Escrow status
+                if (match.escrowId) {
+                    await Escrow.findByIdAndUpdate(match.escrowId, {
+                        status: 'released',
+                        releasedTo: declaredWinnerId,
+                        releasedAt: new Date()
+                    });
+                }
 
                 // Trust Score Updates
                 const playersToUpdate = [match.createdBy?.toString(), userId].filter(Boolean);
@@ -229,6 +248,26 @@ export async function PUT(
             match.disputeReason = reason;
             match.disputeProof = proofUrl;
             await match.save();
+
+            // ── TRIGGER NOTIFICATION (Dispute - Host) ──
+            try {
+                const hostId = match.createdBy.toString();
+                await Notification.create({
+                    userId: hostId,
+                    title: '⚠️ Match Disputed!',
+                    message: `The joiner has disputed the result for "${match.title}". Admin will review video proof.`,
+                    type: 'error',
+                    link: `/battle-zone/${match._id}`
+                });
+
+                sendPushNotification(hostId, {
+                    title: '⚠️ Match Disputed!',
+                    body: `Your result for "${match.title}" is being disputed. Provide video proof to Admin.`,
+                    url: `/battle-zone/${match._id}`
+                }).catch(console.error);
+            } catch (notifyErr) {
+                console.error('[DisputeInitiateNotify] Failed:', notifyErr);
+            }
 
             return NextResponse.json({ success: true, message: 'Dispute submitted for review.' });
         }

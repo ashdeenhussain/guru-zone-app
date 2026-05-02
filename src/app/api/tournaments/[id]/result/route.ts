@@ -206,6 +206,15 @@ export async function PUT(
                 winner.walletBalance += netPrize;
                 winner.totalWins = (winner.totalWins || 0) + 1;
                 winner.netEarnings = (winner.netEarnings || 0) + netPrize;
+                
+                if (tournament.isOfficial) {
+                    winner.officialWins = (winner.officialWins || 0) + 1;
+                    winner.officialEarnings = (winner.officialEarnings || 0) + netPrize;
+                } else {
+                    winner.battleZoneWins = (winner.battleZoneWins || 0) + 1;
+                    winner.battleZoneEarnings = (winner.battleZoneEarnings || 0) + netPrize;
+                }
+                
                 await winner.save();
                 console.log(`[VERIFY] Winner balance updated. New balance: ${winner.walletBalance}`);
 

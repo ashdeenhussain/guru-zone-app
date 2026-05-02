@@ -106,7 +106,7 @@ export async function POST(
         const payload = {
             title: `New Message from ${message.senderName}`,
             body: message.content,
-            url: `/dashboard/battle-zone/match/${id}`
+            url: `/battle-zone/match/${id}`
         };
 
         for (const participant of otherParticipants) {

@@ -5,7 +5,10 @@ import connectMongo from '@/lib/db';
 import User from '@/models/User';
 import BattleMatch from '@/models/BattleMatch';
 import Transaction from '@/models/Transaction';
+import Escrow from '@/models/Escrow';
 import mongoose from 'mongoose';
+import Notification from '@/models/Notification';
+import { sendPushNotification } from '@/lib/webpush';
 
 export async function POST(req: Request) {
     try {
@@ -15,7 +18,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { format, entryFee, gameMode, mapName, advancedRules } = body;
+        const { format, entryFee, gameMode, mapName, advancedRules, availabilityDuration } = body;
 
         // Input Validation
         if (!['1v1', '2v2', '4v4'].includes(format)) {
@@ -63,6 +66,10 @@ export async function POST(req: Request) {
         const hostName = user.inGameName || user.name || 'Anonymous';
         const title = `${hostName}'s ${format} ${gameMode || 'Clash'}`;
 
+        // Calculate expiresAt based on availabilityDuration (default to 60 mins if not provided or invalid)
+        const durationMinutes = Number(availabilityDuration) || 60;
+        const expiresAt = new Date(Date.now() + durationMinutes * 60 * 1000);
+
         // Start a session for atomic operations
         const dbSession = await mongoose.startSession();
         dbSession.startTransaction();
@@ -83,7 +90,18 @@ export async function POST(req: Request) {
                 }], { session: dbSession });
             }
 
-            // 2. Create BattleMatch (STRICTLY separate from Tournaments)
+            // 2. Create Escrow record immediately to track host's payment
+            const escrowRecord = {
+                matchId: new mongoose.Types.ObjectId(), // Temporary, will update
+                totalAmount: totalPot,
+                platformFee: Math.floor(totalPot * platformFeePercentage),
+                netPrize: prizePool,
+                status: 'held'
+            };
+
+            const escrow = await Escrow.create([escrowRecord], { session: dbSession });
+
+            // 3. Create BattleMatch (STRICTLY separate from Tournaments)
             const newMatch = await BattleMatch.create([{
                 title,
                 format,
@@ -93,9 +111,10 @@ export async function POST(req: Request) {
                 prizePool,
                 status: 'open',
                 createdBy: user._id,
-                isOfficial: false, // ALWAYS false for Battle Zone, regardless of user role
+                isOfficial: false, 
                 maxSlots: 2, 
                 joinedCount: 1,
+                escrowId: escrow[0]._id,
                 participants: [{
                     userId: user._id,
                     inGameName: user.inGameName,
@@ -105,10 +124,34 @@ export async function POST(req: Request) {
                     rounds: 7,
                     limitedAmmo: true,
                     headshotOnly: false
-                }
+                },
+                expiresAt: expiresAt
             }], { session: dbSession });
 
+            // 4. Update Escrow with correct matchId
+            escrow[0].matchId = newMatch[0]._id;
+            await escrow[0].save({ session: dbSession });
+
             await dbSession.commitTransaction();
+
+            // ── TRIGGER NOTIFICATION (Host) ──
+            try {
+                await Notification.create({
+                    userId: user._id,
+                    title: '✅ Battle Created!',
+                    message: `Your match is now live in the lobby. Waiting for an opponent.`,
+                    type: 'success',
+                    link: `/battle-zone/${newMatch[0]._id}`
+                });
+
+                sendPushNotification(user._id.toString(), {
+                    title: '✅ Battle Created!',
+                    body: `Your match "${title}" is live. Waiting for an opponent.`,
+                    url: `/battle-zone/${newMatch[0]._id}`
+                }).catch(console.error);
+            } catch (notifyErr) {
+                console.error('[CreateBattleNotify] Failed:', notifyErr);
+            }
 
             return NextResponse.json({
                 success: true,

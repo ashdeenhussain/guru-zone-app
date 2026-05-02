@@ -57,6 +57,22 @@ const UserSchema = new Schema(
             type: Number,
             default: 0,
         },
+        officialEarnings: {
+            type: Number,
+            default: 0,
+        },
+        officialWins: {
+            type: Number,
+            default: 0,
+        },
+        battleZoneEarnings: {
+            type: Number,
+            default: 0,
+        },
+        battleZoneWins: {
+            type: Number,
+            default: 0,
+        },
         tournamentsPlayed: [{
             type: Schema.Types.ObjectId,
             ref: 'Tournament',
