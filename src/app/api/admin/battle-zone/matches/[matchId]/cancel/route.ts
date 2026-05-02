@@ -40,7 +40,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ matchId
 
             // Update status
             match.status = 'cancelled';
-            match.cancellationReason = 'Admin Force Cancelled';
+            match.adminNote = 'Admin Force Cancelled';
             await match.save({ session: sessionDB });
 
             // Process Refunds
