@@ -49,8 +49,8 @@ export async function POST(req: Request) {
             const pId = (p.userId._id || p.userId).toString();
             return pId !== hostId;
         });
-        const joinerId = joinerParticipant
-            ? (joinerParticipant.userId._id || joinerParticipant.userId).toString()
+        const joinerId = joinerParticipant?.userId
+            ? ((joinerParticipant.userId as any)._id || joinerParticipant.userId).toString()
             : null;
 
         // The prizePool already has the 10% platform fee deducted during creation
