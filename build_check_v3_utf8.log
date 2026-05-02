@@ -6,3 +6,26 @@
 - Environments: .env.local
 
   Creating an optimized production build ...
+Γ£ô Compiled successfully in 3.0min
+  Running TypeScript ...
+node.exe : Failed to compile.
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Failed to compile.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+./src/app/api/admin/battle-zone/disputes/route.ts:179:52
+Type error: 'pId' is possibly 'null' or 'undefined'.
+
+[0m [90m 177 |[39m
+ [90m 178 |[39m                         [90m// ΓöÇΓöÇ Push (To Participant) ΓöÇΓöÇ[39m
+[31m[1m>[22m[39m[90m 179 |[39m                         [36mawait[39m 
+sendPushNotification(pId[33m.[39mtoString()[33m,[39m {
+ [90m     |[39m                                                    [31m[1m^[22m[39m
+ [90m 180 |[39m                             title[33m:[39m [32m'≡ƒ¢æ Tournament Refunded'[39m[33m,[39m
+ [90m 181 |[39m                             body[33m:[39m [32m`The dispute for "${tournament.title}" was resolved 
+with a refund. ${entryFee} coins returned.`[39m[33m,[39m
+ [90m 182 |[39m                         })[33m;[39m[0m
+Next.js build worker exited with code: 1 and signal: null

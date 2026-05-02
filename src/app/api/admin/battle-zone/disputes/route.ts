@@ -132,7 +132,7 @@ export async function POST(req: Request) {
                             type: 'error'
                         });
 
-                        await sendPushNotification(lyingJoinerId.toString(), {
+                        await sendPushNotification((lyingJoinerId as any).toString(), {
                             title: '🛑 Trust Score Penalty',
                             body: `Your trust score dropped to ${joiner.trustScore}% due to an invalid dispute in "${tournament.title}".`,
                         });
@@ -176,7 +176,7 @@ export async function POST(req: Request) {
                         });
 
                         // ── Push (To Participant) ──
-                        await sendPushNotification(pId.toString(), {
+                        await sendPushNotification((pId as any).toString(), {
                             title: '🛑 Tournament Refunded',
                             body: `The dispute for "${tournament.title}" was resolved with a refund. ${entryFee} coins returned.`,
                         });
