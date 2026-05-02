@@ -66,7 +66,7 @@ export async function POST(req: Request) {
             const winner = await User.findById(winnerIdStr);
             
             if (winner) {
-                const grossPrize = tournament.prizeDistribution?.first || tournament.prizePool;
+                const grossPrize = tournament.prizePool;
                 const PLATFORM_FEE_PCT = 0.10;
                 const platformFee = Math.floor(grossPrize * PLATFORM_FEE_PCT);
                 const netPrize = grossPrize - platformFee;
