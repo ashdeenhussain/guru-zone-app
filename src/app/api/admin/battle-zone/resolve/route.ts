@@ -11,7 +11,7 @@ import { sendPushNotification } from '@/lib/webpush';
 import mongoose from 'mongoose';
 
 export async function POST(req: Request) {
-    let dbSession = null;
+    let dbSession: mongoose.ClientSession | null = null;
     try {
         const session = await getServerSession(authOptions);
         if (!session || (session.user as any).role !== 'admin') {

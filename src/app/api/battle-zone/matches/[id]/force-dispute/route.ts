@@ -14,7 +14,7 @@ export async function POST(
     req: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    let dbSession = null;
+    let dbSession: mongoose.ClientSession | null = null;
     try {
         const session = await getServerSession(authOptions);
         if (!session || !session.user) {
