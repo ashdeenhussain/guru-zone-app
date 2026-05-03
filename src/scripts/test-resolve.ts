@@ -105,6 +105,10 @@ async function runTest() {
     const finalHost = await User.findById(host._id);
     const finalJoiner = await User.findById(joiner._id);
     const finalMatch = await BattleMatch.findById(match._id);
+    if (!finalHost || !finalJoiner || !finalMatch) {
+        console.error('Final verification failed: document not found');
+        process.exit(1);
+    }
 
     console.log('\n📊 --- FINAL RESULTS ---');
     console.log(`Host Wallet: ${finalHost.walletBalance} (Expected: 1000)`);

@@ -158,13 +158,15 @@ export async function GET(req: Request) {
 
                 // 2. Refund All Participants
                 for (const participant of match.participants) {
-                    const userId = participant.userId.toString();
+                    const userId = (participant.userId as any)?.toString();
+                    if (!userId) continue;
+
                     const user = await User.findById(userId);
                     if (user) {
                         user.walletBalance += match.entryFee;
                         
                         // Penalty for Host
-                        const isHost = userId === match.createdBy.toString();
+                        const isHost = userId === (match.createdBy as any)?.toString();
                         if (isHost) {
                             user.trustScore = Math.max(0, (user.trustScore || 100) - 10);
                             

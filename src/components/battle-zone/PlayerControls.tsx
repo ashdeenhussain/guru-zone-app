@@ -86,7 +86,7 @@ export default function PlayerControls({ tournament, userId, onUpdate }: PlayerC
         if (tournament.status !== 'pending_verification' || !tournament.verificationStartedAt) return;
 
         const interval = setInterval(() => {
-            const startTime = new Date(tournament.verificationStartedAt).getTime();
+            const startTime = new Date(tournament.verificationStartedAt as any).getTime();
             const now = Date.now();
             const diff = (startTime + 30 * 60 * 1000) - now; // 30 mins
 

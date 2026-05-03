@@ -112,6 +112,10 @@ export async function GET() {
         const finalJoiner = await User.findById(joiner._id);
         const finalMatch = await BattleMatch.findById(match._id);
 
+        if (!finalHost || !finalJoiner || !finalMatch) {
+            throw new Error('Final verification failed: document not found');
+        }
+
         log('\n📊 --- FINAL RESULTS ---');
         log(`Host Wallet: ${finalHost.walletBalance} (Expected: 1000)`);
         log(`Host Trust Score: ${finalHost.trustScore}% (Expected: 85%)`);

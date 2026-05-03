@@ -133,7 +133,7 @@ export async function PUT(
             }
 
             if (!isAdmin) {
-                const startTime = new Date(match.verificationStartedAt).getTime();
+                const startTime = new Date(match.verificationStartedAt as any).getTime();
                 const timeDiff = Date.now() - startTime;
                 if (timeDiff < 30 * 60 * 1000) {
                     const remaining = Math.ceil((30 * 60 * 1000 - timeDiff) / 60000);

@@ -38,7 +38,7 @@ export default function HostControls({ tournament, onUpdate }: HostControlsProps
         }
 
         const interval = setInterval(() => {
-            const startTime = new Date(tournament.activatedAt).getTime();
+            const startTime = new Date(tournament.activatedAt as any).getTime();
             const now = Date.now();
             const diff = (startTime + 15 * 60 * 1000) - now; // 15 mins
 
@@ -59,7 +59,7 @@ export default function HostControls({ tournament, onUpdate }: HostControlsProps
         if (tournament.status !== 'pending_verification' || !tournament.verificationStartedAt) return;
 
         const interval = setInterval(() => {
-            const startTime = new Date(tournament.verificationStartedAt).getTime();
+            const startTime = new Date(tournament.verificationStartedAt as any).getTime();
             const now = Date.now();
             const diff = (startTime + 30 * 60 * 1000) - now;
 

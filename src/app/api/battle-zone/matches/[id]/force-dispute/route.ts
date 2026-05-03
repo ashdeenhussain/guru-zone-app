@@ -113,8 +113,8 @@ export async function POST(
             await dbSession.commitTransaction();
 
             // Notify parties
-            notify(match.createdBy.toString(), '❌ Match Cancelled', `Your match "${match.title}" was cancelled because you failed to provide Room ID. -10 Trust Score applied.`, 'error', match._id);
-            notify(userId, '✅ Refund Processed', `Host failed to provide Room ID. ${match.entryFee} coins have been refunded.`, 'success', match._id);
+            notify(match.createdBy.toString(), '❌ Match Cancelled', `Your match "${match.title}" was cancelled because you failed to provide Room ID. -10 Trust Score applied.`, 'error', match._id.toString());
+            notify(userId, '✅ Refund Processed', `Host failed to provide Room ID. ${match.entryFee} coins have been refunded.`, 'success', match._id.toString());
 
             return NextResponse.json({ success: true, message: 'Match cancelled. Your refund has been processed.' });
 
@@ -137,7 +137,7 @@ export async function POST(
             await dbSession.commitTransaction();
 
             // Notify Host
-            notify(match.createdBy.toString(), '⚠️ Match Disputed!', `The joiner in "${match.title}" has reported you as AFK. Provide result proof immediately to avoid further penalties.`, 'error', match._id);
+            notify(match.createdBy.toString(), '⚠️ Match Disputed!', `The joiner in "${match.title}" has reported you as AFK. Provide result proof immediately to avoid further penalties.`, 'error', match._id.toString());
 
             return NextResponse.json({ 
                 success: true, 

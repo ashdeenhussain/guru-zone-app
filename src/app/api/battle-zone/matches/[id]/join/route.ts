@@ -8,6 +8,7 @@ import Transaction from '@/models/Transaction';
 import Escrow from '@/models/Escrow';
 import Notification from '@/models/Notification';
 import mongoose from 'mongoose';
+import { sendPushNotification } from '@/lib/webpush';
 
 export async function POST(
     req: Request,
@@ -36,7 +37,7 @@ export async function POST(
             return NextResponse.json({ message: 'Match not found' }, { status: 404 });
         }
 
-        if (match.status !== 'open' && match.status !== 'Open') {
+        if (match.status !== 'open') {
             await session.abortTransaction();
             return NextResponse.json({ message: 'Match is not open' }, { status: 400 });
         }
