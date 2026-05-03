@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import Providers from "@/components/Providers";
+import PromoModal from "@/components/PromoModal";
 import { Toaster } from "sonner";
 import "./globals.css";
 
@@ -64,7 +65,7 @@ export const metadata: Metadata = {
     ],
     locale: "en_PK",
     type: "website",
-  },
+    },
   twitter: {
     card: "summary_large_image",
     title: "Guru Zone - Pakistan's Top Esports Platform",
@@ -102,6 +103,7 @@ export default function RootLayout({
         <Providers>
           <Navbar />
           {children}
+          <PromoModal />
           <Toaster richColors position="top-center" />
         </Providers>
       </body>

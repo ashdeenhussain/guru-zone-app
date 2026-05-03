@@ -31,6 +31,12 @@ const SystemSettingSchema = new Schema(
             type: String,
             default: "", // Text scrolling on home
         },
+        promoBanner: {
+            imageUrl: { type: String, default: "" },
+            redirectUrl: { type: String, default: "" },
+            isActive: { type: Boolean, default: false },
+            updatedAt: { type: Date, default: Date.now },
+        },
     },
     { timestamps: true }
 );

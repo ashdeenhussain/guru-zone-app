@@ -41,7 +41,8 @@ const AdminActivitySchema = new Schema(
                 'CREATE_SPIN_ITEM',
                 'UPDATE_SPIN_ITEM',
                 'DELETE_SPIN_ITEM',
-                'GLOBAL_NOTIFICATION'
+                'GLOBAL_NOTIFICATION',
+                'UPDATE_PROMO_BANNER'
             ]
         },
         targetId: { // ID of the user, transaction, tournament, etc. being acted upon

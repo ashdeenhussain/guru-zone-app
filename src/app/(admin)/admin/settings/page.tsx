@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
     Settings, Image as ImageIcon, CreditCard, Bell,
-    Save, Trash2, Plus, Info, CheckCircle, AlertTriangle, Loader2, ChevronUp, ChevronDown
+    Save, Trash2, Plus, Info, CheckCircle, AlertTriangle, Loader2, ChevronUp, ChevronDown, Layout
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -33,7 +34,7 @@ type PaymentMethod = {
 const BANK_OPTIONS = ['Easypaisa', 'JazzCash', 'Sadapay', 'Nayapay', 'U-Paisa', 'Bank Transfer'];
 
 export default function AdminSettingsPage() {
-    const [activeTab, setActiveTab] = useState<'general' | 'banners' | 'payments' | 'notifications'>('general');
+    const [activeTab, setActiveTab] = useState<'general' | 'banners' | 'payments' | 'notifications' | 'promo'>('general');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -275,11 +276,24 @@ export default function AdminSettingsPage() {
                     {/* Navigation - Premium Pill Style on Mobile, Sidebar on Desktop */}
                     <nav className="w-full lg:w-64 shrink-0 h-fit sticky top-4 z-40">
                         <div className="flex flex-row lg:flex-col lg:bg-card/50 lg:backdrop-blur-md lg:border lg:border-white/5 lg:p-2 lg:rounded-2xl overflow-x-auto no-scrollbar gap-2 lg:gap-1">
-                            {['general', 'banners', 'payments', 'notifications'].map((tab) => {
+                            {['general', 'banners', 'payments', 'notifications', 'promo'].map((tab) => {
                                 const isActive = activeTab === tab;
-                                const icons = { general: Settings, banners: ImageIcon, payments: CreditCard, notifications: Bell };
-                                const labels = { general: 'General', banners: 'Banners', payments: 'Payments', notifications: 'Announcements' };
+                                const icons = { general: Settings, banners: ImageIcon, payments: CreditCard, notifications: Bell, promo: Layout };
+                                const labels = { general: 'General', banners: 'Banners', payments: 'Payments', notifications: 'Announcements', promo: 'App Promo' };
                                 const Icon = icons[tab as keyof typeof icons];
+
+                                if (tab === 'promo') {
+                                    return (
+                                        <Link
+                                            key={tab}
+                                            href="/admin/promo-banner"
+                                            className="relative flex items-center gap-3 px-4 lg:px-6 py-2.5 lg:py-4 transition-all duration-300 rounded-full lg:rounded-xl whitespace-nowrap flex-shrink-0 border lg:border-none bg-card/80 lg:bg-transparent text-muted-foreground hover:text-foreground border-white/5 hover:bg-white/5"
+                                        >
+                                            <Icon className="h-4 w-4 lg:h-5 lg:w-5" />
+                                            <span className="text-sm lg:text-base font-medium">App Promo</span>
+                                        </Link>
+                                    );
+                                }
 
                                 return (
                                     <button

@@ -21,7 +21,8 @@ import {
     Shield,
     ArrowUpRight,
     Swords,
-    Globe
+    Globe,
+    Layout
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSession } from "next-auth/react";
@@ -59,6 +60,7 @@ export default function Sidebar({ onClose }: AdminSidebarProps) {
         { name: 'Finance', href: '/admin/finance', icon: Wallet, permission: 'manage_finance' },
         { name: 'Transactions', href: '/admin/transactions', icon: ArrowUpRight, permission: 'manage_finance' },
         { name: 'Landing Page', href: '/admin/landing-page', icon: Globe, permission: 'manage_system' },
+        { name: 'App Promo', href: '/admin/promo-banner', icon: Layout, permission: 'manage_system' },
         { name: 'Audit Logs', href: '/admin/audit-logs', icon: Shield, permission: 'manage_system' },
     ];
 
