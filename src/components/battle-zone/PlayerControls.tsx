@@ -37,7 +37,7 @@ export default function PlayerControls({ tournament, userId, onUpdate }: PlayerC
     // Poll for status updates every 3 seconds
     useEffect(() => {
         if (!tournament || 
-            ['completed', 'Completed', 'disputed', 'Disputed', 'cancelled', 'Cancelled'].includes(tournament.status)
+            ['completed', 'Completed', 'disputed', 'Disputed', 'cancelled', 'Cancelled'].includes(tournament?.status || '')
         ) return;
 
         const interval = setInterval(() => {
@@ -53,9 +53,9 @@ export default function PlayerControls({ tournament, userId, onUpdate }: PlayerC
     const [unlockAtFormatted, setUnlockAtFormatted] = useState<string>('');
 
     useEffect(() => {
-        if (tournament.status !== 'active') return;
+        if (tournament?.status !== 'active') return;
 
-        const expiresAt = new Date(tournament.expiresAt || tournament.createdAt).getTime();
+        const expiresAt = new Date(tournament?.expiresAt || tournament?.createdAt || Date.now()).getTime();
         const unlockTime = expiresAt + (30 * 60 * 1000); // 30 mins after expiry
 
         // Format the static unlock time once
@@ -79,11 +79,11 @@ export default function PlayerControls({ tournament, userId, onUpdate }: PlayerC
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [tournament.status, tournament.expiresAt, tournament.createdAt]);
+    }, [tournament?.status, tournament?.expiresAt, tournament?.createdAt]);
 
     // Result Verification Timer Logic (30 mins from host declaration)
     useEffect(() => {
-        if (tournament.status !== 'pending_verification' || !tournament.verificationStartedAt) return;
+        if (tournament?.status !== 'pending_verification' || !tournament?.verificationStartedAt) return;
 
         const interval = setInterval(() => {
             const startTime = new Date(tournament.verificationStartedAt as any).getTime();
@@ -101,7 +101,7 @@ export default function PlayerControls({ tournament, userId, onUpdate }: PlayerC
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [tournament.status, tournament.verificationStartedAt]);
+    }, [tournament?.status, tournament?.verificationStartedAt]);
 
     const handleViewCreds = async () => {
         if (showCreds) {
@@ -204,15 +204,15 @@ export default function PlayerControls({ tournament, userId, onUpdate }: PlayerC
         }
     };
 
-    const isHost = (tournament.createdBy?._id || tournament.createdBy) === userId;
+    const isHost = (tournament?.createdBy?._id || tournament?.createdBy) === userId;
     // Derive winner info
-    const winnerData = tournament.winners?.rank1;
+    const winnerData = tournament?.winners?.rank1;
     const winnerId = String(winnerData?._id || winnerData || '');
     const winnerName = winnerData?.inGameName || winnerData?.username || winnerData?.name || 'Player';
     const winnerUid = winnerData?.freeFireUid || winnerData?.uid || '---';
 
     const isDeclaredWinner = !!winnerId && String(userId) === winnerId;
-    const canVerify = tournament.status === 'pending_verification' && !!winnerId;
+    const canVerify = tournament?.status === 'pending_verification' && !!winnerId;
 
     return (
         <div className="space-y-6">

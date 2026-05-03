@@ -117,11 +117,12 @@ export default function BattleZonePage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userId = (session?.user as any)?.id;
 
-    const filteredTournaments = tournaments.filter(t => {
+    const filteredTournaments = (tournaments || []).filter(t => {
+        if (!t) return false;
         const hostId = (t.createdBy?._id || t.createdBy)?.toString();
         const isHost = hostId === userId;
         const isParticipant = t.participants?.some((p: any) => {
-            const pId = (p.userId?._id || p.userId)?.toString();
+            const pId = (p?.userId?._id || p?.userId)?.toString();
             return pId === userId;
         });
 
@@ -141,7 +142,7 @@ export default function BattleZonePage() {
         const isWaitingForOpponent = (t.joinedCount || 0) < (t.maxSlots || 2);
         
         // Dynamic hiding if expired
-        const matchExpiresAt = t.expiresAt || new Date(new Date(t.createdAt).getTime() + 60 * 60 * 1000).toISOString();
+        const matchExpiresAt = t.expiresAt || (t.createdAt ? new Date(new Date(t.createdAt).getTime() + 60 * 60 * 1000).toISOString() : new Date().toISOString());
         const isExpired = new Date(matchExpiresAt).getTime() <= now;
         
         return isOpen && isWaitingForOpponent && !isExpired;
@@ -356,11 +357,11 @@ export default function BattleZonePage() {
                                                 />
                                             )}
 
-                                            <h3 className={`font-black text-xl text-foreground tracking-tight truncate mb-1 ${!['open', 'full'].includes(match.status?.toLowerCase()) ? 'mt-3' : ''}`}>
-                                                {match.title}
+                                            <h3 className={`font-black text-xl text-foreground tracking-tight truncate mb-1 ${!['open', 'full'].includes(match.status?.toLowerCase() || '') ? 'mt-3' : ''}`}>
+                                                {match?.title || 'Untitled Match'}
                                             </h3>
                                             <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest flex items-center gap-2">
-                                                Hosted by <span className="text-foreground">{match.createdBy?.name || match.createdBy?.inGameName || 'Player'}</span>
+                                                Hosted by <span className="text-foreground">{match?.createdBy?.name || match?.createdBy?.inGameName || 'Guru Player'}</span>
                                             </p>
                                         </div>
 
@@ -389,10 +390,10 @@ export default function BattleZonePage() {
                                         <div className="flex-1 flex items-center gap-4 text-[11px] font-bold text-muted-foreground uppercase tracking-widest bg-muted/30 px-6 py-3 rounded-2xl w-full">
                                             <div className="flex items-center gap-2">
                                                 <Calendar className="w-4 h-4 text-primary" />
-                                                {format(new Date(match.createdAt), 'MMM d, h:mm a')}
+                                                {match?.createdAt ? format(new Date(match.createdAt), 'MMM d, h:mm a') : 'Recently'}
                                             </div>
                                             <div className="w-1.5 h-1.5 rounded-full bg-border" />
-                                            <div className="truncate">{match.gameMode || 'CS'} Match</div>
+                                            <div className="truncate">{match?.gameMode || 'CS'} Match</div>
                                         </div>
                                         
                                         <button 

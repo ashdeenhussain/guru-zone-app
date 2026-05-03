@@ -13,8 +13,8 @@ interface HostControlsProps {
 
 export default function HostControls({ tournament, onUpdate }: HostControlsProps) {
     // Existing State
-    const [roomId, setRoomId] = useState(tournament.roomID || '');
-    const [roomPass, setRoomPass] = useState(tournament.roomPassword || '');
+    const [roomId, setRoomId] = useState(tournament?.roomID || '');
+    const [roomPass, setRoomPass] = useState(tournament?.roomPassword || '');
     const [selectedWinner, setSelectedWinner] = useState('');
     const [isUpdating, setIsUpdating] = useState(false);
     const [isDeclaring, setIsDeclaring] = useState(false);
@@ -32,7 +32,7 @@ export default function HostControls({ tournament, onUpdate }: HostControlsProps
     const [afkTimeLeft, setAfkTimeLeft] = useState<string>('');
 
     useEffect(() => {
-        if (tournament.status !== 'active' || tournament.roomID || !tournament.activatedAt) {
+        if (tournament?.status !== 'active' || tournament?.roomID || !tournament?.activatedAt) {
             setAfkTimeLeft('');
             return;
         }
@@ -53,10 +53,10 @@ export default function HostControls({ tournament, onUpdate }: HostControlsProps
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [tournament.status, tournament.roomID, tournament.activatedAt]);
+    }, [tournament?.status, tournament?.roomID, tournament?.activatedAt]);
 
     useEffect(() => {
-        if (tournament.status !== 'pending_verification' || !tournament.verificationStartedAt) return;
+        if (tournament?.status !== 'pending_verification' || !tournament?.verificationStartedAt) return;
 
         const interval = setInterval(() => {
             const startTime = new Date(tournament.verificationStartedAt as any).getTime();
@@ -74,7 +74,7 @@ export default function HostControls({ tournament, onUpdate }: HostControlsProps
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [tournament.status, tournament.verificationStartedAt]);
+    }, [tournament?.status, tournament?.verificationStartedAt]);
 
     // Poll for status updates every 3 seconds to catch disputes
     useEffect(() => {
@@ -336,9 +336,10 @@ export default function HostControls({ tournament, onUpdate }: HostControlsProps
                                             <p className="text-[10px] font-black text-muted-foreground uppercase opacity-70 leading-none mb-1">Declared Winner</p>
                                             <p className="text-base font-black truncate">
                                                 {(() => {
-                                                    const winnerId = tournament.winners.rank1?._id || tournament.winners.rank1;
-                                                    const winner = tournament.participants.find((p: any) => (p.userId._id || p.userId).toString() === winnerId.toString());
-                                                    return winner ? (winner.inGameName || winner.userId.inGameName || winner.userId.username || 'Player') : 'Unknown';
+                                                    const winnerId = tournament?.winners?.rank1?._id || tournament?.winners?.rank1;
+                                                    if (!winnerId) return 'Unknown';
+                                                    const winner = tournament?.participants?.find((p: any) => (p?.userId?._id || p?.userId || '').toString() === winnerId.toString());
+                                                    return winner ? (winner.inGameName || winner.userId?.inGameName || winner.userId?.username || 'Player') : 'Unknown';
                                                 })()}
                                             </p>
                                         </div>

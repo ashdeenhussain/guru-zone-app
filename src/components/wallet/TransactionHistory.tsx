@@ -161,7 +161,7 @@ export default function TransactionHistory({ transactions, loading }: Transactio
                                             {formatType(trx.type)}
                                         </p>
                                         <p className="text-xs text-muted-foreground">
-                                            {format(new Date(trx.createdAt), "MMM d, yyyy • h:mm a")}
+                                            {trx?.createdAt ? format(new Date(trx.createdAt), "MMM d, yyyy • h:mm a") : "Recent"}
                                         </p>
                                     </div>
                                 </div>
