@@ -47,7 +47,7 @@ export default function TrustScoreBadge({ score, balance }: TrustScoreBadgeProps
     const style = getBadgeStyle();
 
     return (
-        <div className="flex items-center gap-2 p-1 bg-white/5 rounded-full border border-white/5 shadow-inner">
+        <div className="flex items-center gap-2 p-1 bg-muted/30 rounded-full border border-border/50 shadow-inner">
             {/* Wallet Balance Pill */}
             {balance !== undefined && (
                 <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-muted/40 rounded-full border border-border/50 shadow-sm">

@@ -113,15 +113,15 @@ export default function JoinTournamentModal({ isOpen, onClose, tournament, user,
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.9 }}
-                        className="relative w-full max-w-lg mx-auto bg-[#0F172A] border border-blue-500/30 rounded-2xl shadow-2xl overflow-hidden"
+                        className="relative w-full max-w-lg mx-auto bg-card border border-border rounded-2xl shadow-2xl overflow-hidden"
                     >
                         {/* Header */}
-                        <div className="flex items-center justify-between p-6 border-b border-white/10 bg-gradient-to-r from-blue-900/20 to-purple-900/20">
+                        <div className="flex items-center justify-between p-6 border-b border-border bg-muted/20">
                             <div>
-                                <h2 className="text-xl font-bold text-white">Join {tournament.format} Match</h2>
-                                <p className="text-sm text-gray-400">Entry Fee: <span className="text-yellow-400 font-semibold">{tournament.entryFee} Coins</span></p>
+                                <h2 className="text-xl font-bold text-foreground">Join {tournament.format} Match</h2>
+                                <p className="text-sm text-muted-foreground">Entry Fee: <span className="text-primary font-semibold">{tournament.entryFee} Coins</span></p>
                             </div>
-                            <button onClick={onClose} className="p-2 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors">
+                            <button onClick={onClose} className="p-2 text-muted-foreground hover:text-foreground bg-muted hover:bg-muted/80 rounded-full transition-colors">
                                 <X size={20} />
                             </button>
                         </div>
@@ -138,10 +138,10 @@ export default function JoinTournamentModal({ isOpen, onClose, tournament, user,
                             <div className="space-y-4">
                                 {/* Common Fields */}
                                 <div>
-                                    <label className="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wider">My Details</label>
+                                    <label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wider">My Details</label>
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="relative">
-                                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" size={16} />
                                             <input
                                                 type="text"
                                                 name="inGameName"
@@ -149,11 +149,11 @@ export default function JoinTournamentModal({ isOpen, onClose, tournament, user,
                                                 required
                                                 value={formData.inGameName}
                                                 onChange={handleChange}
-                                                className="w-full bg-black/40 border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all"
+                                                className="w-full bg-muted/50 border border-border rounded-lg pl-10 pr-4 py-2.5 text-foreground placeholder-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                                             />
                                         </div>
                                         <div className="relative">
-                                            <Shield className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                                            <Shield className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" size={16} />
                                             <input
                                                 type="text"
                                                 name="uid"
@@ -161,7 +161,7 @@ export default function JoinTournamentModal({ isOpen, onClose, tournament, user,
                                                 required
                                                 value={formData.uid}
                                                 onChange={handleChange}
-                                                className="w-full bg-black/40 border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all"
+                                                className="w-full bg-muted/50 border border-border rounded-lg pl-10 pr-4 py-2.5 text-foreground placeholder-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                                             />
                                         </div>
                                     </div>
@@ -171,7 +171,7 @@ export default function JoinTournamentModal({ isOpen, onClose, tournament, user,
                                 {['Duo', '2v2'].includes(tournament.format) && (
                                     <div className="space-y-3">
                                         <div>
-                                            <label className="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wider">Team Name</label>
+                                            <label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wider">Team Name</label>
                                             <input
                                                 type="text"
                                                 name="squadName" // Reuse squadName state for simplicity
@@ -179,11 +179,11 @@ export default function JoinTournamentModal({ isOpen, onClose, tournament, user,
                                                 required
                                                 value={formData.squadName}
                                                 onChange={handleChange}
-                                                className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 transition-all"
+                                                className="w-full bg-muted/50 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wider">Teammate Details</label>
+                                            <label className="block text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wider">Teammate Details</label>
                                             <div className="grid grid-cols-2 gap-3">
                                                 <input
                                                     type="text"
@@ -192,7 +192,7 @@ export default function JoinTournamentModal({ isOpen, onClose, tournament, user,
                                                     required
                                                     value={formData.partnerName}
                                                     onChange={handleChange}
-                                                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 transition-all"
+                                                    className="w-full bg-muted/50 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                                                 />
                                                 <input
                                                     type="text"
@@ -201,7 +201,7 @@ export default function JoinTournamentModal({ isOpen, onClose, tournament, user,
                                                     required
                                                     value={formData.partnerUid}
                                                     onChange={handleChange}
-                                                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 transition-all"
+                                                    className="w-full bg-muted/50 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                                                 />
                                             </div>
                                         </div>
@@ -212,7 +212,7 @@ export default function JoinTournamentModal({ isOpen, onClose, tournament, user,
                                 {['Squad', '4v4'].includes(tournament.format) && (
                                     <div className="space-y-3">
                                         <div className="grid grid-cols-1 gap-3">
-                                            <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider">Squad Name</label>
+                                            <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider">Squad Name</label>
                                             <input
                                                 type="text"
                                                 name="squadName"
@@ -220,11 +220,11 @@ export default function JoinTournamentModal({ isOpen, onClose, tournament, user,
                                                 required
                                                 value={formData.squadName}
                                                 onChange={handleChange}
-                                                className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 transition-all"
+                                                className="w-full bg-muted/50 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                                             />
                                         </div>
 
-                                        <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mt-2">Squad Members</label>
+                                        <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mt-2">Squad Members</label>
                                         {[2, 3, 4].map((num) => (
                                             <div key={num} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 <input
@@ -235,7 +235,7 @@ export default function JoinTournamentModal({ isOpen, onClose, tournament, user,
                                                     // @ts-ignore
                                                     value={formData[`player${num}Name`]}
                                                     onChange={handleChange}
-                                                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 transition-all"
+                                                    className="w-full bg-muted/50 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                                                 />
                                                 <input
                                                     type="text"
@@ -245,7 +245,7 @@ export default function JoinTournamentModal({ isOpen, onClose, tournament, user,
                                                     // @ts-ignore
                                                     value={formData[`player${num}Uid`]}
                                                     onChange={handleChange}
-                                                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 transition-all"
+                                                    className="w-full bg-muted/50 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                                                 />
                                             </div>
                                         ))}
@@ -258,7 +258,7 @@ export default function JoinTournamentModal({ isOpen, onClose, tournament, user,
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg transform transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    className="w-full bg-primary text-primary-foreground font-bold py-3 px-6 rounded-xl shadow-lg transform transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
                                     {loading ? (
                                         <>
@@ -271,7 +271,7 @@ export default function JoinTournamentModal({ isOpen, onClose, tournament, user,
                                         </>
                                     )}
                                 </button>
-                                <p className="text-center text-xs text-gray-500 mt-3">
+                                <p className="text-center text-xs text-muted-foreground mt-3">
                                     By joining, you agree to the tournament rules.
                                 </p>
                             </div>

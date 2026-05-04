@@ -180,7 +180,7 @@ Here is my video proof:`;
 
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-[#0B0F1A]">
+            <div className="min-h-screen flex items-center justify-center bg-background">
                 <div className="flex flex-col items-center gap-4">
                     <Loader2 className="w-12 h-12 animate-spin text-[#F5C518]" />
                     <p className="text-sm text-muted-foreground animate-pulse font-bold tracking-widest uppercase">Loading Battle...</p>
@@ -191,7 +191,7 @@ Here is my video proof:`;
 
     if (error || !match) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-[#0B0F1A] p-4 text-center">
+            <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 text-center">
                 <div className="bg-destructive/10 p-4 rounded-full mb-4">
                     <Shield className="w-8 h-8 text-destructive" />
                 </div>
@@ -199,7 +199,7 @@ Here is my video proof:`;
                 <p className="text-muted-foreground mb-6">{error || 'This battle does not exist or has been removed.'}</p>
                 <Link 
                     href="/battle-zone" 
-                    className="bg-[#F5C518] text-black px-8 py-3 rounded-xl font-black uppercase tracking-wider hover:scale-105 transition-all shadow-lg shadow-[#F5C518]/20"
+                    className="bg-primary text-primary-foreground px-8 py-3 rounded-xl font-black uppercase tracking-wider hover:scale-105 transition-all shadow-lg shadow-primary/20"
                 >
                     Back to Battle Zone
                 </Link>
@@ -218,24 +218,24 @@ Here is my video proof:`;
     ];
 
     return (
-        <div className="min-h-screen bg-[#0B0F1A] text-white pb-24 lg:pb-8 flex flex-col">
+        <div className="min-h-screen bg-background text-foreground pb-24 lg:pb-8 flex flex-col">
             {/* Navbar Header */}
-            <div className="pt-4 pb-4 px-4 border-b border-white/5 bg-[#0F172A]/80 backdrop-blur-xl sticky top-0 z-50 flex items-center gap-4 shadow-2xl">
-                <Link href="/battle-zone" className="p-2 hover:bg-white/10 rounded-xl transition-all group">
+            <div className="pt-4 pb-4 px-4 border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-50 flex items-center gap-4 shadow-2xl">
+                <Link href="/battle-zone" className="p-2 hover:bg-muted rounded-xl transition-all group">
                     <ArrowLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
                 </Link>
                 <div className="flex-1 min-w-0">
                     <h1 className="font-black text-lg leading-tight truncate tracking-tight">{match.title}</h1>
                     <div className="flex items-center gap-2">
                         <span className={`w-2 h-2 rounded-full animate-pulse ${match.status === 'open' ? 'bg-green-500' : 'bg-yellow-500'}`} />
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] leading-none">
+                        <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] leading-none">
                             {match.status} • {match.format}
                         </span>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 px-4 py-1.5 rounded-full">
-                    <Crown className="w-4 h-4 text-yellow-500" />
-                    <span className="text-[11px] font-black text-yellow-500 uppercase tracking-tighter">
+                <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 px-4 py-1.5 rounded-full">
+                    <Crown className="w-4 h-4 text-primary" />
+                    <span className="text-[11px] font-black text-primary uppercase tracking-tighter">
                         {match.createdBy?.name || 'HOST'}
                     </span>
                 </div>
@@ -254,13 +254,13 @@ Here is my video proof:`;
                             <Shield className="w-6 h-6" />
                             <span className="text-sm font-black uppercase tracking-[0.2em]">Admin Decision</span>
                         </div>
-                        <div className="bg-white/5 p-6 rounded-2xl border border-white/5">
-                            <p className="text-base font-bold text-gray-200 leading-relaxed italic">
+                        <div className="bg-muted/50 p-6 rounded-2xl border border-border">
+                            <p className="text-base font-bold text-foreground leading-relaxed italic">
                                 "{match.resolutionComment}"
                             </p>
                         </div>
                         {match.resolvedAt && (
-                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">
+                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center">
                                 Verdict issued on {format(new Date(match.resolvedAt), "MMMM d, yyyy 'at' h:mm a")}
                             </p>
                         )}
@@ -284,8 +284,8 @@ Here is my video proof:`;
                             </div>
                             
                             <div className="space-y-2">
-                                <h2 className="text-2xl font-black text-white uppercase tracking-tight">Match Disputed</h2>
-                                <p className="text-sm font-bold text-gray-400 max-w-sm mx-auto leading-relaxed">
+                                <h2 className="text-2xl font-black text-foreground uppercase tracking-tight">Match Disputed</h2>
+                                <p className="text-sm font-bold text-muted-foreground max-w-sm mx-auto leading-relaxed">
                                     Our administrators are reviewing this match. To speed up the process, please send your video proof via WhatsApp.
                                 </p>
                             </div>
@@ -307,7 +307,7 @@ Here is my video proof:`;
                 
                 {/* Created At Display */}
                 <div className="flex justify-center -mt-2 mb-2">
-                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest bg-[#1E293B]/50 px-4 py-2 rounded-xl border border-white/5 flex items-center gap-2">
+                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest bg-muted/50 px-4 py-2 rounded-xl border border-border flex items-center gap-2">
                         <Calendar className="w-3 h-3" />
                         Created on: {match.createdAt ? format(new Date(match.createdAt), "MMMM d, yyyy, 'at' h:mm a") : 'Unknown'}
                     </span>
@@ -319,7 +319,7 @@ Here is my video proof:`;
                 )}
 
                 {/* Prize & Entry Stats */}
-                <div className="relative overflow-hidden bg-gradient-to-br from-[#1E293B] to-[#0F172A] rounded-[2.5rem] border border-white/5 p-8 shadow-2xl">
+                <div className="relative overflow-hidden bg-card rounded-[2.5rem] border border-border p-8 shadow-2xl">
                     <div className="absolute -top-10 -right-10 opacity-5">
                         <Trophy className="w-64 h-64 rotate-12 text-yellow-500" />
                     </div>
@@ -327,17 +327,17 @@ Here is my video proof:`;
                     <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
                         <div className="grid grid-cols-2 gap-12 flex-1 w-full">
                             <div className="space-y-2 text-center md:text-left">
-                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Prize Pool</span>
+                                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">Prize Pool</span>
                                 <div className="flex items-center justify-center md:justify-start gap-3">
-                                    <Trophy className="w-8 h-8 text-yellow-500 drop-shadow-[0_0_10px_rgba(245,197,24,0.4)]" />
-                                    <span className="text-4xl font-black text-white">{match.prizePool}</span>
+                                    <Trophy className="w-8 h-8 text-primary drop-shadow-[0_0_10px_rgba(245,197,24,0.4)]" />
+                                    <span className="text-4xl font-black text-foreground">{match.prizePool}</span>
                                 </div>
                             </div>
                             <div className="space-y-2 text-center md:text-left">
-                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Entry Fee</span>
+                                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">Entry Fee</span>
                                 <div className="flex items-center justify-center md:justify-start gap-3">
-                                    <Coins className="w-8 h-8 text-[#F5C518]" />
-                                    <span className="text-4xl font-black text-white">{match.entryFee || 'FREE'}</span>
+                                    <Coins className="w-8 h-8 text-primary" />
+                                    <span className="text-4xl font-black text-foreground">{match.entryFee || 'FREE'}</span>
                                 </div>
                             </div>
                         </div>
@@ -345,7 +345,7 @@ Here is my video proof:`;
                         {!isJoined && !isFull && (
                             <button
                                 onClick={handleJoinClick}
-                                className="group bg-[#F5C518] text-black w-full md:w-auto px-10 py-5 rounded-2xl font-black uppercase tracking-[0.1em] text-sm flex items-center justify-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-yellow-500/20"
+                                className="group bg-primary text-primary-foreground w-full md:w-auto px-10 py-5 rounded-2xl font-black uppercase tracking-[0.1em] text-sm flex items-center justify-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/20"
                             >
                                 <Swords className="w-6 h-6" />
                                 Join Match
@@ -358,16 +358,16 @@ Here is my video proof:`;
                             </div>
                         )}
                         {isFull && !isJoined && (
-                            <div className="bg-white/5 px-8 py-4 rounded-2xl flex items-center gap-3 border border-white/10 opacity-50">
-                                <AlertCircle className="w-6 h-6 text-gray-400" />
-                                <span className="text-sm font-black text-gray-400 uppercase tracking-widest italic">Full Match</span>
+                            <div className="bg-muted/50 px-8 py-4 rounded-2xl flex items-center gap-3 border border-border opacity-50">
+                                <AlertCircle className="w-6 h-6 text-muted-foreground" />
+                                <span className="text-sm font-black text-muted-foreground uppercase tracking-widest italic">Full Match</span>
                             </div>
                         )}
                     </div>
                 </div>
 
                 {/* Battle Zone Tab Switcher */}
-                <div className="grid grid-cols-4 bg-[#0F172A]/50 p-1.5 rounded-[2rem] border border-white/5 sticky top-24 z-40 backdrop-blur-xl shadow-2xl">
+                <div className="grid grid-cols-4 bg-muted/50 p-1.5 rounded-[2rem] border border-border sticky top-24 z-40 backdrop-blur-xl shadow-2xl">
                     {tabs.map((tab) => {
                         const Icon = tab.icon;
                         const isActive = activeTab === tab.id;
@@ -383,13 +383,13 @@ Here is my video proof:`;
                                 disabled={tab.disabled}
                                 className={`
                                     relative flex flex-col items-center gap-2 py-4 rounded-2xl transition-all duration-500
-                                    ${isActive ? 'text-black' : tab.disabled ? 'text-gray-600 opacity-20' : 'text-gray-400 hover:text-white hover:bg-white/5'}
+                                    ${isActive ? 'text-primary-foreground' : tab.disabled ? 'text-muted-foreground/20 opacity-20' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}
                                 `}
                             >
                                 {isActive && (
                                     <motion.div 
                                         layoutId="activeTabBg"
-                                        className="absolute inset-0 bg-[#F5C518] rounded-2xl shadow-[0_0_20px_rgba(245,197,24,0.3)]"
+                                        className="absolute inset-0 bg-primary rounded-2xl shadow-[0_0_20px_rgba(245,197,24,0.3)]"
                                         transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                                     />
                                 )}
@@ -399,7 +399,7 @@ Here is my video proof:`;
                                 </span>
 
                                 {tab.hasNotification && !isActive && (
-                                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-[#0B0F1A] animate-ping z-20" />
+                                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-background animate-ping z-20" />
                                 )}
                             </button>
                         );
@@ -426,19 +426,19 @@ Here is my video proof:`;
                                         { icon: Shield, label: 'Gloo Wall', value: match.advancedRules?.limitedAmmo === false ? 'Unlimited' : 'Limited' },
                                         { icon: Swords, label: 'Gun Specs', value: match.advancedRules?.headshotOnly ? 'HS Only' : 'Skins ON' }
                                     ].map((item, i) => (
-                                        <div key={i} className="bg-[#1E293B]/30 border border-white/5 p-5 rounded-3xl space-y-2 hover:bg-[#1E293B]/50 transition-colors">
-                                            <div className="flex items-center gap-3 text-gray-500">
+                                        <div key={i} className="bg-muted/20 border border-border p-5 rounded-3xl space-y-2 hover:bg-muted/40 transition-colors">
+                                            <div className="flex items-center gap-3 text-muted-foreground">
                                                 <item.icon className="w-4 h-4" />
                                                 <span className="text-[10px] font-black uppercase tracking-widest">{item.label}</span>
                                             </div>
-                                            <p className="font-black text-base text-white tracking-tight">{item.value}</p>
+                                            <p className="font-black text-base text-foreground tracking-tight">{item.value}</p>
                                         </div>
                                     ))}
                                 </section>
 
-                                <div className="bg-[#1E293B]/20 border border-white/5 p-6 rounded-3xl space-y-4">
-                                    <h3 className="font-black text-[10px] text-gray-400 uppercase tracking-[0.3em] flex items-center gap-3">
-                                        <Info className="w-4 h-4 text-yellow-500" />
+                                <div className="bg-muted/10 border border-border p-6 rounded-3xl space-y-4">
+                                    <h3 className="font-black text-[10px] text-muted-foreground uppercase tracking-[0.3em] flex items-center gap-3">
+                                        <Info className="w-4 h-4 text-primary" />
                                         Match Protocols
                                     </h3>
                                     <ul className="space-y-4">
@@ -449,8 +449,8 @@ Here is my video proof:`;
                                             { text: 'Entry fee is held in Escrow and will be released to the winner.', highlight: true }
                                         ].map((protocol, i) => (
                                             <li key={i} className="flex items-start gap-4 group">
-                                                <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${protocol.highlight ? 'bg-yellow-500 shadow-[0_0_5px_rgba(245,197,24,0.5)]' : 'bg-gray-700'}`} />
-                                                <span className={`text-[13px] font-medium leading-relaxed ${protocol.highlight ? 'text-gray-200' : 'text-gray-400'}`}>
+                                                <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${protocol.highlight ? 'bg-primary shadow-[0_0_5px_rgba(245,197,24,0.5)]' : 'bg-muted-foreground/30'}`} />
+                                                <span className={`text-[13px] font-medium leading-relaxed ${protocol.highlight ? 'text-foreground' : 'text-muted-foreground'}`}>
                                                     {protocol.text}
                                                 </span>
                                             </li>
@@ -470,51 +470,51 @@ Here is my video proof:`;
                                 className="space-y-12 py-8"
                             >
                                 <div className="flex flex-col items-center gap-8 relative">
-                                    <div className="absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-y-1/2" />
-                                    <div className="bg-[#0B0F1A] border border-white/10 px-6 py-2 rounded-full relative z-10">
-                                        <span className="text-4xl font-black italic tracking-tighter text-yellow-500 opacity-20">VS</span>
+                                    <div className="absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent -translate-y-1/2" />
+                                    <div className="bg-background border border-border px-6 py-2 rounded-full relative z-10">
+                                        <span className="text-4xl font-black italic tracking-tighter text-primary opacity-20">VS</span>
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12 w-full">
                                         {/* Team A: Host */}
                                         <div className="flex flex-col items-center space-y-6">
-                                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Host / Team A</span>
+                                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">Host / Team A</span>
                                             <div className="relative group">
-                                                <div className="absolute -inset-4 bg-yellow-500/10 rounded-full blur-2xl group-hover:bg-yellow-500/20 transition-all duration-500" />
-                                                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-yellow-500 to-yellow-700 p-[2px] shadow-2xl relative">
-                                                    <div className="w-full h-full bg-[#0B0F1A] rounded-[calc(1.5rem-2px)] flex items-center justify-center overflow-hidden">
-                                                        <User className="w-12 h-12 text-yellow-500/50" />
+                                                <div className="absolute -inset-4 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all duration-500" />
+                                                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary to-primary/60 p-[2px] shadow-2xl relative">
+                                                    <div className="w-full h-full bg-background rounded-[calc(1.5rem-2px)] flex items-center justify-center overflow-hidden">
+                                                        <User className="w-12 h-12 text-primary/50" />
                                                     </div>
                                                 </div>
-                                                <Crown className="absolute -top-3 -right-3 w-8 h-8 text-yellow-500 drop-shadow-lg" />
+                                                <Crown className="absolute -top-3 -right-3 w-8 h-8 text-primary drop-shadow-lg" />
                                             </div>
                                             <div className="text-center">
-                                                <h4 className="font-black text-xl text-white tracking-tight">{match.createdBy?.name || 'Waiting...'}</h4>
-                                                <p className="text-[10px] font-black text-yellow-500/50 uppercase tracking-widest mt-1">Match Captain</p>
+                                                <h4 className="font-black text-xl text-foreground tracking-tight">{match.createdBy?.name || 'Waiting...'}</h4>
+                                                <p className="text-[10px] font-black text-primary/50 uppercase tracking-widest mt-1">Match Captain</p>
                                             </div>
                                         </div>
 
                                         {/* Team B: Opponent */}
                                         <div className="flex flex-col items-center space-y-6">
-                                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Opponent / Team B</span>
+                                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">Opponent / Team B</span>
                                             <div className="relative group">
                                                 {match.participants?.length > 1 ? (
                                                     <>
                                                         <div className="absolute -inset-4 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all duration-500" />
                                                         <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-blue-500 to-indigo-700 p-[2px] shadow-2xl relative">
-                                                            <div className="w-full h-full bg-[#0B0F1A] rounded-[calc(1.5rem-2px)] flex items-center justify-center overflow-hidden">
+                                                            <div className="w-full h-full bg-background rounded-[calc(1.5rem-2px)] flex items-center justify-center overflow-hidden">
                                                                 <User className="w-12 h-12 text-blue-500/50" />
                                                             </div>
                                                         </div>
                                                     </>
                                                 ) : (
-                                                    <div className="w-24 h-24 rounded-3xl border-2 border-dashed border-white/5 flex items-center justify-center">
-                                                        <Loader2 className="w-8 h-8 text-gray-700 animate-spin" />
+                                                    <div className="w-24 h-24 rounded-3xl border-2 border-dashed border-border flex items-center justify-center">
+                                                        <Loader2 className="w-8 h-8 text-muted-foreground/30 animate-spin" />
                                                     </div>
                                                 )}
                                             </div>
                                             <div className="text-center">
-                                                <h4 className="font-black text-xl text-white tracking-tight">
+                                                <h4 className="font-black text-xl text-foreground tracking-tight">
                                                     {match.participants?.length > 1 ? match.participants[1].inGameName : 'Searching...'}
                                                 </h4>
                                                 <p className="text-[10px] font-black text-blue-500/50 uppercase tracking-widest mt-1">Challenger</p>
@@ -546,19 +546,19 @@ Here is my video proof:`;
                                         onUpdate={fetchMatch}
                                     />
                                 ) : (
-                                    <div className="flex flex-col items-center justify-center p-12 bg-[#1E293B]/10 rounded-[3rem] border border-white/5 text-center space-y-6">
-                                        <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center">
-                                            <Gamepad2 className="w-10 h-10 text-gray-600" />
+                                    <div className="flex flex-col items-center justify-center p-12 bg-muted/10 rounded-[3rem] border border-border text-center space-y-6">
+                                        <div className="w-20 h-20 bg-muted/30 rounded-full flex items-center justify-center">
+                                            <Gamepad2 className="w-10 h-10 text-muted-foreground/50" />
                                         </div>
                                         <div className="space-y-2">
-                                            <h3 className="text-xl font-black text-white">Private Room Details</h3>
-                                            <p className="text-sm text-gray-500 max-w-xs mx-auto">
+                                            <h3 className="text-xl font-black text-foreground">Private Room Details</h3>
+                                            <p className="text-sm text-muted-foreground max-w-xs mx-auto">
                                                 Only match participants can access the Room ID and Password once the host releases them.
                                             </p>
                                         </div>
                                         <button 
                                             onClick={handleJoinClick}
-                                            className="bg-white/10 hover:bg-white/20 text-white px-8 py-3 rounded-2xl font-black uppercase text-xs transition-all"
+                                            className="bg-muted hover:bg-muted/80 text-foreground px-8 py-3 rounded-2xl font-black uppercase text-xs transition-all"
                                         >
                                             Join Battle to Unlock
                                         </button>
