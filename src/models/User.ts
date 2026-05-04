@@ -158,6 +158,18 @@ const UserSchema = new Schema(
             type: Date,
             default: null,
         },
+        squad: {
+            squadName: { type: String, default: "" },
+            members: {
+                type: [
+                    {
+                        name: { type: String, default: "" },
+                        uid: { type: String, default: "" },
+                    }
+                ],
+                default: [],
+            },
+        },
     },
     { timestamps: true }
 );

@@ -29,6 +29,7 @@ export default async function ProfilePage() {
         avatarId: dbUser.avatarId || 1,
         bio: dbUser.bio || "",
         image: dbUser.image || "",
+        squad: dbUser.squad || { squadName: "", members: [] },
     };
 
     return (

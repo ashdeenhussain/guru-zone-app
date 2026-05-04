@@ -61,6 +61,10 @@ interface User {
     avatarId?: number;
     inGameName?: string;
     freeFireUid?: string;
+    squad?: {
+        squadName: string;
+        members: { name: string; uid: string }[];
+    };
 }
 
 interface TournamentDetailsClientProps {

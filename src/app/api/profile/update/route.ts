@@ -12,29 +12,35 @@ export async function PATCH(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { inGameName, freeFireUid, avatarId, bio, image } = body;
+        const { inGameName, freeFireUid, avatarId, bio, image, squad } = body;
 
         await connectDB();
 
-        // Only update allowed fields
-        const updateData: any = {};
-        if (inGameName !== undefined) updateData.inGameName = inGameName;
-        if (freeFireUid !== undefined) updateData.freeFireUid = freeFireUid;
-        if (avatarId !== undefined) updateData.avatarId = avatarId;
-        if (bio !== undefined) updateData.bio = bio;
-        if (image !== undefined) updateData.image = image;
-
-        const updatedUser = await User.findByIdAndUpdate(
-            session.user.id,
-            { $set: updateData },
-            { new: true, runValidators: true }
-        ).select('-password');
-
-        if (!updatedUser) {
+        const user = await User.findById(session.user.id);
+        if (!user) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
-        return NextResponse.json({ message: 'Profile updated successfully', user: updatedUser }, { status: 200 });
+        if (inGameName !== undefined) user.inGameName = inGameName;
+        if (freeFireUid !== undefined) user.freeFireUid = freeFireUid;
+        if (avatarId !== undefined) user.avatarId = avatarId;
+        if (bio !== undefined) user.bio = bio;
+        if (image !== undefined) user.image = image;
+        
+        if (squad !== undefined) {
+            // Ensure squad structure is correct
+            user.squad = {
+                squadName: squad.squadName || "",
+                members: (squad.members || []).map((m: any) => ({
+                    name: m.name || "",
+                    uid: m.uid || ""
+                }))
+            };
+        }
+
+        await user.save();
+
+        return NextResponse.json({ message: 'Profile updated successfully', user }, { status: 200 });
 
     } catch (error) {
         console.error('Error updating profile:', error);

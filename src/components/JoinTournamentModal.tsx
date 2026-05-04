@@ -18,6 +18,10 @@ interface JoinTournamentModalProps {
         walletBalance: number;
         inGameName?: string;
         freeFireUid?: string;
+        squad?: {
+            squadName: string;
+            members: { name: string; uid: string }[];
+        };
     };
     onJoinSuccess?: () => void;
     joinApiUrl?: string;
@@ -45,13 +49,50 @@ export default function JoinTournamentModal({ isOpen, onClose, tournament, user,
     // Update formData if user prop changes or on mount (though state initializer handles mount)
     useEffect(() => {
         if (isOpen) {
+            const baseData = {
+                inGameName: user.inGameName || '',
+                uid: user.freeFireUid || '',
+                partnerName: '',
+                partnerUid: '',
+                squadName: '',
+                leaderName: user.inGameName || '',
+                player2Name: '',
+                player2Uid: '',
+                player3Name: '',
+                player3Uid: '',
+                player4Name: '',
+                player4Uid: '',
+            };
+
+            // Auto-fill logic
+            if (user.squad && (['Duo', '2v2', 'Squad', '4v4'].includes(tournament.format))) {
+                baseData.squadName = user.squad.squadName || '';
+                
+                if (['Duo', '2v2'].includes(tournament.format) && user.squad.members?.[0]) {
+                    baseData.partnerName = user.squad.members[0].name || '';
+                    baseData.partnerUid = user.squad.members[0].uid || '';
+                } else if (['Squad', '4v4'].includes(tournament.format)) {
+                    if (user.squad.members?.[0]) {
+                        baseData.player2Name = user.squad.members[0].name || '';
+                        baseData.player2Uid = user.squad.members[0].uid || '';
+                    }
+                    if (user.squad.members?.[1]) {
+                        baseData.player3Name = user.squad.members[1].name || '';
+                        baseData.player3Uid = user.squad.members[1].uid || '';
+                    }
+                    if (user.squad.members?.[2]) {
+                        baseData.player4Name = user.squad.members[2].name || '';
+                        baseData.player4Uid = user.squad.members[2].uid || '';
+                    }
+                }
+            }
+
             setFormData(prev => ({
                 ...prev,
-                inGameName: user.inGameName || prev.inGameName,
-                uid: user.freeFireUid || prev.uid
+                ...baseData
             }));
         }
-    }, [isOpen, user]);
+    }, [isOpen, user, tournament.format]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
