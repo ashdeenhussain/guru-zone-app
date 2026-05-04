@@ -50,14 +50,19 @@ export default function MobileNavigation() {
         <div className="lg:hidden">
             {/* Top Bar */}
             <div className="fixed top-0 left-0 right-0 z-[60] h-16 px-4 bg-background/80 backdrop-blur-xl border-b border-border flex items-center justify-between shadow-sm">
-                <div className="flex items-center gap-3">
-                    <div className="relative h-9 w-9 overflow-hidden rounded-xl border border-border shadow-sm">
-                        <Image src="/logo.jpg" alt="Guru Zone" fill className="object-cover" />
+                {/* Left Side: Brand Logo */}
+                <Link href={session ? "/dashboard" : "/"} className="flex items-center gap-2">
+                    <div className="relative h-8 w-8 overflow-hidden rounded-lg">
+                        <img src="/logo.jpg" alt="Guru Zone Logo" className="h-full w-full object-cover" />
                     </div>
-                </div>
+                    <span className="text-lg font-bold bg-gradient-to-r from-primary to-yellow-200 bg-clip-text text-transparent tracking-tighter">
+                        GURU ZONE
+                    </span>
+                </Link>
 
+                {/* Right Side: Action Icons Group */}
                 <div className="flex items-center gap-3">
-                    {/* Daily Reward Link */}
+                    {/* 1. Daily Reward (Gift) */}
                     <Link
                         href="/dashboard/daily-reward"
                         className="relative p-2 rounded-xl bg-gradient-to-br from-purple-600/20 to-fuchsia-600/20 border border-purple-500/30 text-purple-400 hover:text-purple-300 hover:bg-purple-500/20 transition-all group"
@@ -67,17 +72,28 @@ export default function MobileNavigation() {
                         <span className="absolute -top-1 -right-1 w-3 h-3 bg-fuchsia-500 rounded-full animate-ping" />
                         <span className="absolute -top-1 -right-1 w-3 h-3 bg-fuchsia-500 rounded-full" />
                     </Link>
+
+                    {/* 2. Notification (Bell) */}
                     <NotificationDropdown />
+
+                    {/* 3. Menu (Hamburger) */}
+                    <button
+                        onClick={() => setIsMenuOpen(true)}
+                        className="p-2 -mr-2 text-muted-foreground hover:text-primary transition-colors"
+                        aria-label="Open menu"
+                    >
+                        <Menu size={24} />
+                    </button>
                 </div>
             </div>
 
             {/* Bottom Navigation */}
-            <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-lg border-t border-border pb-safe">
-                <div className="flex items-center justify-between h-16 px-4 relative">
+            <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-t border-border pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
+                <div className="grid grid-cols-5 h-16 relative">
 
                     <Link
                         href="/dashboard"
-                        className={`flex flex-col items-center gap-1 p-2 transition-colors ${isActive('/dashboard') ? 'text-primary' : 'text-muted-foreground'}`}
+                        className={`flex flex-col items-center justify-center gap-1 transition-all ${isActive('/dashboard') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
                     >
                         <LayoutDashboard size={20} strokeWidth={isActive('/dashboard') ? 2.5 : 2} />
                         <span className="text-[10px] font-bold">Home</span>
@@ -85,15 +101,42 @@ export default function MobileNavigation() {
 
                     <Link
                         href="/dashboard/tournaments"
-                        className={`flex flex-col items-center gap-1 p-2 transition-colors ${isActive('/dashboard/tournaments') ? 'text-primary' : 'text-muted-foreground'}`}
+                        className={`flex flex-col items-center justify-center gap-1 transition-all ${isActive('/dashboard/tournaments') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
                     >
                         <Trophy size={20} strokeWidth={isActive('/dashboard/tournaments') ? 2.5 : 2} />
-                        <span className="text-[10px] font-bold">Battle</span>
+                        <span className="text-[10px] font-bold">Tournament</span>
+                    </Link>
+
+                    {/* Battle Zone - Center Feature Highlight */}
+                    <Link
+                        href="/battle-zone"
+                        className={`flex flex-col items-center justify-center gap-1 relative transition-all duration-300 ${isActive('/battle-zone') ? 'text-primary scale-110' : 'text-muted-foreground hover:text-foreground'}`}
+                    >
+                        <div className="relative p-2 flex items-center justify-center">
+                            {/* Animated Background Glow */}
+                            <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
+                            <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 to-transparent rounded-full animate-spin-slow" />
+                            
+                            <Swords 
+                                size={24} 
+                                strokeWidth={isActive('/battle-zone') ? 2.5 : 2}
+                                className={`${isActive('/battle-zone') ? 'text-primary' : 'text-muted-foreground'} relative z-10 drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]`}
+                            />
+                            
+                            {/* "NEW" Badge */}
+                            <span className="absolute -top-1 -right-1 flex h-4 w-4 z-20">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-4 w-4 bg-primary border-2 border-background flex items-center justify-center">
+                                    <span className="text-[6px] text-primary-foreground font-black leading-none">N</span>
+                                </span>
+                            </span>
+                        </div>
+                        <span className="text-[10px] font-bold">Battle Zone</span>
                     </Link>
 
                     <Link
                         href="/dashboard/shop"
-                        className={`flex flex-col items-center gap-1 p-2 transition-colors ${isActive('/dashboard/shop') ? 'text-primary' : 'text-muted-foreground'}`}
+                        className={`flex flex-col items-center justify-center gap-1 transition-all ${isActive('/dashboard/shop') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
                     >
                         <ShoppingBag size={20} strokeWidth={isActive('/dashboard/shop') ? 2.5 : 2} />
                         <span className="text-[10px] font-bold">Shop</span>
@@ -101,19 +144,11 @@ export default function MobileNavigation() {
 
                     <Link
                         href="/dashboard/wallet"
-                        className={`flex flex-col items-center gap-1 p-2 transition-colors ${isActive('/dashboard/wallet') ? 'text-primary' : 'text-muted-foreground'}`}
+                        className={`flex flex-col items-center justify-center gap-1 transition-all ${isActive('/dashboard/wallet') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
                     >
                         <Wallet size={20} strokeWidth={isActive('/dashboard/wallet') ? 2.5 : 2} />
                         <span className="text-[10px] font-bold">Wallet</span>
                     </Link>
-
-                    <button
-                        onClick={() => setIsMenuOpen(true)}
-                        className={`flex flex-col items-center gap-1 p-2 transition-colors ${isMenuOpen ? 'text-primary' : 'text-muted-foreground'}`}
-                    >
-                        <Menu size={20} strokeWidth={isMenuOpen ? 2.5 : 2} />
-                        <span className="text-[10px] font-bold">Menu</span>
-                    </button>
 
                 </div>
             </div>

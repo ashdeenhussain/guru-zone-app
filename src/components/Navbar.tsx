@@ -36,18 +36,8 @@ export default function Navbar() {
         <nav className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-xl border-b border-white/5 shadow-sm transition-all duration-300">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-20">
-                    {/* Left Side: Hamburger (Mobile) + Logo */}
-                    <div className="flex items-center space-x-3">
-                        {/* Hamburger Menu for Mobile */}
-                        <button
-                            onClick={() => setIsOpen(!isOpen)}
-                            className="p-2 -ml-2 text-gray-400 hover:text-white transition-colors md:hidden"
-                            aria-label="Open menu"
-                        >
-                            <Menu size={24} />
-                        </button>
-
-                        {/* Logo */}
+                    {/* Left Side: Logo */}
+                    <div className="flex items-center">
                         <Link href={session ? "/dashboard" : "/"} className="flex items-center space-x-2">
                             <div className="relative h-10 w-10 overflow-hidden rounded-lg">
                                 <img src="/logo.jpg" alt="Guru Zone Logo" className="h-full w-full object-cover" />
@@ -88,6 +78,14 @@ export default function Navbar() {
                                 </Link>
                             </>
                         )}
+                        {/* Hamburger Menu for Mobile (Right Side) */}
+                        <button
+                            onClick={() => setIsOpen(!isOpen)}
+                            className="p-2 -mr-2 text-gray-400 hover:text-white transition-colors md:hidden"
+                            aria-label="Open menu"
+                        >
+                            <Menu size={24} />
+                        </button>
                     </div>
                 </div>
             </div>
