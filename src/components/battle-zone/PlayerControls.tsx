@@ -501,7 +501,7 @@ export default function PlayerControls({ tournament, userId, onUpdate }: PlayerC
                                                         </span>
                                                     </div>
                                                     <p className="text-[9px] font-bold text-orange-500/70 text-center uppercase leading-tight">
-                                                        Host time expired. You can force a dispute/refund soon.
+                                                        Host deadline reached. You can force a dispute/refund soon.
                                                     </p>
                                                 </div>
                                             )}
@@ -519,7 +519,7 @@ export default function PlayerControls({ tournament, userId, onUpdate }: PlayerC
                                         </div>
                                         
                                         <p className="text-[9px] font-bold text-muted-foreground/40 leading-relaxed text-center uppercase max-w-[240px] mx-auto">
-                                            Auto-refund available if Room ID missing. Dispute case opened if Room ID exists but host is AFK.
+                                            Auto-refund available after deadline if Room ID is missing. Dispute case opened if Room ID exists but host is AFK.
                                         </p>
                                     </div>
                                 )}

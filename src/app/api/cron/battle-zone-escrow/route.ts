@@ -142,26 +142,31 @@ export async function GET(req: Request) {
             }
         }
 
-        // --- HOST AFK CHECK FOR ACTIVE MATCHES (15 MINS NO ROOM ID) ---
-        const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+        // --- HOST AFK CHECK FOR ACTIVE MATCHES (EXPIRES AT + 30 MINS NO ROOM ID) ---
+        // Rule: Host has until match.expiresAt + 30 mins to provide Room ID.
+        // The old 15-minute timer from join-time is removed.
+        const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000);
         const afkMatches = await BattleMatch.find({
             status: 'active',
-            activatedAt: { $lte: fifteenMinutesAgo },
+            expiresAt: { $lte: thirtyMinsAgo },
             roomID: { $exists: false }
         });
 
         for (const match of afkMatches) {
+            const cronSession = await mongoose.startSession();
+            cronSession.startTransaction();
             try {
                 // 1. Cancel Match
                 match.status = 'cancelled';
-                await match.save();
+                match.adminNote = 'System Auto-Cancelled: Host failed to provide Room ID within 30 mins after expiry.';
+                await match.save({ session: cronSession });
 
                 // 2. Refund All Participants
                 for (const participant of match.participants) {
                     const userId = (participant.userId as any)?.toString();
                     if (!userId) continue;
 
-                    const user = await User.findById(userId);
+                    const user = await User.findById(userId).session(cronSession);
                     if (user) {
                         user.walletBalance += match.entryFee;
                         
@@ -170,45 +175,51 @@ export async function GET(req: Request) {
                         if (isHost) {
                             user.trustScore = Math.max(0, (user.trustScore || 100) - 10);
                             
-                            await Notification.create({
+                            await Notification.create([{
                                 userId,
                                 title: '🛑 Host AFK Penalty',
                                 message: `Match "${match.title}" cancelled because you didn't provide Room ID in time. -10 Trust Score.`,
-                                type: 'error'
-                            });
+                                type: 'error',
+                                link: `/battle-zone/${match._id}`
+                            }], { session: cronSession });
                         } else {
-                            await Notification.create({
+                            await Notification.create([{
                                 userId,
                                 title: 'Match Cancelled',
                                 message: `Match "${match.title}" cancelled (Host AFK). Entry fee refunded.`,
-                                type: 'info'
-                            });
+                                type: 'info',
+                                link: `/battle-zone/${match._id}`
+                            }], { session: cronSession });
                         }
                         
-                        await user.save();
+                        await user.save({ session: cronSession });
 
-                        await Transaction.create({
+                        await Transaction.create([{
                             user: userId,
                             amount: match.entryFee,
                             type: 'refund',
                             description: `Refund (Host AFK): ${match.title}`,
                             status: 'completed',
                             referenceId: match._id
-                        });
+                        }], { session: cronSession });
                     }
                 }
 
                 // 3. Update Escrow
-                const escrow = await Escrow.findOne({ matchId: match._id });
+                const escrow = await Escrow.findOne({ matchId: match._id }).session(cronSession);
                 if (escrow) {
                     escrow.status = 'refunded';
-                    await escrow.save();
+                    await escrow.save({ session: cronSession });
                 }
 
+                await cronSession.commitTransaction();
                 results.push({ id: match._id, status: 'host-afk-cancelled' });
                 console.log(`[CRON] Host AFK cancellation for Match ${match._id}`);
             } catch (err: any) {
+                await cronSession.abortTransaction();
                 console.error(`[CRON ERROR] Failed to handle host AFK for ${match._id}:`, err);
+            } finally {
+                cronSession.endSession();
             }
         }
 

@@ -80,27 +80,36 @@ export async function POST(
             match.resolutionComment = 'Match cancelled due to Host inactivity (No Room ID). Full refund issued to Joiner.';
             await match.save({ session: dbSession });
 
-            // Refund Joiner (the requester is the joiner)
-            const joiner = await User.findById(userId).session(dbSession);
-            if (joiner) {
-                joiner.walletBalance += match.entryFee;
-                await joiner.save({ session: dbSession });
+            // Refund All Participants (including Host)
+            // Host is included because they are added to participants array in create/route.ts
+            for (const participant of match.participants) {
+                const pId = (participant.userId as any)?._id?.toString() || participant.userId?.toString();
+                if (!pId) continue;
 
-                await Transaction.create([{
-                    user: userId,
-                    amount: match.entryFee,
-                    type: 'refund',
-                    description: `Force Refund: Host AFK (No Room ID) in ${match.title}`,
-                    status: 'completed',
-                    referenceId: match._id
-                }], { session: dbSession });
-            }
+                const user = await User.findById(pId).session(dbSession);
+                if (user) {
+                    user.walletBalance += match.entryFee;
+                    
+                    const isHost = pId === match.createdBy?.toString();
+                    if (isHost) {
+                        user.trustScore = Math.max(0, (user.trustScore || 100) - 10);
+                        
+                        notify(pId, '❌ Match Cancelled', `Your match "${match.title}" was cancelled because you failed to provide Room ID. -10 Trust Score applied. Entry fee refunded.`, 'error', match._id.toString());
+                    } else {
+                        notify(pId, '✅ Refund Processed', `Host failed to provide Room ID. ${match.entryFee} coins have been refunded.`, 'success', match._id.toString());
+                    }
 
-            // Penalty for Host
-            const host = await User.findById(match.createdBy).session(dbSession);
-            if (host) {
-                host.trustScore = Math.max(0, (host.trustScore || 100) - 10);
-                await host.save({ session: dbSession });
+                    await user.save({ session: dbSession });
+
+                    await Transaction.create([{
+                        user: pId,
+                        amount: match.entryFee,
+                        type: 'refund',
+                        description: `Force Refund (Host AFK/No Room ID): ${match.title}`,
+                        status: 'completed',
+                        referenceId: match._id
+                    }], { session: dbSession });
+                }
             }
 
             // Update Escrow
@@ -112,11 +121,7 @@ export async function POST(
 
             await dbSession.commitTransaction();
 
-            // Notify parties
-            notify(match.createdBy.toString(), '❌ Match Cancelled', `Your match "${match.title}" was cancelled because you failed to provide Room ID. -10 Trust Score applied.`, 'error', match._id.toString());
-            notify(userId, '✅ Refund Processed', `Host failed to provide Room ID. ${match.entryFee} coins have been refunded.`, 'success', match._id.toString());
-
-            return NextResponse.json({ success: true, message: 'Match cancelled. Your refund has been processed.' });
+            return NextResponse.json({ success: true, message: 'Match cancelled. Everyone has been refunded.' });
 
         } else {
             // CASE B: ROOM ID PROVIDED BUT NO RESULT -> DISPUTED + -15 TS

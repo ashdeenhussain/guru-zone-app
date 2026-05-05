@@ -32,15 +32,16 @@ export default function HostControls({ tournament, onUpdate }: HostControlsProps
     const [afkTimeLeft, setAfkTimeLeft] = useState<string>('');
 
     useEffect(() => {
-        if (tournament?.status !== 'active' || tournament?.roomID || !tournament?.activatedAt) {
+        // Now using expiresAt + 30 mins instead of activatedAt + 15 mins
+        if (tournament?.status !== 'active' || tournament?.roomID || !tournament?.expiresAt) {
             setAfkTimeLeft('');
             return;
         }
 
         const interval = setInterval(() => {
-            const startTime = new Date(tournament.activatedAt as any).getTime();
+            const expiresAt = new Date(tournament.expiresAt as any).getTime();
             const now = Date.now();
-            const diff = (startTime + 15 * 60 * 1000) - now; // 15 mins
+            const diff = (expiresAt + 30 * 60 * 1000) - now; // expiresAt + 30 mins
 
             if (diff <= 0) {
                 setAfkTimeLeft('EXPIRED');
@@ -53,7 +54,7 @@ export default function HostControls({ tournament, onUpdate }: HostControlsProps
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [tournament?.status, tournament?.roomID, tournament?.activatedAt]);
+    }, [tournament?.status, tournament?.roomID, tournament?.expiresAt]);
 
     useEffect(() => {
         if (tournament?.status !== 'pending_verification' || !tournament?.verificationStartedAt) return;
@@ -232,7 +233,7 @@ export default function HostControls({ tournament, onUpdate }: HostControlsProps
                                         <span className="text-sm font-black uppercase tracking-widest">Action Required: Share Room ID</span>
                                     </div>
                                     <p className="text-[10px] font-bold uppercase tracking-tight opacity-80">
-                                        You must provide Room Details within 15 minutes or the match will be cancelled with a penalty.
+                                        You must provide Room Details before the deadline (30 mins after expiry) or the match will be cancelled with a penalty.
                                     </p>
                                     <div className="text-2xl font-black font-mono">
                                         {afkTimeLeft === 'EXPIRED' ? 'AFK - PENALTY IMMINENT' : afkTimeLeft}
