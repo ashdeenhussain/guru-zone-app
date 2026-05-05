@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import TournamentCard from '@/components/TournamentCard';
-import { Trophy, Filter, Wallet } from 'lucide-react';
+import { Trophy, Filter, Wallet, ArrowRight } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 import { useSearchParams } from 'next/navigation';
 
@@ -103,18 +103,23 @@ export default function TournamentsPage() {
             <div className="p-4 md:p-6 space-y-6 max-w-4xl mx-auto">
 
                 {/* Wallet Balance Card */}
-                <div className="bg-card border border-border rounded-2xl p-6 relative overflow-hidden shadow-sm">
-                    <div className="absolute right-0 top-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
-                    <div className="flex justify-between items-center relative z-10">
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                            <Wallet className="w-5 h-5 text-primary" />
-                            <span className="font-medium text-sm">Your Balance</span>
-                        </div>
-                        <div className="text-2xl font-bold text-foreground">
-                            {balance} <span className="text-sm text-muted-foreground font-normal">coins</span>
+                <Link href="/dashboard/wallet" className="block group">
+                    <div className="bg-card border border-border rounded-2xl p-6 relative overflow-hidden shadow-sm cursor-pointer hover:border-primary/50 transition-all hover:bg-white/5">
+                        <div className="absolute right-0 top-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
+                        <div className="flex justify-between items-center relative z-10">
+                            <div className="flex items-center gap-2 text-muted-foreground group-hover:text-primary transition-colors">
+                                <Wallet className="w-5 h-5 text-primary" />
+                                <span className="font-medium text-sm">Your Balance</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="text-2xl font-bold text-foreground">
+                                    {balance} <span className="text-sm text-muted-foreground font-normal">coins</span>
+                                </div>
+                                <ArrowRight className="w-5 h-5 text-primary opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                            </div>
                         </div>
                     </div>
-                </div>
+                </Link>
 
                 {/* Tabs Selector */}
                 <div className="grid grid-cols-2 p-1.5 bg-muted/40 rounded-xl border border-border/50">

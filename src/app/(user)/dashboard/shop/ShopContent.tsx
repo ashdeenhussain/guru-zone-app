@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Info, X, CheckCircle, AlertCircle, Loader2, CreditCard, ShoppingBag, Wallet } from "lucide-react";
+import { Info, X, CheckCircle, AlertCircle, Loader2, CreditCard, ShoppingBag, Wallet, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import LuckyWheelGame from "./spin/LuckyWheelGame";
 import PromotionalBanners from "@/components/shared/PromotionalBanners";
 import PageHeader from "@/components/PageHeader";
@@ -175,20 +176,23 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
                 {/* Wallet & Lucky Spin Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Wallet Balance Card */}
-                    <div className="bg-card border border-border rounded-2xl p-6 relative overflow-hidden shadow-sm flex items-center justify-between">
-                        <div className="absolute right-0 top-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
-                        <div className="relative z-10 flex gap-3 items-center">
-                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                                <Wallet size={20} />
+                    <Link href="/dashboard/wallet" className="block group w-full">
+                        <div className="bg-card border border-border rounded-2xl p-6 relative overflow-hidden shadow-sm flex items-center justify-between cursor-pointer hover:border-primary/50 transition-all hover:bg-white/5">
+                            <div className="absolute right-0 top-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
+                            <div className="relative z-10 flex gap-3 items-center">
+                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary/20 transition-colors">
+                                    <Wallet size={20} />
+                                </div>
+                                <div>
+                                    <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider group-hover:text-primary transition-colors">Your Wallet</p>
+                                    <p className="text-xl font-bold text-primary tabular-nums leading-none mt-0.5">
+                                        {userBalance.toLocaleString()} <span className="text-sm font-normal text-muted-foreground">Coins</span>
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Your Wallet</p>
-                                <p className="text-xl font-bold text-primary tabular-nums leading-none mt-0.5">
-                                    {userBalance.toLocaleString()} <span className="text-sm font-normal text-muted-foreground">Coins</span>
-                                </p>
-                            </div>
+                            <ArrowRight className="relative z-10 w-5 h-5 text-primary opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                         </div>
-                    </div>
+                    </Link>
 
                     {/* Lucky Spin Banner */}
                     {/* Lucky Spin Banner - Enhanced */}

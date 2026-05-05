@@ -199,12 +199,14 @@ export default function BattleZonePage() {
                                                 onClick={() => setIsTrustInfoModalOpen(true)}
                                             />
                                         </div>
-                                        <div className="flex items-center gap-1.5 px-3 py-2 bg-muted/50 rounded-lg border border-border/50 w-full sm:w-auto">
-                                            <Coins className="w-4 h-4 text-yellow-500 shrink-0" />
-                                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider truncate">
-                                                Balance: <span className="text-yellow-500">{balance !== null ? balance : '...'} Coins</span>
-                                            </span>
-                                        </div>
+                                        <Link href="/dashboard/wallet" className="w-full sm:w-auto">
+                                            <div className="flex items-center gap-1.5 px-3 py-2 bg-muted/50 rounded-lg border border-border/50 w-full sm:w-auto cursor-pointer hover:bg-muted/80 transition-all hover:scale-[1.02] active:scale-95 group">
+                                                <Coins className="w-4 h-4 text-yellow-500 shrink-0 group-hover:scale-110 transition-transform" />
+                                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider truncate">
+                                                    Balance: <span className="text-yellow-500">{balance !== null ? balance : '...'} Coins</span>
+                                                </span>
+                                            </div>
+                                        </Link>
                                     </div>
                                 )}
                             </div>

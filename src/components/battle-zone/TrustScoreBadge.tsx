@@ -1,8 +1,9 @@
 'use client';
 
-import { Shield, Info, Coins } from 'lucide-react';
+import { Shield, Info, Coins, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
+import Link from 'next/link';
 
 interface TrustScoreBadgeProps {
     score: number;
@@ -50,17 +51,20 @@ export default function TrustScoreBadge({ score, balance }: TrustScoreBadgeProps
         <div className="flex items-center gap-2 p-1 bg-muted/30 rounded-full border border-border/50 shadow-inner">
             {/* Wallet Balance Pill */}
             {balance !== undefined && (
-                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-muted/40 rounded-full border border-border/50 shadow-sm">
-                    <div className="p-1 bg-yellow-500/10 rounded-full">
-                        <Coins className="w-3.5 h-3.5 text-yellow-500" />
+                <Link href="/dashboard/wallet">
+                    <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-muted/40 rounded-full border border-border/50 shadow-sm cursor-pointer hover:bg-muted/60 transition-all hover:scale-[1.02] active:scale-95 group">
+                        <div className="p-1 bg-yellow-500/10 rounded-full group-hover:bg-yellow-500/20 transition-colors">
+                            <Coins className="w-3.5 h-3.5 text-yellow-500" />
+                        </div>
+                        <span className="text-[11px] font-black text-foreground">
+                            {balance.toLocaleString()}
+                        </span>
+                        <span className="text-[9px] font-bold text-muted-foreground uppercase opacity-70">
+                            Coins
+                        </span>
+                        <ArrowRight className="w-2.5 h-2.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-all -ml-1 group-hover:ml-0.5" />
                     </div>
-                    <span className="text-[11px] font-black text-foreground">
-                        {balance.toLocaleString()}
-                    </span>
-                    <span className="text-[9px] font-bold text-muted-foreground uppercase opacity-70">
-                        Coins
-                    </span>
-                </div>
+                </Link>
             )}
 
             {/* Trust Score Pill */}

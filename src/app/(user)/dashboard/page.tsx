@@ -103,20 +103,22 @@ export default async function DashboardPage() {
                 {/* Stats Grid (2x2) */}
                 <div className="grid grid-cols-2 gap-4">
                     {/* Wallet Balance - Gold Theme */}
-                    <div className="relative overflow-hidden glass-card p-4 rounded-2xl group transition-all duration-300 hover:border-yellow-500/50 shadow-sm">
-                        <div className="absolute right-0 bottom-0 w-24 h-24 bg-yellow-500/20 blur-[60px] rounded-full pointer-events-none" />
-                        <div className="flex justify-between items-start mb-4 relative z-10">
-                            <div className="p-2 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 rounded-xl border border-yellow-500/20 shadow-[0_0_15px_rgba(234,179,8,0.2)]">
-                                <Wallet size={20} />
+                    <Link href="/dashboard/wallet" className="block group cursor-pointer">
+                        <div className="relative overflow-hidden glass-card p-4 rounded-2xl group transition-all duration-300 hover:border-yellow-500/50 hover:bg-white/5 shadow-sm">
+                            <div className="absolute right-0 bottom-0 w-24 h-24 bg-yellow-500/20 blur-[60px] rounded-full pointer-events-none" />
+                            <div className="flex justify-between items-start mb-4 relative z-10">
+                                <div className="p-2 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 rounded-xl border border-yellow-500/20 shadow-[0_0_15px_rgba(234,179,8,0.2)]">
+                                    <Wallet size={20} />
+                                </div>
+                                <ArrowUpRight size={16} className="text-yellow-600 dark:text-yellow-400 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                             </div>
-                            <ArrowUpRight size={16} className="text-yellow-600 dark:text-yellow-400" />
+                            <p className="text-muted-foreground text-sm mb-1 relative z-10">Wallet Balance</p>
+                            <h3 className="text-2xl font-bold text-foreground relative z-10 drop-shadow-sm truncate">
+                                {walletBalance}
+                                <span className="text-sm font-normal text-muted-foreground ml-1">coins</span>
+                            </h3>
                         </div>
-                        <p className="text-muted-foreground text-sm mb-1 relative z-10">Wallet Balance</p>
-                        <h3 className="text-2xl font-bold text-foreground relative z-10 drop-shadow-sm truncate">
-                            {walletBalance}
-                            <span className="text-sm font-normal text-muted-foreground ml-1">coins</span>
-                        </h3>
-                    </div>
+                    </Link>
 
                     {/* Total Wins - Silver Theme */}
                     <div className="relative overflow-hidden glass-card p-4 rounded-2xl group transition-all duration-300 hover:border-emerald-500/50 shadow-sm">
