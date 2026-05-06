@@ -46,8 +46,8 @@ export async function POST(req: Request) {
                 throw new Error("No spins available");
             }
 
-            // Fetch Items
-            const items = await SpinItem.find({ isActive: true }).lean();
+            // Fetch Items - Sorted by _id to match frontend order
+            const items = await SpinItem.find({ isActive: true }).sort({ _id: 1 }).lean();
 
             if (items.length === 0) {
                 throw new Error("No active spin items");

@@ -72,27 +72,16 @@ export default function LuckyWheelGame({ items, spinsAvailable, userProgress, on
     };
 
     const animateWheel = (winnerIndex: number, winningItem: SpinItem, finalSpins: number) => {
+        if (!items || items.length === 0) return;
         const segmentAngle = 360 / items.length;
-        // Center of the winning slice
         const currentSliceCenter = (winnerIndex * segmentAngle) + (segmentAngle / 2);
 
-        // We want the slice center to land at 270deg (Top)
-        // Visual Rotation = WheelRotation + SliceCenter
-        // Target Visual Rotation = 270 (or 270 + N*360)
-        // WheelTarget + SliceCenter = 270 + N*360
-        // WheelTarget = 270 - SliceCenter + N*360
-
-        // Start from current rotation and add at least 5 full spins (1800deg)
         const minSpin = 1800;
         let targetRotation = 270 - currentSliceCenter;
 
-        // Adjust targetRotation to be greater than (current rotation + minSpin)
         while (targetRotation < rotation + minSpin) {
             targetRotation += 360;
         }
-
-        // Add random slight offset for realism? No, user wants precise pointer.
-        // Actually, let's keep it precise to the center of the slice for now.
 
         setRotation(targetRotation);
 
@@ -107,38 +96,39 @@ export default function LuckyWheelGame({ items, spinsAvailable, userProgress, on
     return (
         <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-4">
 
-            {/* 3D Wheel Container - Compact Size */}
-            <div className="relative w-[80vw] h-[80vw] max-w-[300px] max-h-[300px] aspect-square mb-6 group select-none">
-
-                {/* Pointer (Sharpened Golden Pin) */}
-                <div className="absolute -top-[8%] left-1/2 transform -translate-x-1/2 z-30 filter drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] flex flex-col items-center">
-                    {/* Pin Head Circle - Aligned with Purple Border */}
-                    <div className="w-2.5 h-2.5 rounded-full bg-white border border-yellow-600 shadow-sm z-10 -mb-1 ring-1 ring-purple-900/50"></div>
-
-                    {/* Pin Body */}
-                    <div
-                        className="w-12 h-14 bg-gradient-to-b from-[#FFD700] via-[#FDB931] to-[#C99618] flex items-start justify-center shadow-lg mx-auto"
-                        style={{ clipPath: 'polygon(15% 0%, 85% 0%, 50% 100%)' }}
-                    >
-                        <div className="w-8 h-8 rounded-full bg-yellow-100/30 -mt-2 blur-sm"></div>
+            {/* 3D Wheel Container - Perfectly Centered Unit */}
+            <div className="relative w-[85vw] h-[85vw] max-w-[320px] max-h-[320px] aspect-square mb-8 group select-none mx-auto">
+                
+                {/* Pointer (Indicator) - Positioned at exact top center */}
+                <div className="absolute -top-[12%] left-0 right-0 flex justify-center z-40 pointer-events-none">
+                    <div className="flex flex-col items-center filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]">
+                        {/* Pin Head */}
+                        <div className="w-3 h-3 rounded-full bg-white border-2 border-yellow-600 shadow-sm z-10 -mb-1 ring-2 ring-purple-900/30"></div>
+                        
+                        {/* Pin Body (Triangle) */}
+                        <div
+                            className="w-12 h-16 bg-gradient-to-b from-[#FFD700] via-[#FDB931] to-[#C99618] flex items-start justify-center shadow-lg"
+                            style={{ clipPath: 'polygon(15% 0%, 85% 0%, 50% 100%)' }}
+                        >
+                            <div className="w-8 h-8 rounded-full bg-yellow-100/40 -mt-2 blur-md"></div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Outer Ring (Static) - Thicker Purple & Gold */}
-                <div className="absolute -inset-[5%] rounded-full bg-gradient-to-b from-purple-600 to-purple-900 shadow-[0_10px_30px_rgba(0,0,0,0.6)] border-[5px] border-yellow-500 flex items-center justify-center z-0">
-
-                    {/* Border Dots */}
+                {/* Outer Ring (Static) - Thicker Purple & Gold, perfectly concentric */}
+                <div className="absolute -inset-[6%] rounded-full bg-gradient-to-b from-purple-600 to-purple-950 shadow-[0_15px_40px_rgba(0,0,0,0.7)] border-[6px] border-yellow-500 z-0 flex items-center justify-center">
+                    {/* Decorative Border Dots */}
                     {Array.from({ length: 12 }).map((_, i) => {
                         const angleDeg = i * 30;
                         const angleRad = (angleDeg * Math.PI) / 180;
-                        const r = 48;
+                        const r = 47.5; // Radius percentage for dots
                         const x = 50 + r * Math.cos(angleRad);
                         const y = 50 + r * Math.sin(angleRad);
 
                         return (
                             <div
                                 key={`dot-${i}`}
-                                className="absolute w-2 h-2 bg-white rounded-full shadow-[0_0_5px_rgba(255,255,255,0.8)]"
+                                className="absolute w-2.5 h-2.5 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.9)] border border-purple-200/30"
                                 style={{
                                     left: `${x}%`,
                                     top: `${y}%`,
@@ -151,19 +141,18 @@ export default function LuckyWheelGame({ items, spinsAvailable, userProgress, on
 
                 {/* Rotating Wheel Inner */}
                 <div
-                    className="w-full h-full rounded-full overflow-hidden relative z-10 border-[5px] border-yellow-500 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)] bg-[#2c3e50]"
+                    className="absolute inset-0 rounded-full overflow-hidden z-10 border-[5px] border-yellow-500 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)] bg-[#1a2a3a]"
                     style={{
                         transform: `rotate(${rotation}deg)`,
                         transition: spinning ? "transform 5s cubic-bezier(0.15, 0, 0, 1)" : "none"
                     }}
                 >
-                    {/* 1. Background Slices (Colors) */}
-                    {items.map((item, index) => {
+                    {/* Background Slices (Colors) */}
+                    {items.length > 0 && items.map((item, index) => {
                         const segmentAngle = 360 / items.length;
                         const rotate = index * segmentAngle;
                         const skew = 90 - segmentAngle;
-                        // Enforce Purple & Gold Theme
-                        const sliceColor = index % 2 === 0 ? '#9333ea' : '#eab308'; // purple-600 : yellow-500
+                        const sliceColor = index % 2 === 0 ? '#9333ea' : '#eab308'; // Purple / Yellow
 
                         return (
                             <div
@@ -172,23 +161,20 @@ export default function LuckyWheelGame({ items, spinsAvailable, userProgress, on
                                 style={{
                                     backgroundColor: sliceColor,
                                     transform: `rotate(${rotate}deg) skewY(-${skew}deg)`,
-                                    borderLeft: '2px solid rgba(255,255,255,0.1)',
-                                    boxShadow: 'inset 0 0 10px rgba(0,0,0,0.2)'
+                                    borderLeft: '1px solid rgba(255,255,255,0.15)',
+                                    boxShadow: 'inset 0 0 15px rgba(0,0,0,0.3)'
                                 }}
                             />
                         );
                     })}
 
-                    {/* 2. Text Content Layer (Use Spoke Logic) */}
+                    {/* Text Content Layer */}
                     <div className="absolute inset-0 rounded-full pointer-events-none">
-                        {items.map((item, index) => {
+                        {items.length > 0 && items.map((item, index) => {
                             const segmentAngle = 360 / items.length;
                             const midAngle = (index * segmentAngle) + (segmentAngle / 2);
                             const midAngleRad = (midAngle * Math.PI) / 180;
-
-                            // Position: radius/2 (25% of full diameter)
-                            // We position the CENTER of the text box at this point.
-                            const r = 25; // 25% from center
+                            const r = 28; // Keep the improved radius
                             const x = 50 + r * Math.cos(midAngleRad);
                             const y = 50 + r * Math.sin(midAngleRad);
 
@@ -199,20 +185,15 @@ export default function LuckyWheelGame({ items, spinsAvailable, userProgress, on
                                     style={{
                                         left: `${x}%`,
                                         top: `${y}%`,
-                                        width: '40%', // Restrict width to avoid overflow
-                                        // Text is Straight but Rotated. Spoke alignment.
-                                        // Rotate by midAngle.
-                                        // At 0deg (Right), text is Horizontal (L->R). Reads Inner->Outer.
+                                        width: '40%', 
                                         transform: `translate(-50%, -50%) rotate(${midAngle}deg)`,
                                     }}
                                 >
                                     <span
-                                        className="text-white font-black uppercase tracking-wider drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]"
+                                        className="text-white font-black uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] whitespace-nowrap"
                                         style={{
-                                            fontSize: 'clamp(10px, 3vw, 16px)', // Responsive font
+                                            fontSize: 'clamp(9px, 2.5vw, 13px)', 
                                             lineHeight: '1',
-                                            textShadow: '0 2px 4px rgba(0,0,0,0.5)',
-                                            whiteSpace: 'nowrap'
                                         }}
                                     >
                                         {item.label}
@@ -223,11 +204,12 @@ export default function LuckyWheelGame({ items, spinsAvailable, userProgress, on
                     </div>
                 </div>
 
-                {/* Center Cap */}
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
-                    <div className="w-[20%] h-[20%] min-w-[50px] min-h-[50px] aspect-square rounded-full bg-gradient-to-br from-[#FDB931] to-[#C99618] border-4 border-[#8a6e15] shadow-xl flex items-center justify-center">
-                        {/* Using responsive sizing/aspect-square ensures circle */}
-                        <div className="w-[60%] h-[60%] rounded-full bg-gradient-to-tl from-[#e0b745] to-[#fff5c3] shadow-inner"></div>
+                {/* Center Cap (The Hub) - Perfectly centered using flex */}
+                <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
+                    <div className="w-[22%] h-[22%] min-w-[65px] min-h-[65px] aspect-square rounded-full bg-gradient-to-br from-[#FFD700] via-[#FDB931] to-[#C99618] border-[5px] border-[#8a6e15] shadow-[0_8px_20px_rgba(0,0,0,0.5),inset_0_2px_10px_rgba(255,255,255,0.4)] flex items-center justify-center">
+                        <div className="w-[60%] h-[60%] rounded-full bg-gradient-to-tl from-[#e0b745] to-[#fff5c3] shadow-inner flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 rounded-full bg-white/40 blur-[1px]"></div>
+                        </div>
                     </div>
                 </div>
             </div>

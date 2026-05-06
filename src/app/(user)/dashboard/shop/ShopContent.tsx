@@ -200,19 +200,18 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
                         <div className="absolute right-0 top-0 w-32 h-32 bg-purple-500/5 rounded-full blur-2xl pointer-events-none" />
 
                         <div className="flex items-center justify-between mb-3 relative z-10">
-                            <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 flex items-center justify-center shrink-0">
+                            <div className="flex items-center gap-4">
+                                <div className="w-14 h-14 relative flex items-center justify-center shrink-0 drop-shadow-[0_0_15px_rgba(168,85,247,0.4)]">
                                     <Image
                                         src="/spin-icon-clean.png"
                                         alt="Spin"
                                         fill
-                                        className="object-contain animate-spin"
-                                        style={{ animationDuration: '3s' }}
+                                        className="object-contain animate-spin-slow"
                                     />
                                 </div>
-                                <div>
-                                    <h3 className="font-bold text-foreground leading-none">Lucky Spin</h3>
-                                    <p className="text-[10px] text-muted-foreground mt-0.5 font-medium">Win Exclusive Prizes</p>
+                                <div className="flex flex-col">
+                                    <h3 className="font-black text-xl text-foreground leading-none tracking-tight">Lucky Spin</h3>
+                                    <p className="text-[11px] text-muted-foreground mt-1 font-bold uppercase tracking-wider opacity-80">Win Exclusive Prizes</p>
                                 </div>
                             </div>
                             <button

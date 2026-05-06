@@ -9,7 +9,7 @@ const SpinItemSchema = new Schema(
         },
         type: {
             type: String,
-            enum: ['coins', 'product'],
+            enum: ['coins', 'product', 'Coin', 'Product', 'empty'],
             required: true,
         },
         value: {
@@ -33,7 +33,7 @@ const SpinItemSchema = new Schema(
         },
         imageUrl: {
             type: String,
-            required: [true, 'Please provide an image URL'],
+            required: false,
         },
         isActive: {
             type: Boolean,

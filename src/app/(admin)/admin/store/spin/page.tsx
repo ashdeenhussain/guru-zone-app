@@ -8,7 +8,7 @@ import ImageUpload from "@/components/admin/ImageUpload";
 interface SpinItem {
     _id: string;
     label: string;
-    type: "Coin" | "Product";
+    type: "Coin" | "Product" | "coins" | "product";
 
     value?: number | string;
     probability: number;
@@ -25,7 +25,7 @@ interface SpinHistoryItem {
         email: string;
         image?: string;
     };
-    type: "Coin" | "Product";
+    type: "Coin" | "Product" | "coins" | "product";
     prize: string;
     status: string;
     originalData: any; // ID for order updates
@@ -51,7 +51,7 @@ export default function AdminSpinPage() {
     // Form State
     const [formData, setFormData] = useState({
         label: "",
-        type: "Coin",
+        type: "coins",
         value: "",
         probability: 0,
         color: "#ffffff",
@@ -130,13 +130,16 @@ export default function AdminSpinPage() {
                 body: JSON.stringify(payload),
             });
 
-            if (!res.ok) throw new Error("Failed to save");
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || errorData.message || "Failed to save");
+            }
 
             setIsModalOpen(false);
             fetchItems();
             resetForm();
-        } catch (error) {
-            alert("Error saving item");
+        } catch (error: any) {
+            alert("Error saving item: " + error.message);
         }
     };
 
@@ -175,7 +178,7 @@ export default function AdminSpinPage() {
         setIsEditing(null);
         setFormData({
             label: "",
-            type: "Coin",
+            type: "coins",
             value: "",
             probability: 0,
             color: "#ffffff",
@@ -275,7 +278,7 @@ export default function AdminSpinPage() {
                                             )}
                                             <div className="flex flex-col">
                                                 <span className="font-bold text-foreground text-sm">{item.label}</span>
-                                                <span className={`text-[10px] font-bold uppercase ${item.type === 'Coin' ? 'text-yellow-500' : 'text-blue-500'}`}>
+                                                <span className={`text-[10px] font-bold uppercase ${(item.type === 'Coin' || item.type === 'coins') ? 'text-yellow-500' : 'text-blue-500'}`}>
                                                     {item.type} • {item.value || 'No Value'}
                                                 </span>
                                             </div>
@@ -373,7 +376,7 @@ export default function AdminSpinPage() {
                             <div>
                                 <label className="text-xs text-muted-foreground font-bold uppercase block mb-1">Label</label>
                                 <input
-                                    className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:ring-2 focus:ring-primary outline-none"
+                                    className="w-full bg-background border border-border rounded-lg px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-primary outline-none"
                                     placeholder="100 Coins"
                                     value={formData.label}
                                     onChange={e => setFormData({ ...formData, label: e.target.value })}
@@ -383,18 +386,18 @@ export default function AdminSpinPage() {
                                 <div>
                                     <label className="text-xs text-muted-foreground font-bold uppercase block mb-1">Type</label>
                                     <select
-                                        className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:ring-2 focus:ring-primary outline-none"
+                                        className="w-full bg-background border border-border rounded-lg px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-primary outline-none"
                                         value={formData.type}
                                         onChange={e => setFormData({ ...formData, type: e.target.value })}
                                     >
-                                        <option value="Coin">Coins</option>
-                                        <option value="Product">Product</option>
+                                        <option value="coins" className="bg-background text-zinc-900 dark:text-zinc-100">Coins</option>
+                                        <option value="product" className="bg-background text-zinc-900 dark:text-zinc-100">Product</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label className="text-xs text-muted-foreground font-bold uppercase block mb-1">Val / ID</label>
 
-                                    {formData.type === 'Product' ? (
+                                    {formData.type.toLowerCase().includes('product') ? (
                                         <select
                                             className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:ring-2 focus:ring-primary outline-none"
                                             value={formData.value}
@@ -409,14 +412,14 @@ export default function AdminSpinPage() {
                                         >
                                             <option value="">-- Select Active Product --</option>
                                             {availableProducts.map(p => (
-                                                <option key={p._id} value={p._id}>
+                                                <option key={p._id} value={p._id} className="bg-background text-zinc-900 dark:text-zinc-100">
                                                     {p.title} ({p.priceCoins} 🪙)
                                                 </option>
                                             ))}
                                         </select>
                                     ) : (
                                         <input
-                                            className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:ring-2 focus:ring-primary outline-none"
+                                            className="w-full bg-background border border-border rounded-lg px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-primary outline-none"
                                             placeholder="100"
                                             value={formData.value}
                                             onChange={e => setFormData({ ...formData, value: e.target.value })}
@@ -429,7 +432,7 @@ export default function AdminSpinPage() {
                                     <label className="text-xs text-muted-foreground font-bold uppercase block mb-1">Probability %</label>
                                     <input
                                         type="number"
-                                        className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:ring-2 focus:ring-primary outline-none"
+                                        className="w-full bg-background border border-border rounded-lg px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-primary outline-none"
                                         value={formData.probability}
                                         onChange={e => setFormData({ ...formData, probability: Number(e.target.value) })}
                                     />
@@ -438,7 +441,7 @@ export default function AdminSpinPage() {
                                     <label className="text-xs text-muted-foreground font-bold uppercase block mb-1">Color (Hex)</label>
                                     <input
                                         type="color"
-                                        className="w-full h-10 bg-background border border-input rounded-lg cursor-pointer"
+                                        className="w-full h-10 bg-background border border-border rounded-lg cursor-pointer"
                                         value={formData.color}
                                         onChange={e => setFormData({ ...formData, color: e.target.value })}
                                     />
@@ -495,8 +498,8 @@ export default function AdminSpinPage() {
                             <div className="flex justify-between items-center">
                                 <span className="text-xs font-bold uppercase text-muted-foreground">Prize Won</span>
                                 <div className="flex items-center gap-2">
-                                    {selectedHistoryItem.type === 'Coin' ? '🪙' : '🎁'}
-                                    <span className={`text-lg font-bold ${selectedHistoryItem.type === 'Coin' ? 'text-yellow-500' : 'text-blue-500'}`}>
+                                    {(selectedHistoryItem.type === 'Coin' || selectedHistoryItem.type === 'coins') ? '🪙' : '🎁'}
+                                    <span className={`text-lg font-bold ${(selectedHistoryItem.type === 'Coin' || selectedHistoryItem.type === 'coins') ? 'text-yellow-500' : 'text-blue-500'}`}>
                                         {selectedHistoryItem.prize}
                                     </span>
                                 </div>

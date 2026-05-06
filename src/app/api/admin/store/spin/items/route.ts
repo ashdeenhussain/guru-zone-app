@@ -8,12 +8,13 @@ import { z } from "zod";
 
 const spinItemSchema = z.object({
     label: z.string().min(1, "Label is required"),
-    type: z.enum(['coins', 'product', 'empty', 'Product']),
-    value: z.string().optional(),
+    type: z.enum(['coins', 'product', 'empty', 'Product', 'Coin']),
+    value: z.string().optional().or(z.number()),
     probability: z.number().min(0).max(100),
     isActive: z.boolean().optional().default(true),
     color: z.string().optional(),
     product: z.string().optional(),
+    imageUrl: z.string().optional(), // Added imageUrl
     icon: z.string().optional()
 });
 

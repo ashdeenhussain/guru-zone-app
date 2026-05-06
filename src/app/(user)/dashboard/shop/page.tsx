@@ -30,7 +30,7 @@ export default async function ShopPage() {
 
     // Fetch Products & Spin Items
     const products = await StoreProduct.find({ isActive: true }).lean();
-    const spinItems = await SpinItem.find({ isActive: true }).lean();
+    const spinItems = await SpinItem.find({ isActive: true }).sort({ _id: 1 }).lean();
 
     // Fetch System Settings for Banners
     // @ts-ignore
