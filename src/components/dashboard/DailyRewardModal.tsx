@@ -259,12 +259,12 @@ export default function DailyRewardModal({ onClose, onCoinsUpdated }: DailyRewar
                                     {spinItems.length > 0 ? (
                                         <div className="flex flex-col items-center gap-5">
                                             {/* Wheel */}
-                                            <div className="relative w-[60vw] h-[60vw] max-w-[200px] max-h-[200px] aspect-square select-none my-6">
+                                            <div className="relative w-[65vw] h-[65vw] max-w-[220px] max-h-[220px] aspect-square select-none my-6">
                                                 {/* Pointer */}
-                                                <div className="absolute -top-[15%] left-1/2 transform -translate-x-1/2 z-30 flex flex-col items-center filter drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)]">
-                                                    <div className="w-2.5 h-2.5 rounded-full bg-white border border-yellow-600 z-10 -mb-1 ring-1 ring-purple-900/50" />
+                                                <div className="absolute -top-[18%] left-1/2 transform -translate-x-1/2 z-30 flex flex-col items-center filter drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)]">
+                                                    <div className="w-2 h-2 rounded-full bg-white border border-yellow-600 z-10 -mb-1 ring-1 ring-purple-900/50" />
                                                     <div
-                                                        className="w-10 h-12 bg-gradient-to-b from-[#FFD700] via-[#FDB931] to-[#C99618] flex items-start justify-center shadow-lg"
+                                                        className="w-8 h-12 bg-gradient-to-b from-[#FFD700] via-[#FDB931] to-[#C99618] flex items-start justify-center shadow-lg"
                                                         style={{ clipPath: "polygon(15% 0%, 85% 0%, 50% 100%)" }}
                                                     />
                                                 </div>
@@ -318,7 +318,7 @@ export default function DailyRewardModal({ onClose, onCoinsUpdated }: DailyRewar
                                                             const segAngle = 360 / spinItems.length;
                                                             const midAngle = index * segAngle + segAngle / 2;
                                                             const midAngleRad = (midAngle * Math.PI) / 180;
-                                                            const r = 25;
+                                                            const r = 24;
                                                             const x = 50 + r * Math.cos(midAngleRad);
                                                             const y = 50 + r * Math.sin(midAngleRad);
                                                             return (
@@ -327,7 +327,7 @@ export default function DailyRewardModal({ onClose, onCoinsUpdated }: DailyRewar
                                                                     className="absolute flex items-center justify-center text-center"
                                                                     style={{ left: `${x}%`, top: `${y}%`, width: "40%", transform: `translate(-50%,-50%) rotate(${midAngle}deg)` }}
                                                                 >
-                                                                    <span className="text-white font-black uppercase drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] whitespace-nowrap" style={{ fontSize: "clamp(9px,3.5vw,12px)", lineHeight: "1" }}>
+                                                                    <span className="text-white font-black uppercase drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] whitespace-nowrap" style={{ fontSize: "clamp(8px,3.2vw,11px)", lineHeight: "1" }}>
                                                                         {item.label}
                                                                     </span>
                                                                 </div>
@@ -337,8 +337,8 @@ export default function DailyRewardModal({ onClose, onCoinsUpdated }: DailyRewar
                                                 </div>
                                                 {/* Center Cap */}
                                                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
-                                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FDB931] to-[#C99618] border-4 border-[#8a6e15] shadow-xl flex items-center justify-center">
-                                                        <div className="w-6 h-6 rounded-full bg-gradient-to-tl from-[#e0b745] to-[#fff5c3] shadow-inner" />
+                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FDB931] to-[#C99618] border-4 border-[#8a6e15] shadow-xl flex items-center justify-center">
+                                                        <div className="w-5 h-5 rounded-full bg-gradient-to-tl from-[#e0b745] to-[#fff5c3] shadow-inner" />
                                                     </div>
                                                 </div>
                                             </div>

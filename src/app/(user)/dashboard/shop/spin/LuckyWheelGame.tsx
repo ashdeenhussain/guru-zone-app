@@ -97,7 +97,7 @@ export default function LuckyWheelGame({ items, spinsAvailable, userProgress, on
         <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-2 sm:p-4">
 
             {/* 3D Wheel Container - Perfectly Centered Unit */}
-            <div className="relative w-[60vw] h-[60vw] max-w-[200px] max-h-[200px] aspect-square mb-10 mt-4 group select-none mx-auto">
+            <div className="relative w-[65vw] h-[65vw] max-w-[220px] max-h-[220px] aspect-square mb-10 mt-6 group select-none mx-auto">
                 
                 {/* Pointer (Indicator) - Positioned at exact top center */}
                 <div className="absolute -top-[18%] left-0 right-0 flex justify-center z-40 pointer-events-none">
@@ -107,7 +107,7 @@ export default function LuckyWheelGame({ items, spinsAvailable, userProgress, on
                         
                         {/* Pin Body (Triangle) */}
                         <div
-                            className="w-12 h-16 bg-gradient-to-b from-[#FFD700] via-[#FDB931] to-[#C99618] flex items-start justify-center shadow-lg"
+                            className="w-10 h-14 bg-gradient-to-b from-[#FFD700] via-[#FDB931] to-[#C99618] flex items-start justify-center shadow-lg"
                             style={{ clipPath: 'polygon(15% 0%, 85% 0%, 50% 100%)' }}
                         >
                             <div className="w-8 h-8 rounded-full bg-yellow-100/40 -mt-2 blur-md"></div>
@@ -174,7 +174,7 @@ export default function LuckyWheelGame({ items, spinsAvailable, userProgress, on
                             const segmentAngle = 360 / items.length;
                             const midAngle = (index * segmentAngle) + (segmentAngle / 2);
                             const midAngleRad = (midAngle * Math.PI) / 180;
-                            const r = 28; // Keep the improved radius
+                            const r = 26; // Adjusted radius for better text centering
                             const x = 50 + r * Math.cos(midAngleRad);
                             const y = 50 + r * Math.sin(midAngleRad);
 
@@ -192,7 +192,7 @@ export default function LuckyWheelGame({ items, spinsAvailable, userProgress, on
                                     <span
                                         className="text-white font-black uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] whitespace-nowrap"
                                         style={{
-                                            fontSize: 'clamp(9px, 3.5vw, 12px)', 
+                                            fontSize: 'clamp(8px, 3.2vw, 11px)', 
                                             lineHeight: '1',
                                         }}
                                     >
@@ -206,7 +206,7 @@ export default function LuckyWheelGame({ items, spinsAvailable, userProgress, on
 
                 {/* Center Cap (The Hub) - Perfectly centered using flex */}
                 <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
-                    <div className="w-[22%] h-[22%] min-w-[65px] min-h-[65px] aspect-square rounded-full bg-gradient-to-br from-[#FFD700] via-[#FDB931] to-[#C99618] border-[5px] border-[#8a6e15] shadow-[0_8px_20px_rgba(0,0,0,0.5),inset_0_2px_10px_rgba(255,255,255,0.4)] flex items-center justify-center">
+                    <div className="w-[18%] h-[18%] min-w-[45px] min-h-[45px] aspect-square rounded-full bg-gradient-to-br from-[#FFD700] via-[#FDB931] to-[#C99618] border-[4px] border-[#8a6e15] shadow-[0_4px_12px_rgba(0,0,0,0.5),inset_0_2px_8px_rgba(255,255,255,0.4)] flex items-center justify-center">
                         <div className="w-[60%] h-[60%] rounded-full bg-gradient-to-tl from-[#e0b745] to-[#fff5c3] shadow-inner flex items-center justify-center">
                             <div className="w-1.5 h-1.5 rounded-full bg-white/40 blur-[1px]"></div>
                         </div>
