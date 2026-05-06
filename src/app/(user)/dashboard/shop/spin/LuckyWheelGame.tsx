@@ -94,13 +94,13 @@ export default function LuckyWheelGame({ items, spinsAvailable, userProgress, on
     };
 
     return (
-        <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-4">
+        <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-2 sm:p-4">
 
             {/* 3D Wheel Container - Perfectly Centered Unit */}
-            <div className="relative w-[85vw] h-[85vw] max-w-[320px] max-h-[320px] aspect-square mb-8 group select-none mx-auto">
+            <div className="relative w-[70vw] h-[70vw] max-w-[240px] max-h-[240px] aspect-square mb-12 mt-6 group select-none mx-auto">
                 
                 {/* Pointer (Indicator) - Positioned at exact top center */}
-                <div className="absolute -top-[12%] left-0 right-0 flex justify-center z-40 pointer-events-none">
+                <div className="absolute -top-[15%] left-0 right-0 flex justify-center z-40 pointer-events-none">
                     <div className="flex flex-col items-center filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]">
                         {/* Pin Head */}
                         <div className="w-3 h-3 rounded-full bg-white border-2 border-yellow-600 shadow-sm z-10 -mb-1 ring-2 ring-purple-900/30"></div>
@@ -192,7 +192,7 @@ export default function LuckyWheelGame({ items, spinsAvailable, userProgress, on
                                     <span
                                         className="text-white font-black uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] whitespace-nowrap"
                                         style={{
-                                            fontSize: 'clamp(9px, 2.5vw, 13px)', 
+                                            fontSize: 'clamp(9px, 3.5vw, 12px)', 
                                             lineHeight: '1',
                                         }}
                                     >

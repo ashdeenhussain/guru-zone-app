@@ -484,7 +484,7 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
                                 initial={{ scale: 0.8, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
                                 exit={{ scale: 0.8, opacity: 0 }}
-                                className="bg-card w-full max-w-lg rounded-3xl border border-border shadow-2xl relative overflow-hidden"
+                                className="bg-card w-full max-w-lg rounded-3xl border border-border shadow-2xl relative overflow-y-auto max-h-[95vh]"
                             >
                                 <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-10 bg-gradient-to-b from-black/20 to-transparent">
                                     <div><h3 className="text-white font-bold text-lg drop-shadow-md">Lucky Spin</h3></div>
@@ -500,7 +500,7 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
                                 <div className="absolute -top-32 -right-32 w-64 h-64 bg-primary/20 rounded-full blur-3xl pointer-events-none"></div>
                                 <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
 
-                                <div className="p-6 md:p-8 pt-16">
+                                <div className="p-4 md:p-8 pt-12">
                                     <LuckyWheelGame
                                         items={spinItems}
                                         spinsAvailable={loyaltyData.spinsAvailable}

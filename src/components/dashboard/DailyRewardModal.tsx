@@ -259,9 +259,9 @@ export default function DailyRewardModal({ onClose, onCoinsUpdated }: DailyRewar
                                     {spinItems.length > 0 ? (
                                         <div className="flex flex-col items-center gap-5">
                                             {/* Wheel */}
-                                            <div className="relative w-[260px] h-[260px] aspect-square select-none">
+                                            <div className="relative w-[70vw] h-[70vw] max-w-[240px] max-h-[240px] aspect-square select-none my-4">
                                                 {/* Pointer */}
-                                                <div className="absolute -top-[8%] left-1/2 transform -translate-x-1/2 z-30 flex flex-col items-center filter drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)]">
+                                                <div className="absolute -top-[12%] left-1/2 transform -translate-x-1/2 z-30 flex flex-col items-center filter drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)]">
                                                     <div className="w-2.5 h-2.5 rounded-full bg-white border border-yellow-600 z-10 -mb-1 ring-1 ring-purple-900/50" />
                                                     <div
                                                         className="w-10 h-12 bg-gradient-to-b from-[#FFD700] via-[#FDB931] to-[#C99618] flex items-start justify-center shadow-lg"
@@ -327,7 +327,7 @@ export default function DailyRewardModal({ onClose, onCoinsUpdated }: DailyRewar
                                                                     className="absolute flex items-center justify-center text-center"
                                                                     style={{ left: `${x}%`, top: `${y}%`, width: "40%", transform: `translate(-50%,-50%) rotate(${midAngle}deg)` }}
                                                                 >
-                                                                    <span className="text-white font-black uppercase drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] whitespace-nowrap" style={{ fontSize: "clamp(9px,2.5vw,13px)", lineHeight: "1" }}>
+                                                                    <span className="text-white font-black uppercase drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] whitespace-nowrap" style={{ fontSize: "clamp(9px,3.5vw,12px)", lineHeight: "1" }}>
                                                                         {item.label}
                                                                     </span>
                                                                 </div>
