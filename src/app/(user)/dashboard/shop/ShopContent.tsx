@@ -486,11 +486,11 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
                                 exit={{ scale: 0.8, opacity: 0 }}
                                 className="bg-card w-full max-w-lg rounded-3xl border border-border shadow-2xl relative overflow-y-auto max-h-[95vh]"
                             >
-                                <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-10 bg-gradient-to-b from-black/20 to-transparent">
+                                <div className="sticky top-0 left-0 right-0 p-4 flex justify-between items-center z-20 bg-card/80 backdrop-blur-md border-b border-white/5">
                                     <div><h3 className="text-white font-bold text-lg drop-shadow-md">Lucky Spin</h3></div>
                                     <button
                                         onClick={() => setIsSpinModalOpen(false)}
-                                        className="p-2 rounded-full bg-black/30 hover:bg-black/50 text-white transition-colors backdrop-blur-sm"
+                                        className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
                                     >
                                         <X size={20} />
                                     </button>
@@ -500,7 +500,7 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
                                 <div className="absolute -top-32 -right-32 w-64 h-64 bg-primary/20 rounded-full blur-3xl pointer-events-none"></div>
                                 <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
 
-                                <div className="p-4 md:p-8 pt-12">
+                                <div className="p-4 md:p-8">
                                     <LuckyWheelGame
                                         items={spinItems}
                                         spinsAvailable={loyaltyData.spinsAvailable}

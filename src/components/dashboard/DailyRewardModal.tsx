@@ -154,7 +154,7 @@ export default function DailyRewardModal({ onClose, onCoinsUpdated }: DailyRewar
                 className="bg-card w-full max-w-md rounded-t-[2rem] sm:rounded-[2rem] border border-border shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
             >
                 {/* Header */}
-                <div className="relative bg-gradient-to-r from-purple-600 via-fuchsia-600 to-purple-700 p-5 flex items-center justify-between">
+                <div className="sticky top-0 left-0 right-0 z-20 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-purple-700 p-5 flex items-center justify-between">
                     <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4xNSkiLz48L3N2Zz4=')] opacity-30" />
                     <div className="relative flex items-center gap-3">
                         <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-xl">🎁</div>
@@ -259,9 +259,9 @@ export default function DailyRewardModal({ onClose, onCoinsUpdated }: DailyRewar
                                     {spinItems.length > 0 ? (
                                         <div className="flex flex-col items-center gap-5">
                                             {/* Wheel */}
-                                            <div className="relative w-[70vw] h-[70vw] max-w-[240px] max-h-[240px] aspect-square select-none my-4">
+                                            <div className="relative w-[60vw] h-[60vw] max-w-[200px] max-h-[200px] aspect-square select-none my-6">
                                                 {/* Pointer */}
-                                                <div className="absolute -top-[12%] left-1/2 transform -translate-x-1/2 z-30 flex flex-col items-center filter drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)]">
+                                                <div className="absolute -top-[15%] left-1/2 transform -translate-x-1/2 z-30 flex flex-col items-center filter drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)]">
                                                     <div className="w-2.5 h-2.5 rounded-full bg-white border border-yellow-600 z-10 -mb-1 ring-1 ring-purple-900/50" />
                                                     <div
                                                         className="w-10 h-12 bg-gradient-to-b from-[#FFD700] via-[#FDB931] to-[#C99618] flex items-start justify-center shadow-lg"

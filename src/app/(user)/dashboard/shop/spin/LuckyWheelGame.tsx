@@ -97,10 +97,10 @@ export default function LuckyWheelGame({ items, spinsAvailable, userProgress, on
         <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-2 sm:p-4">
 
             {/* 3D Wheel Container - Perfectly Centered Unit */}
-            <div className="relative w-[70vw] h-[70vw] max-w-[240px] max-h-[240px] aspect-square mb-12 mt-6 group select-none mx-auto">
+            <div className="relative w-[60vw] h-[60vw] max-w-[200px] max-h-[200px] aspect-square mb-10 mt-4 group select-none mx-auto">
                 
                 {/* Pointer (Indicator) - Positioned at exact top center */}
-                <div className="absolute -top-[15%] left-0 right-0 flex justify-center z-40 pointer-events-none">
+                <div className="absolute -top-[18%] left-0 right-0 flex justify-center z-40 pointer-events-none">
                     <div className="flex flex-col items-center filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]">
                         {/* Pin Head */}
                         <div className="w-3 h-3 rounded-full bg-white border-2 border-yellow-600 shadow-sm z-10 -mb-1 ring-2 ring-purple-900/30"></div>
@@ -215,7 +215,7 @@ export default function LuckyWheelGame({ items, spinsAvailable, userProgress, on
             </div>
 
             {/* Dashboard-Style Rank Bar - Premium Glass Card */}
-            <div className="w-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-5 mb-6 space-y-4 shadow-lg">
+            <div className="w-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-4 mb-4 space-y-3 shadow-lg">
                 <div className="flex justify-between items-end">
                     <div>
                         <p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-1.5 flex items-center gap-1">
