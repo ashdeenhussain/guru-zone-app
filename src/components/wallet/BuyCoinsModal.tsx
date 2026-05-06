@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronRight, Upload, Copy, Check, CreditCard, Loader2 } from "lucide-react";
+import { X, ChevronRight, Upload, Copy, Check, CreditCard, Loader2, AlertCircle } from "lucide-react";
 
 interface PaymentMethod {
     _id: string;
@@ -15,10 +15,12 @@ interface PaymentMethod {
 
 const ProofGuideModal = ({
     imageUrl,
+    instructions,
     onClose,
     onConfirm
 }: {
     imageUrl: string;
+    instructions?: string;
     onClose: () => void;
     onConfirm: () => void;
 }) => (
@@ -26,38 +28,67 @@ const ProofGuideModal = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4"
     >
         <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            className="w-full max-w-sm overflow-hidden rounded-2xl bg-card border border-border shadow-2xl flex flex-col max-h-[90vh]"
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.9, y: 20 }}
+            className="w-full max-w-md overflow-hidden rounded-3xl bg-card border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col max-h-[90vh]"
         >
-            <div className="p-4 border-b border-border flex justify-between items-center bg-muted/20">
-                <h3 className="font-bold text-foreground flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500/20 text-blue-500 text-xs font-bold">!</span>
-                    Proof Requirements
-                </h3>
-                <button onClick={onClose} className="p-1 hover:bg-muted rounded-full transition-colors">
-                    <X size={18} />
+            <div className="p-5 border-b border-white/5 flex justify-between items-center bg-muted/30">
+                <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-yellow-500/20 text-yellow-500 shadow-inner">
+                        <AlertCircle size={24} />
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-foreground text-lg leading-tight">
+                            Verification Guide
+                        </h3>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Avoid Rejection</p>
+                    </div>
+                </div>
+                <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full transition-colors text-muted-foreground hover:text-foreground">
+                    <X size={20} />
                 </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 bg-black/40">
-                <div className="relative rounded-lg overflow-hidden border border-border/50">
-                    <img src={imageUrl} alt="Proof Guide" className="w-full h-auto object-contain" />
+            <div className="flex-1 overflow-y-auto p-5 space-y-5">
+                <div className="space-y-2">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">Sample Proof</p>
+                    <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl group">
+                        <img src={imageUrl} alt="Proof Guide" className="w-full h-auto object-contain transition-transform duration-500 group-hover:scale-105" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
+                    </div>
                 </div>
-                <div className="mt-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-xs text-blue-200 leading-relaxed">
-                    Please upload a screenshot exactly like the sample above. Ensure <strong>Transaction ID</strong>, <strong>Time</strong>, and <strong>Status</strong> are clearly visible.
+
+                <div className="space-y-3">
+                    <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 space-y-2">
+                        <p className="text-xs font-bold text-primary uppercase tracking-wider">Instructions</p>
+                        <p className="text-sm text-foreground/90 leading-relaxed font-medium">
+                            {instructions || "Please upload a screenshot exactly like the sample above. Ensure Transaction ID, Time, and Status are clearly visible."}
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="flex items-center gap-2 p-3 rounded-xl bg-green-500/10 border border-green-500/20">
+                            <div className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+                            <span className="text-[11px] font-bold text-green-500">Visible Trx ID</span>
+                        </div>
+                        <div className="flex items-center gap-2 p-3 rounded-xl bg-green-500/10 border border-green-500/20">
+                            <div className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+                            <span className="text-[11px] font-bold text-green-500">Clear Status</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div className="p-4 border-t border-border bg-card">
+            <div className="p-5 border-t border-white/5 bg-muted/10">
                 <button
                     onClick={onConfirm}
-                    className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 font-bold text-white hover:opacity-90 transition-opacity"
+                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-purple-600 font-bold text-white shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                 >
-                    I Understand, Upload Proof
+                    I Understand, Continue <ChevronRight size={18} />
                 </button>
             </div>
         </motion.div>
@@ -102,10 +133,10 @@ export default function BuyCoinsModal({ isOpen, onClose }: BuyCoinsModalProps) {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Client-side validation 1: File size check (2MB limit)
-        const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+        // Client-side validation 1: File size check (10MB limit)
+        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
         if (file.size > MAX_FILE_SIZE) {
-            alert('File too large!\n\nMaximum size: 2MB\nYour file: ' + (file.size / (1024 * 1024)).toFixed(2) + 'MB\n\nPlease compress or choose a smaller screenshot.');
+            alert('File too large!\n\nMaximum size: 10MB\nYour file: ' + (file.size / (1024 * 1024)).toFixed(2) + 'MB\n\nPlease compress or choose a smaller screenshot.');
             e.target.value = ''; // Reset file input
             return;
         }
@@ -494,6 +525,7 @@ export default function BuyCoinsModal({ isOpen, onClose }: BuyCoinsModalProps) {
                                         {showGuideModal && selectedMethod?.proofGuideImageUrl && (
                                             <ProofGuideModal
                                                 imageUrl={selectedMethod.proofGuideImageUrl}
+                                                instructions={selectedMethod.instructions}
                                                 onClose={() => setShowGuideModal(false)}
                                                 onConfirm={() => {
                                                     setShowGuideModal(false);

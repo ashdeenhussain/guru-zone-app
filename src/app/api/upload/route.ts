@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import cloudinary from '@/lib/cloudinary';
 
 // Constants
-const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
 // Helper to detect file type from buffer using magic numbers

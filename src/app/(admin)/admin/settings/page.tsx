@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
     Settings, Image as ImageIcon, CreditCard, Bell,
-    Save, Trash2, Plus, Info, CheckCircle, AlertTriangle, Loader2, ChevronUp, ChevronDown, Layout
+    Save, Trash2, Plus, Info, CheckCircle, AlertTriangle, Loader2, ChevronUp, ChevronDown, Layout, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -61,9 +61,13 @@ export default function AdminSettingsPage() {
     const [uploadingGuide, setUploadingGuide] = useState(false);
     const [uploadingBannerIdx, setUploadingBannerIdx] = useState<number | null>(null);
 
-    // Form State for Notification
     const [notification, setNotification] = useState({ title: '', message: '' });
     const [showNotifyModal, setShowNotifyModal] = useState(false);
+
+    // Edit Method State
+    const [editingMethod, setEditingMethod] = useState<PaymentMethod | null>(null);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
     // --- Fetch Data ---
     useEffect(() => {
@@ -115,13 +119,17 @@ export default function AdminSettingsPage() {
 
     const handleTogglePaymentMethod = async (id: string, currentStatus: boolean) => {
         try {
+            // Find the method to get current data
+            const methodToUpdate = paymentMethods.find(p => p._id === id);
+            if (!methodToUpdate) return;
+
             // Optimistic UI update
             setPaymentMethods(prev => prev.map(p => p._id === id ? { ...p, isActive: !currentStatus } : p));
 
             const res = await fetch(`/api/admin/settings/payment-methods/${id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ isActive: !currentStatus }),
+                body: JSON.stringify({ ...methodToUpdate, isActive: !currentStatus }),
             });
 
             if (!res.ok) throw new Error('Failed to toggle');
@@ -131,9 +139,66 @@ export default function AdminSettingsPage() {
         }
     };
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleUpdatePaymentMethod = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingMethod) return;
+        setSaving(true);
+        try {
+            const res = await fetch(`/api/admin/settings/payment-methods/${editingMethod._id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(editingMethod),
+            });
+
+            if (!res.ok) throw new Error('Failed to update');
+
+            const updated = await res.json();
+            setPaymentMethods(prev => prev.map(p => p._id === updated._id ? updated : p));
+            setShowEditModal(false);
+            setEditingMethod(null);
+            showToast('success', 'Payment method updated');
+        } catch (error) {
+            showToast('error', 'Failed to update payment method');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDeletePaymentMethod = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this payment method?')) return;
+        setIsDeleting(id);
+        try {
+            const res = await fetch(`/api/admin/settings/payment-methods/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (!res.ok) throw new Error('Failed to delete');
+
+            setPaymentMethods(prev => prev.filter(p => p._id !== id));
+            showToast('success', 'Payment method deleted');
+        } catch (error) {
+            showToast('error', 'Failed to delete payment method');
+        } finally {
+            setIsDeleting(null);
+        }
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, mode: 'new' | 'edit' = 'new') => {
         const file = e.target.files?.[0];
         if (!file) return;
+
+        // Client-side validation: 10MB limit
+        if (file.size > 10 * 1024 * 1024) {
+            showToast('error', 'File too large (Max 10MB)');
+            return;
+        }
+
+        // Type validation
+        const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowed.includes(file.type)) {
+            showToast('error', 'Invalid file type (Use JPG, PNG, GIF, or WebP)');
+            return;
+        }
 
         setUploadingGuide(true);
         const formData = new FormData();
@@ -147,7 +212,11 @@ export default function AdminSettingsPage() {
 
             const data = await res.json();
             if (data.success) {
-                setNewMethod({ ...newMethod, proofGuideImageUrl: data.url });
+                if (mode === 'new') {
+                    setNewMethod({ ...newMethod, proofGuideImageUrl: data.url });
+                } else if (editingMethod) {
+                    setEditingMethod({ ...editingMethod, proofGuideImageUrl: data.url });
+                }
                 showToast('success', 'Guide image uploaded');
             } else {
                 showToast('error', 'Upload failed');
@@ -162,6 +231,12 @@ export default function AdminSettingsPage() {
     const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
         const file = e.target.files?.[0];
         if (!file) return;
+
+        // Validation
+        if (file.size > 10 * 1024 * 1024) {
+            showToast('error', 'Banner too large (Max 10MB)');
+            return;
+        }
 
         setUploadingBannerIdx(idx);
         const formData = new FormData();
@@ -600,8 +675,26 @@ export default function AdminSettingsPage() {
                                                 <h3 className="text-lg font-bold text-foreground">{method.bankName}</h3>
                                                 <p className="text-muted-foreground text-sm font-medium">{method.accountTitle}</p>
 
-                                                <div className="mt-4 pt-4 border-t border-dashed border-white/10">
+                                                <div className="mt-4 pt-4 border-t border-dashed border-white/10 flex items-center justify-between">
                                                     <p className="font-mono text-lg tracking-wider text-white/80">{method.accountNumber}</p>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingMethod(method);
+                                                                setShowEditModal(true);
+                                                            }}
+                                                            className="p-2 bg-blue-500/10 text-blue-500 rounded-lg hover:bg-blue-500 hover:text-white transition-all"
+                                                        >
+                                                            <Settings size={14} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeletePaymentMethod(method._id)}
+                                                            disabled={isDeleting === method._id}
+                                                            className="p-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all disabled:opacity-50"
+                                                        >
+                                                            {isDeleting === method._id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))}
@@ -647,13 +740,22 @@ export default function AdminSettingsPage() {
                                             </div>
 
                                             <div className="space-y-1 md:col-span-2">
+                                                <label className="text-[10px] font-bold uppercase text-muted-foreground">Special Instructions (Optional)</label>
+                                                <textarea
+                                                    value={newMethod.instructions} onChange={e => setNewMethod({ ...newMethod, instructions: e.target.value })}
+                                                    className="w-full bg-muted/30 border border-white/5 rounded-xl px-4 py-3 text-foreground focus:ring-1 focus:ring-green-500/50 outline-none placeholder:text-muted-foreground/30 resize-none h-20"
+                                                    placeholder="e.g. Please upload JazzCash Transaction SMS screenshot"
+                                                />
+                                            </div>
+
+                                            <div className="space-y-1 md:col-span-2">
                                                 <label className="text-[10px] font-bold uppercase text-muted-foreground">Proof Guide Image (Optional)</label>
                                                 <div className="flex items-center gap-4">
                                                     <div className="relative flex-1">
                                                         <input
                                                             type="file"
                                                             accept="image/*"
-                                                            onChange={handleFileUpload}
+                                                            onChange={(e) => handleFileUpload(e, 'new')}
                                                             className="w-full bg-muted/30 border border-white/5 rounded-xl px-4 py-3 text-foreground focus:ring-1 focus:ring-green-500/50 outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 transition-all"
                                                         />
                                                     </div>
@@ -777,6 +879,110 @@ export default function AdminSettingsPage() {
                     </div>
                 )
             }
+
+            {/* Edit Payment Method Modal */}
+            <AnimatePresence>
+                {showEditModal && editingMethod && (
+                    <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-[60] p-4 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            className="bg-card w-full max-w-2xl rounded-2xl border border-border shadow-2xl overflow-hidden"
+                        >
+                            <div className="p-4 border-b border-border flex justify-between items-center bg-muted/10">
+                                <h3 className="font-bold text-lg">Edit Payment Gateway</h3>
+                                <button onClick={() => setShowEditModal(false)} className="p-2 hover:bg-muted rounded-full transition-colors">
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleUpdatePaymentMethod} className="p-6 grid gap-4 grid-cols-1 md:grid-cols-2">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold uppercase text-muted-foreground">Provider</label>
+                                    <select
+                                        value={editingMethod.bankName}
+                                        onChange={e => setEditingMethod({ ...editingMethod, bankName: e.target.value })}
+                                        className="w-full bg-muted/30 border border-border rounded-xl px-4 py-3 text-foreground outline-none focus:border-primary"
+                                    >
+                                        {BANK_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                    </select>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold uppercase text-muted-foreground">Account Title</label>
+                                    <input
+                                        type="text" required
+                                        value={editingMethod.accountTitle} onChange={e => setEditingMethod({ ...editingMethod, accountTitle: e.target.value })}
+                                        className="w-full bg-muted/30 border border-border rounded-xl px-4 py-3 text-foreground outline-none focus:border-primary"
+                                    />
+                                </div>
+
+                                <div className="space-y-1 md:col-span-2">
+                                    <label className="text-[10px] font-bold uppercase text-muted-foreground">Account Number / IBAN</label>
+                                    <input
+                                        type="text" required
+                                        value={editingMethod.accountNumber} onChange={e => setEditingMethod({ ...editingMethod, accountNumber: e.target.value })}
+                                        className="w-full bg-muted/30 border border-border rounded-xl px-4 py-3 text-foreground outline-none focus:border-primary font-mono"
+                                    />
+                                </div>
+
+                                <div className="space-y-1 md:col-span-2">
+                                    <label className="text-[10px] font-bold uppercase text-muted-foreground">Special Instructions</label>
+                                    <textarea
+                                        value={editingMethod.instructions || ''} onChange={e => setEditingMethod({ ...editingMethod, instructions: e.target.value })}
+                                        className="w-full bg-muted/30 border border-border rounded-xl px-4 py-3 text-foreground outline-none focus:border-primary resize-none h-20"
+                                        placeholder="e.g. Please upload JazzCash Transaction SMS screenshot"
+                                    />
+                                </div>
+
+                                <div className="space-y-1 md:col-span-2">
+                                    <label className="text-[10px] font-bold uppercase text-muted-foreground">Proof Guide Image</label>
+                                    <div className="flex items-center gap-4">
+                                        <div className="relative flex-1">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => handleFileUpload(e, 'edit')}
+                                                className="w-full bg-muted/30 border border-border rounded-xl px-4 py-3 text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary"
+                                            />
+                                        </div>
+                                        {uploadingGuide && <Loader2 className="animate-spin text-primary" />}
+                                        {editingMethod.proofGuideImageUrl && (
+                                            <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-border">
+                                                <img src={editingMethod.proofGuideImageUrl} alt="Preview" className="w-full h-full object-cover" />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setEditingMethod({ ...editingMethod, proofGuideImageUrl: '' })}
+                                                    className="absolute top-0 right-0 bg-red-500 text-white p-0.5 rounded-bl-lg"
+                                                >
+                                                    <X size={12} />
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="md:col-span-2 pt-4 flex gap-3">
+                                    <button
+                                        type="button" onClick={() => setShowEditModal(false)}
+                                        className="flex-1 bg-muted hover:bg-muted/80 text-foreground rounded-xl px-4 py-3 font-bold transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit" disabled={saving}
+                                        className="flex-[2] bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-4 py-3 font-bold shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5"
+                                    >
+                                        {saving ? <Loader2 className="animate-spin inline mr-2" /> : null}
+                                        Save Changes
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div >
     );
 }
