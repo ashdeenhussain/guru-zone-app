@@ -28,17 +28,24 @@ export default function TournamentsPage() {
     const initialTab = searchParams.get('tab') === 'my' ? 'my' : 'all';
 
     const [tournaments, setTournaments] = useState<Tournament[]>([]);
+    const [joinedTournaments, setJoinedTournaments] = useState<Tournament[]>([]);
     const [loading, setLoading] = useState(true);
     const [balance, setBalance] = useState<number>(0);
-    const [joinedIds, setJoinedIds] = useState<string[]>([]);
     const [activeTab, setActiveTab] = useState<'all' | 'my'>(initialTab); // Initialize from URL
     const [filterFormat, setFilterFormat] = useState('All');
     const [filterGameType, setFilterGameType] = useState('All');
 
     useEffect(() => {
-        fetchTournaments();
-        fetchBalance();
-        fetchJoinedTournaments();
+        const loadData = async () => {
+            setLoading(true);
+            await Promise.all([
+                fetchTournaments(),
+                fetchBalance(),
+                fetchJoinedTournaments()
+            ]);
+            setLoading(false);
+        };
+        loadData();
     }, []);
 
     const fetchTournaments = async () => {
@@ -50,8 +57,6 @@ export default function TournamentsPage() {
             }
         } catch (error) {
             console.error('Failed to fetch tournaments', error);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -72,7 +77,7 @@ export default function TournamentsPage() {
             const res = await fetch('/api/user/tournaments');
             const data = await res.json();
             if (data.success) {
-                setJoinedIds(data.joined);
+                setJoinedTournaments(data.joined || []);
             }
         } catch (error) {
             console.error('Failed to fetch joined tournaments', error);
@@ -80,16 +85,20 @@ export default function TournamentsPage() {
     };
 
     const filteredTournaments = tournaments.filter(t => {
-        // Tab Filter
-        if (activeTab === 'my') {
-            if (!joinedIds.includes(t._id)) return false;
-        }
-
         // Standard Filters
         if (filterFormat !== 'All' && t.format !== filterFormat) return false;
         if (filterGameType !== 'All' && t.gameType !== filterGameType) return false;
         return true;
     });
+
+    const filteredJoined = joinedTournaments.filter(t => {
+        if (filterFormat !== 'All' && t.format !== filterFormat) return false;
+        if (filterGameType !== 'All' && t.gameType !== filterGameType) return false;
+        return true;
+    });
+
+    // Display list for "My Matches" - limited to 5
+    const myRecentMatches = filteredJoined.slice(0, 5);
 
     return (
         <div className="bg-background text-foreground pb-24 lg:pb-8">
@@ -140,12 +149,12 @@ export default function TournamentsPage() {
                             }`}
                     >
                         My Matches
-                        {joinedIds.length > 0 && (
+                        {joinedTournaments.length > 0 && (
                             <span className={`text-[10px] h-5 min-w-[20px] px-1 rounded-full flex items-center justify-center transition-colors ${activeTab === 'my'
                                 ? 'bg-background/20 text-white'
                                 : 'bg-primary/20 text-primary'
                                 }`}>
-                                {joinedIds.length}
+                                {joinedTournaments.length}
                             </span>
                         )}
                     </button>
@@ -206,26 +215,88 @@ export default function TournamentsPage() {
                             <div key={i} className="h-64 bg-card rounded-2xl border border-border animate-pulse"></div>
                         ))}
                     </div>
-                ) : filteredTournaments.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-6">
-                        {filteredTournaments.map(tournament => {
-                            const linkHref = tournament.isOfficial ? `/tournaments/${tournament._id}` : `/battle-zone/${tournament._id}`;
-                            return (
-                                <Link key={tournament._id} href={linkHref} className="block h-full">
-                                    <TournamentCard tournament={tournament} />
-                                </Link>
-                            );
-                        })}
-                    </div>
                 ) : (
-                    <div className="bg-card border border-dashed border-border rounded-2xl p-12 flex flex-col items-center justify-center text-center">
-                        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-                            <Trophy className="w-8 h-8 text-muted-foreground" />
-                        </div>
-                        <h3 className="text-xl font-semibold text-foreground mb-2">No tournaments available</h3>
-                        <p className="text-muted-foreground max-w-xs mx-auto">
-                            Check back later for new tournaments!
-                        </p>
+                    <div className="space-y-6">
+                        {activeTab === 'all' ? (
+                            filteredTournaments.length > 0 ? (
+                                <div className="grid grid-cols-1 gap-6">
+                                    {filteredTournaments.map(tournament => {
+                                        const linkHref = tournament.isOfficial ? `/tournaments/${tournament._id}` : `/battle-zone/${tournament._id}`;
+                                        return (
+                                            <Link key={tournament._id} href={linkHref} className="block h-full">
+                                                <TournamentCard tournament={tournament} />
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="bg-card border border-dashed border-border rounded-2xl p-12 flex flex-col items-center justify-center text-center">
+                                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                                        <Trophy className="w-8 h-8 text-muted-foreground" />
+                                    </div>
+                                    <h3 className="text-xl font-semibold text-foreground mb-2">No tournaments available</h3>
+                                    <p className="text-muted-foreground max-w-xs mx-auto">
+                                        Check back later for new tournaments!
+                                    </p>
+                                </div>
+                            )
+                        ) : (
+                            /* My Matches Tab */
+                            <div className="space-y-6">
+                                {myRecentMatches.length > 0 ? (
+                                    <>
+                                        <div className="grid grid-cols-1 gap-6">
+                                            {myRecentMatches.map(tournament => {
+                                                const linkHref = tournament.isOfficial ? `/tournaments/${tournament._id}` : `/battle-zone/${tournament._id}`;
+                                                return (
+                                                    <Link key={tournament._id} href={linkHref} className="block h-full">
+                                                        <TournamentCard tournament={tournament} />
+                                                    </Link>
+                                                );
+                                            })}
+                                        </div>
+
+                                        <div className="flex justify-center pt-2">
+                                            <Link
+                                                href="/dashboard/history"
+                                                className="inline-flex items-center gap-2 px-8 py-3 bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border border-primary/20 rounded-xl font-bold transition-all group"
+                                            >
+                                                View Tournament History
+                                                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                            </Link>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="bg-card border border-dashed border-border rounded-2xl p-12 flex flex-col items-center justify-center text-center">
+                                        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                                            <Trophy className="w-8 h-8 text-muted-foreground" />
+                                        </div>
+                                        <h3 className="text-xl font-semibold text-foreground mb-2">No joined tournaments</h3>
+                                        <p className="text-muted-foreground max-w-xs mx-auto mb-6">
+                                            {joinedTournaments.length > 0 
+                                                ? "No matches found for the selected filters."
+                                                : "You haven't joined any tournaments yet."}
+                                        </p>
+                                        {joinedTournaments.length === 0 && (
+                                            <button
+                                                onClick={() => setActiveTab('all')}
+                                                className="px-6 py-2 bg-primary text-primary-foreground rounded-lg font-bold shadow-lg shadow-primary/20"
+                                            >
+                                                Browse All
+                                            </button>
+                                        )}
+                                        {joinedTournaments.length > 0 && (
+                                            <Link
+                                                href="/dashboard/history"
+                                                className="text-primary hover:underline font-bold"
+                                            >
+                                                View All History
+                                            </Link>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
