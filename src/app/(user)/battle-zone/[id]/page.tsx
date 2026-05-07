@@ -426,7 +426,7 @@ Here is my video proof:`;
                                     {tab.label}
                                 </span>
 
-                                {tab.count > 0 && !isActive && (
+                                {(tab.count ?? 0) > 0 && !isActive && (
                                     <span className="absolute top-2 right-2 min-w-[20px] h-[20px] px-1.5 bg-red-600 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(220,38,38,0.5)] animate-pulse border-2 border-background z-20">
                                         {tab.count}
                                     </span>
