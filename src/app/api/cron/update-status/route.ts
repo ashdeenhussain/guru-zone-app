@@ -70,7 +70,7 @@ export async function GET(req: Request) {
                                     title: '🎮 Match Started!',
                                     body: `${t.title} has started! Join now.`,
                                     url: t.isOfficial ? `/tournaments/${t._id}` : `/battle-zone/${t._id}`
-                                });
+                                }, 'tournaments');
                             } catch (e) {}
                         }
                     }

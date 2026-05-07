@@ -39,6 +39,18 @@ export default function TournamentChat({ tournamentId, isHost, isParticipant, is
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
+    const markAsRead = async () => {
+        try {
+            await fetch('/api/notifications/read-chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tournamentId }),
+            });
+        } catch (error) {
+            console.error('Error marking chat read:', error);
+        }
+    };
+
     const fetchMessages = async () => {
         try {
             const res = await fetch(`/api/battle-zone/matches/${tournamentId}/chat`);
@@ -54,6 +66,9 @@ export default function TournamentChat({ tournamentId, isHost, isParticipant, is
                     if (!isMe && onNewMessage) {
                         onNewMessage();
                     }
+                    
+                    // Mark as read if we got new messages while looking at them
+                    markAsRead();
                 }
                 
                 setMessages(newMessages);
@@ -64,6 +79,13 @@ export default function TournamentChat({ tournamentId, isHost, isParticipant, is
             setIsLoading(false);
         }
     };
+
+    // Initial mark as read when entering the chat
+    useEffect(() => {
+        if (status === 'authenticated') {
+            markAsRead();
+        }
+    }, [tournamentId, status]);
 
     // Initial load and Polling
     useEffect(() => {

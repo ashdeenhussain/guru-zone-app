@@ -140,7 +140,7 @@ export async function POST(req: Request) {
                         title: '🏁 Match Resolved by Admin',
                         body: `Final Result: ${winnerName} won "${match.title}". Reason: ${match.resolutionComment}`,
                         url: `/battle-zone/${match._id}`
-                    }).catch(console.error)
+                    }, 'system').catch(console.error)
                 ));
             } catch (notifyErr) {
                 console.error('[AdminResolveNotify] Failed:', notifyErr);
@@ -196,7 +196,7 @@ export async function POST(req: Request) {
                         title: '❌ Match Cancelled by Admin',
                         body: `Match "${match.title}" was cancelled and entry fees refunded.`,
                         url: `/battle-zone/${match._id}`
-                    }).catch(console.error)
+                    }, 'system').catch(console.error)
                 ));
             } catch (notifyErr) {
                 console.error('[AdminCancelNotify] Failed:', notifyErr);

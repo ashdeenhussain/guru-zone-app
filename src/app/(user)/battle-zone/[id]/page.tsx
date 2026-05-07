@@ -156,10 +156,33 @@ Here is my video proof:`;
         }
     };
 
+    const [unreadCounts, setUnreadCounts] = useState<any>(null);
+
+    const fetchUnreadCounts = async () => {
+        if (!session) return;
+        try {
+            const res = await fetch('/api/notifications/unread-count');
+            const data = await res.json();
+            if (data.success && data.counts.breakdown) {
+                const searchId = id.toString().trim();
+                const key = Object.keys(data.counts.breakdown).find(k => k.toString().trim() === searchId);
+                if (key) {
+                    setUnreadCounts(data.counts.breakdown[key]);
+                } else {
+                    setUnreadCounts({ chat: 0, system: 0 });
+                }
+            }
+        } catch (e) {}
+    };
+
     useEffect(() => {
         fetchMatch(true);
         fetchUserProfile();
-        const interval = setInterval(() => fetchMatch(), 5000);
+        fetchUnreadCounts();
+        const interval = setInterval(() => {
+            fetchMatch();
+            fetchUnreadCounts();
+        }, 10000);
         return () => clearInterval(interval);
     }, [id, session]);
 
@@ -210,11 +233,11 @@ Here is my video proof:`;
     const isFull = match?.joinedCount >= match?.maxSlots;
     const canChat = isJoined || isAdmin;
 
-    const tabs: { id: TabType, label: string, icon: any, disabled?: boolean, hasNotification?: boolean }[] = [
-        { id: 'info', label: 'MATCH INFO', icon: Info, hasNotification: notifications.info },
-        { id: 'teams', label: 'TEAMS', icon: Users, hasNotification: notifications.teams },
-        { id: 'room', label: 'MATCH ROOM', icon: Gamepad2, disabled: !isJoined && !isAdmin, hasNotification: notifications.room },
-        { id: 'chat', label: 'LOBBY CHAT', icon: MessageSquare, disabled: !canChat, hasNotification: notifications.chat }
+    const tabs: { id: TabType, label: string, icon: any, disabled?: boolean, count?: number }[] = [
+        { id: 'info', label: 'MATCH INFO', icon: Info },
+        { id: 'teams', label: 'TEAMS', icon: Users },
+        { id: 'room', label: 'MATCH ROOM', icon: Gamepad2, disabled: !isJoined && !isAdmin, count: unreadCounts?.system },
+        { id: 'chat', label: 'LOBBY CHAT', icon: MessageSquare, disabled: !canChat, count: unreadCounts?.chat }
     ];
 
     return (
@@ -377,7 +400,12 @@ Here is my video proof:`;
                                 onClick={() => {
                                     if (!tab.disabled) {
                                         setActiveTab(tab.id);
-                                        setNotifications(prev => ({ ...prev, [tab.id]: false }));
+                                        // Smart Clearing: Update local state immediately
+                                        if (tab.id === 'chat') {
+                                            setUnreadCounts((prev: any) => ({ ...prev, chat: 0 }));
+                                        } else if (tab.id === 'room') {
+                                            setUnreadCounts((prev: any) => ({ ...prev, system: 0 }));
+                                        }
                                     }
                                 }}
                                 disabled={tab.disabled}
@@ -398,8 +426,10 @@ Here is my video proof:`;
                                     {tab.label}
                                 </span>
 
-                                {tab.hasNotification && !isActive && (
-                                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-background animate-ping z-20" />
+                                {tab.count > 0 && !isActive && (
+                                    <span className="absolute top-2 right-2 min-w-[20px] h-[20px] px-1.5 bg-red-600 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(220,38,38,0.5)] animate-pulse border-2 border-background z-20">
+                                        {tab.count}
+                                    </span>
                                 )}
                             </button>
                         );

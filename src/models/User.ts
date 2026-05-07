@@ -116,6 +116,9 @@ const UserSchema = new Schema(
         notifications: {
             email: { type: Boolean, default: true },
             tournaments: { type: Boolean, default: true },
+            chat: { type: Boolean, default: true },
+            wallet: { type: Boolean, default: true },
+            system: { type: Boolean, default: true },
         },
         loyaltyProgress: {
             type: Number,
@@ -170,6 +173,18 @@ const UserSchema = new Schema(
                 default: [],
             },
         },
+        pushSubscriptions: [{
+            endpoint: String,
+            keys: {
+                p256dh: String,
+                auth: String
+            }
+        }],
+        lastChatReadAt: {
+            type: Map,
+            of: Date,
+            default: {}
+        }
     },
     { timestamps: true }
 );

@@ -7,6 +7,7 @@ import Transaction from '@/models/Transaction';
 import User from '@/models/User';
 import Notification from '@/models/Notification';
 import AdminActivity from '@/models/AdminActivity';
+import { sendPushNotification } from '@/lib/webpush';
 
 export async function PATCH(
     req: Request,
@@ -79,6 +80,15 @@ export async function PATCH(
                 type: 'success'
             });
 
+            // ── Push Notification ──
+            try {
+                sendPushNotification(user._id.toString(), {
+                    title: `💰 ${actionVerb} Approved!`,
+                    body: `Your ${transaction.type} of Rs ${finalAmount} has been approved.${amountAdjustedMsg}`,
+                    url: '/dashboard/wallet'
+                }, 'wallet').catch(e => console.error("Wallet Push Error:", e));
+            } catch (e) {}
+
             // 5. Admin Log
             await AdminActivity.create({
                 adminId: session.user.id,
@@ -134,6 +144,15 @@ export async function PATCH(
                     message: `Your ${transaction.type} was rejected. Reason: ${rejectionReason}.${refundMsg}`,
                     type: 'error'
                 });
+
+                // ── Push Notification ──
+                try {
+                    sendPushNotification(user._id.toString(), {
+                        title: `❌ ${actionVerb} Rejected`,
+                        body: `Your ${transaction.type} was rejected. Reason: ${rejectionReason}.${refundMsg}`,
+                        url: '/dashboard/wallet'
+                    }, 'wallet').catch(e => console.error("Wallet Push Error:", e));
+                } catch (e) {}
             }
 
             // 4. Admin Log

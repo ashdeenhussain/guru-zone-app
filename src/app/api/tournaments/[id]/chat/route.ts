@@ -110,11 +110,11 @@ export async function POST(
         };
 
         for (const participant of otherParticipants) {
-            notificationPromises.push(sendPushNotification(participant.userId.toString(), payload));
+            notificationPromises.push(sendPushNotification(participant.userId.toString(), payload, 'chat'));
         }
 
         if (notifyHost) {
-            notificationPromises.push(sendPushNotification(hostId, payload));
+            notificationPromises.push(sendPushNotification(hostId, payload, 'chat'));
         }
 
         // Fire and forget push notifications

@@ -11,14 +11,16 @@ self.addEventListener('push', function (event) {
         const title = data.title || 'Guru Zone';
         const options = {
             body: data.body,
-            icon: '/logo.jpg', // Use the premium logo
-            badge: '/logo.jpg', // Small icon for android status bar
+            icon: '/logo.jpg',
+            badge: '/logo.jpg',
             vibrate: [100, 50, 100],
+            tag: data.tag || 'system',
+            renotify: data.renotify || false,
             data: {
                 url: data.url || '/'
             },
             actions: [
-                { action: 'open', title: 'View Match' }
+                { action: 'open', title: 'View Details' }
             ]
         };
 

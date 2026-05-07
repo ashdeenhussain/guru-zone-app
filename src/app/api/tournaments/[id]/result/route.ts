@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/db';
 import Tournament from '@/models/Tournament';
+import Message from '@/models/Message';
 import User from '@/models/User';
 import Transaction from '@/models/Transaction';
 import Notification from '@/models/Notification';
@@ -65,6 +66,19 @@ export async function POST(
 
         await tournament.save();
 
+        // Create System Message to trigger unread badge
+        try {
+            await Message.create({
+                tournamentId: id,
+                sender: userId,
+                senderName: 'System',
+                content: '⏳ Result has been declared! Participants have 30 minutes to verify.',
+                isSystem: true
+            });
+        } catch (msgErr) {
+            console.error('[ResultAPI] System message creation failed:', msgErr);
+        }
+
         // ── Push Notification (To Opponents) ──
         try {
             const opponentIds = tournament.participants
@@ -76,7 +90,7 @@ export async function POST(
                     title: '⏳ Result Declared!',
                     body: `The Host claims victory in "${tournament.title}". You have 30 minutes to verify or the prize will be auto-transferred.`,
                     url: tournament.isOfficial ? `/tournaments/${tournament._id}` : `/battle-zone/${tournament._id}`
-                })
+                }, 'tournaments')
             ));
         } catch (pushErr) {
             console.error('[ResultAPI] Push notification failed:', pushErr);

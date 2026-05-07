@@ -108,10 +108,37 @@ export default function BattleZonePage() {
         }
     };
 
+    const [unreadCounts, setUnreadCounts] = useState<Record<string, any>>({});
+
+    const getMatchUnreadCount = (mId: any) => {
+        if (!mId || !unreadCounts) return 0;
+        const searchId = mId.toString().trim();
+        // Robust lookup: check all keys in case of string/object mismatch
+        const key = Object.keys(unreadCounts).find(k => k.toString().trim() === searchId);
+        if (!key) return 0;
+        const data = unreadCounts[key];
+        return Number(data.chat || 0) + Number(data.system || 0);
+    };
+
+    const fetchUnreadCounts = async () => {
+        if (!session) return;
+        try {
+            const res = await fetch('/api/notifications/unread-count');
+            const data = await res.json();
+            if (data.success && data.counts.breakdown) {
+                setUnreadCounts(data.counts.breakdown);
+            }
+        } catch (e) {}
+    };
+
     useEffect(() => {
         fetchTournaments();
         fetchJoinedTournaments();
         fetchBalance();
+        fetchUnreadCounts();
+
+        const poll = setInterval(fetchUnreadCounts, 10000);
+        return () => clearInterval(poll);
     }, [session]);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -273,6 +300,11 @@ export default function BattleZonePage() {
                                     }`}
                             >
                                 My Battles
+                                {Object.values(unreadCounts).reduce((a, b: any) => a + Number(b.chat || 0) + Number(b.system || 0), 0) > 0 && (
+                                    <span className="bg-red-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full animate-pulse shadow-lg">
+                                        {Object.values(unreadCounts).reduce((a, b: any) => a + Number(b.chat || 0) + Number(b.system || 0), 0)}
+                                    </span>
+                                )}
                             </button>
                         </div>
                     )}
@@ -324,6 +356,14 @@ export default function BattleZonePage() {
                                                     <span className="px-3 py-1 bg-green-500/10 text-green-500 text-[10px] font-black rounded-lg animate-pulse uppercase tracking-[0.15em] border border-green-500/10">
                                                         {match.status?.toLowerCase() === 'full' ? 'FULL' : 'WAITING'}
                                                     </span>
+                                                )}
+                                                {/* Prominent Match Badge */}
+                                                {getMatchUnreadCount(match._id) > 0 && (
+                                                    <div className="absolute top-4 right-4 z-20 flex items-center justify-center">
+                                                        <div className="bg-red-600 text-white text-[11px] font-black w-7 h-7 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(220,38,38,0.6)] animate-bounce border-2 border-background">
+                                                            {getMatchUnreadCount(match._id)}
+                                                        </div>
+                                                    </div>
                                                 )}
                                                 {['active', 'live'].includes(match.status?.toLowerCase()) && (
                                                     <span className="px-3 py-1 bg-blue-500/10 text-blue-500 text-[10px] font-black rounded-lg uppercase tracking-[0.15em] border border-blue-500/10">

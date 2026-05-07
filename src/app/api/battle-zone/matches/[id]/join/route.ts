@@ -141,19 +141,33 @@ export async function POST(
 
         await session.commitTransaction();
 
+        // Create System Message to trigger unread badge
+        try {
+            const Message = mongoose.models.Message || mongoose.model('Message');
+            await Message.create({
+                tournamentId: id,
+                sender: userId,
+                senderName: 'System',
+                content: `⚔️ ${inGameName || 'Someone'} has joined the match. Room ID is now required!`,
+                isSystem: true
+            });
+        } catch (msgErr) {
+            console.error('[JoinAPI] System message creation failed:', msgErr);
+        }
+
         // Push Notifications
         try {
             sendPushNotification(userId, {
                 title: '🎮 Match Joined!',
                 body: `You joined "${match.title}". Waiting for Host to provide Room ID.`,
                 url: `/battle-zone/${match._id}`
-            }).catch(console.error);
+            }, 'tournaments').catch(console.error);
 
             sendPushNotification(match.createdBy.toString(), {
                 title: '⚔️ Opponent Found!',
                 body: `${inGameName || 'Someone'} joined your match. Provide Room ID now!`,
                 url: `/battle-zone/${match._id}`
-            }).catch(console.error);
+            }, 'tournaments').catch(console.error);
         } catch (pushErr) {
             console.error('[JoinBattlePush] Failed:', pushErr);
         }

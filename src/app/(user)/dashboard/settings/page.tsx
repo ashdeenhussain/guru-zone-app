@@ -18,7 +18,10 @@ import {
     CheckCircle,
     AlertCircle,
     AlertTriangle,
-    Settings
+    Settings,
+    Trophy,
+    MessageCircle,
+    Wallet
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
@@ -250,15 +253,16 @@ export default function SettingsPage() {
                         {loadingNotifications ? (
                             <div className="text-center text-muted-foreground py-4">Loading preferences...</div>
                         ) : (
-                            <>
+                            <div className="space-y-4">
+                                {/* Email */}
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-4">
                                         <div className="p-2 rounded-lg bg-green-500/10 text-green-400">
                                             <Mail size={20} />
                                         </div>
                                         <div>
-                                            <h3 className="text-foreground font-semibold">Email Notifications</h3>
-                                            <p className="text-sm text-muted-foreground">Receive updates about your account</p>
+                                            <h3 className="text-foreground font-semibold">Email Alerts</h3>
+                                            <p className="text-sm text-muted-foreground">Receive updates via email</p>
                                         </div>
                                     </div>
                                     <button
@@ -269,26 +273,90 @@ export default function SettingsPage() {
                                     </button>
                                 </div>
 
-                                <div className="h-[1px] bg-border" />
+                                <div className="h-[1px] bg-border/40" />
 
+                                {/* Tournaments */}
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-4">
                                         <div className="p-2 rounded-lg bg-yellow-500/10 text-yellow-400">
-                                            <Bell size={20} />
+                                            <Trophy size={20} />
                                         </div>
                                         <div>
                                             <h3 className="text-foreground font-semibold">Tournament Alerts</h3>
-                                            <p className="text-sm text-muted-foreground"> get notified when tournaments start</p>
+                                            <p className="text-sm text-muted-foreground">Match starts & room IDs</p>
                                         </div>
                                     </div>
                                     <button
-                                        onClick={() => toggleNotification('tournaments')}
+                                        onClick={() => toggleNotification('tournaments' as any)}
                                         className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${notifications.tournaments ? 'bg-green-500' : 'bg-input'}`}
                                     >
                                         <div className={`w-4 h-4 rounded-full bg-white transition-transform ${notifications.tournaments ? 'translate-x-6' : 'translate-x-0'}`} />
                                     </button>
                                 </div>
-                            </>
+
+                                <div className="h-[1px] bg-border/40" />
+
+                                {/* Chat */}
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400">
+                                            <MessageCircle size={20} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-foreground font-semibold">Chat Messages</h3>
+                                            <p className="text-sm text-muted-foreground">New messages in match rooms</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => toggleNotification('chat' as any)}
+                                        className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${notifications.chat ? 'bg-green-500' : 'bg-input'}`}
+                                    >
+                                        <div className={`w-4 h-4 rounded-full bg-white transition-transform ${notifications.chat ? 'translate-x-6' : 'translate-x-0'}`} />
+                                    </button>
+                                </div>
+
+                                <div className="h-[1px] bg-border/40" />
+
+                                {/* Wallet */}
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
+                                            <Wallet size={20} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-foreground font-semibold">Wallet & Finance</h3>
+                                            <p className="text-sm text-muted-foreground">Deposits, Withdrawals & Prizes</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => toggleNotification('wallet' as any)}
+                                        className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${notifications.wallet ? 'bg-green-500' : 'bg-input'}`}
+                                    >
+                                        <div className={`w-4 h-4 rounded-full bg-white transition-transform ${notifications.wallet ? 'translate-x-6' : 'translate-x-0'}`} />
+                                    </button>
+                                </div>
+
+                                <div className="h-[1px] bg-border/40" />
+
+                                {/* System */}
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400">
+                                            <Shield size={20} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-foreground font-semibold">System Updates</h3>
+                                            <p className="text-sm text-muted-foreground">Announcements & Maintenance</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => toggleNotification('system' as any)}
+                                        className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${notifications.system ? 'bg-green-500' : 'bg-input'}`}
+                                    >
+                                        <div className={`w-4 h-4 rounded-full bg-white transition-transform ${notifications.system ? 'translate-x-6' : 'translate-x-0'}`} />
+                                    </button>
+                                </div>
+                            </div>
                         )}
                     </div>
                 </motion.div>

@@ -27,16 +27,34 @@ export function initWebPush() {
  * Sends a push notification to all known subscriptions for a given userId.
  * Stale/invalid subscriptions will be removed automatically from the database.
  */
-export async function sendPushNotification(userId: string, payload: { title: string; body: string; url?: string }) {
+export async function sendPushNotification(
+    userId: string,
+    payload: { title: string; body: string; url?: string },
+    category: 'chat' | 'tournaments' | 'wallet' | 'system' = 'system'
+) {
     try {
         initWebPush();
-        const user = await User.findById(userId).select('pushSubscriptions');
+        const user = await User.findById(userId).select('pushSubscriptions notifications');
 
-        if (!user || !user.pushSubscriptions || user.pushSubscriptions.length === 0) {
+        if (!user) return;
+
+        // Check user preferences
+        if (user.notifications && user.notifications[category] === false) {
+            console.log(`Notification skipped: ${category} is disabled for user ${userId}`);
+            return;
+        }
+
+        if (!user.pushSubscriptions || user.pushSubscriptions.length === 0) {
             return; // No subscriptions
         }
 
-        const stringPayload = JSON.stringify(payload);
+        const payloadWithCategory = {
+            ...payload,
+            category: category,
+            tag: category, // Use category as tag to group notifications
+            renotify: true
+        };
+        const stringPayload = JSON.stringify(payloadWithCategory);
         const subscriptionsToKeep = [];
         let hasChanges = false;
 

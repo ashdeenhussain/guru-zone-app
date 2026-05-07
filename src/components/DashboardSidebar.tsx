@@ -26,7 +26,7 @@ import {
     Gift
 } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 
 export default function DashboardSidebar() {
@@ -34,14 +34,35 @@ export default function DashboardSidebar() {
     const [isHovered, setIsHovered] = useState(false); // Desktop hover state
     const pathname = usePathname();
     const { data: session } = useSession();
+    const [unreadCounts, setUnreadCounts] = useState({ admin: 0, chat: 0, total: 0 });
 
-    // We don't need useTheme here anymore as it's in the header
+    const fetchUnreadCounts = async () => {
+        try {
+            const res = await fetch('/api/notifications/unread-count');
+            if (res.ok) {
+                const data = await res.json();
+                if (data.success) {
+                    setUnreadCounts(data.counts);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to fetch unread counts', error);
+        }
+    };
+
+    useEffect(() => {
+        if (session?.user) {
+            fetchUnreadCounts();
+            const interval = setInterval(fetchUnreadCounts, 15000);
+            return () => clearInterval(interval);
+        }
+    }, [session?.user]);
 
     const sidebarItems = [
         { icon: Gift, label: "Daily Reward", href: "/dashboard/daily-reward", special: true },
         { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
         { icon: Trophy, label: "My Tournaments", href: "/dashboard/tournaments" },
-        { icon: Swords, label: "Battle Zone", href: "/battle-zone" },
+        { icon: Swords, label: "Battle Zone", href: "/battle-zone", badge: unreadCounts.chat },
         { icon: ShoppingBag, label: "Diamond Shop", href: "/dashboard/shop" },
         { icon: Crown, label: "Leaderboard", href: "/dashboard/leaderboard" },
         { icon: Wallet, label: "Wallet", href: "/dashboard/wallet" },
@@ -60,7 +81,8 @@ export default function DashboardSidebar() {
         sidebarItems.unshift({
             icon: Shield,
             label: "Admin Command",
-            href: "/admin/dashboard"
+            href: "/admin/dashboard",
+            badge: unreadCounts.admin
         });
     }
 
@@ -156,10 +178,23 @@ export default function DashboardSidebar() {
                                                 ${isActive ? 'text-primary drop-shadow-[0_0_5px_rgba(255,215,0,0.5)]' : isSpecial ? 'text-fuchsia-400' : 'group-hover:text-foreground'}
                                             `}
                                         />
+                                        {/* Dynamic Badge (Collapsed View) */}
+                                        {item.badge > 0 && !isHovered && (
+                                            <span className="absolute -top-1.5 -right-1.5 flex h-3.5 w-3.5 z-20">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-red-600 border border-background shadow-[0_0_8px_rgba(220,38,38,0.4)]"></span>
+                                            </span>
+                                        )}
                                     </div>
 
                                     <span className={`relative z-10 ml-3 transition-all duration-300 flex items-center gap-2 ${isHovered ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2 lg:opacity-0'}`}>
                                         {item.label}
+                                        {/* Dynamic Badge (Expanded View) */}
+                                        {item.badge > 0 && isHovered && (
+                                            <span className="bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full shadow-lg shadow-red-600/20 animate-in zoom-in-50 duration-300">
+                                                {item.badge > 9 ? '9+' : item.badge}
+                                            </span>
+                                        )}
                                         {item.label === "Battle Zone" && (
                                             <span className="bg-primary/20 text-primary text-[8px] font-black px-1.5 py-0.5 rounded uppercase">BETA</span>
                                         )}

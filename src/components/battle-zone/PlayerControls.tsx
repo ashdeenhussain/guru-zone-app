@@ -34,6 +34,20 @@ export default function PlayerControls({ tournament, userId, onUpdate }: PlayerC
     const [forceDisputeTime, setForceDisputeTime] = useState<string>('');
     const [isForceDisputeLoading, setIsForceDisputeLoading] = useState(false);
 
+    // Mark as read when entering match room
+    useEffect(() => {
+        const markAsRead = async () => {
+            try {
+                await fetch('/api/notifications/read-chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tournamentId: tournament._id }),
+                });
+            } catch (error) {}
+        };
+        markAsRead();
+    }, [tournament._id]);
+
     // Poll for status updates every 3 seconds
     useEffect(() => {
         if (!tournament || 

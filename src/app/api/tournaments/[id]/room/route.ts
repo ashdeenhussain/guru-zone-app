@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/db';
 import Tournament from '@/models/Tournament';
+import Message from '@/models/Message';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { sendPushNotification } from '@/lib/webpush';
@@ -53,6 +54,19 @@ export async function POST(
 
         await tournament.save();
 
+        // Create System Message to trigger unread badge
+        try {
+            await Message.create({
+                tournamentId: id,
+                sender: userId,
+                senderName: 'System',
+                content: '🔥 Room ID & Password have been updated! Check the match room now.',
+                isSystem: true
+            });
+        } catch (msgErr) {
+            console.error('[RoomAPI] System message creation failed:', msgErr);
+        }
+
         // ── Push Notification (To Participants) ──
         try {
             const participantIds = tournament.participants.map((p: any) => 
@@ -64,7 +78,7 @@ export async function POST(
                     title: '🔥 Room is Ready!',
                     body: `The Host has provided the Room ID for "${tournament.title}". Join the game now!`,
                     url: tournament.isOfficial ? `/tournaments/${tournament._id}` : `/battle-zone/${tournament._id}`
-                })
+                }, 'tournaments')
             ));
         } catch (pushErr) {
             console.error('[RoomAPI] Push notification failed:', pushErr);

@@ -1,101 +1,157 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowUpRight, Bell, BellRing, CheckCircle } from "lucide-react";
-import Link from "next/link";
+import { Bell, BellRing, Settings, ShieldAlert, Zap, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
+
+function urlBase64ToUint8Array(base64String: string) {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
 
 export default function NotificationBanner() {
     const [permission, setPermission] = useState<NotificationPermission>("default");
     const [isSupported, setIsSupported] = useState(true);
+    const [isSubscribing, setIsSubscribing] = useState(false);
 
     useEffect(() => {
-        if (!("Notification" in window)) {
+        if (!("Notification" in window) || !('serviceWorker' in navigator)) {
             setIsSupported(false);
         } else {
             setPermission(Notification.permission);
         }
     }, []);
 
-    const requestPermission = async () => {
+    const subscribeUser = async () => {
+        try {
+            const registration = await navigator.serviceWorker.ready;
+            let subscription = await registration.pushManager.getSubscription();
+            
+            if (!subscription) {
+                const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+                if (!publicVapidKey) {
+                    console.error("VAPID Key missing");
+                    return;
+                }
+
+                subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+                });
+            }
+
+            await fetch('/api/notifications/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(subscription),
+            });
+
+            return true;
+        } catch (error) {
+            console.error("Subscription failed:", error);
+            return false;
+        }
+    };
+
+    const handleRequest = async () => {
         if (!isSupported) {
-            toast.error("Notifications are not supported in this browser.");
+            toast.error("Notifications are not supported on this device.");
             return;
         }
 
+        setIsSubscribing(true);
         try {
             const result = await Notification.requestPermission();
             setPermission(result);
 
             if (result === "granted") {
-                toast.success("Notifications enabled successfully!");
-                // Here you would typically subscribe the user to push notifications
-                // await subscribeToPush(); 
+                const success = await subscribeUser();
+                if (success) {
+                    toast.success("Push notifications active!", {
+                        icon: <BellRing className="w-5 h-5 text-primary" />
+                    });
+                } else {
+                    toast.error("Permission granted, but subscription failed.");
+                }
             } else if (result === "denied") {
-                toast.error("Notifications were denied. Please enable them in browser settings.");
+                toast.error("Permission denied. Check browser settings.");
             }
         } catch (error) {
-            console.error("Error requesting notification permission:", error);
-            toast.error("Something went wrong.");
+            toast.error("Failed to enable notifications.");
+        } finally {
+            setIsSubscribing(false);
         }
     };
 
-    // If notifications are already granted or not supported, we might show a different banner or nothing.
-    // For now, let's keep it visible but change state, or hide if granted to avoid clutter?
-    // The user might want to see it to manage them. Let's show "Enabled" state.
-
     if (!isSupported) return null;
 
-    // If granted, maybe show a "View Settings" banner or hide it to save space?
-    // Let's show a "Notifications Active" banner that links to settings.
-    if (permission === 'granted') {
-        return (
-            <div className="bg-primary/10 backdrop-blur-md border border-primary/20 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative overflow-hidden group shadow-sm">
-                <div className="absolute inset-0 bg-primary/5 blur-xl group-hover:bg-primary/10 transition-colors duration-500 pointer-events-none" />
-                <div className="flex items-center gap-3 relative z-10">
-                    <div className="p-2 bg-primary/20 text-primary rounded-lg">
-                        <BellRing size={20} />
+    return (
+        <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative overflow-hidden rounded-[2rem] border border-border bg-card p-5 shadow-sm group"
+        >
+            {/* Ambient Background */}
+            <div className={`absolute top-0 right-0 w-32 h-32 blur-[60px] rounded-full pointer-events-none transition-colors duration-700 ${permission === 'granted' ? 'bg-green-500/10' : permission === 'denied' ? 'bg-red-500/10' : 'bg-primary/10'}`} />
+            
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10">
+                <div className="flex items-center gap-4 text-center sm:text-left">
+                    <div className={`p-3 rounded-2xl border flex items-center justify-center shadow-lg transition-all duration-500 ${
+                        permission === 'granted' ? 'bg-green-500/10 border-green-500/20 text-green-500' : 
+                        permission === 'denied' ? 'bg-red-500/10 border-red-500/20 text-red-500' : 
+                        'bg-primary/10 border-primary/20 text-primary group-hover:scale-110'
+                    }`}>
+                        {permission === 'granted' ? <CheckCircle2 size={24} /> : 
+                         permission === 'denied' ? <ShieldAlert size={24} /> : 
+                         <BellRing size={24} className="animate-pulse" />}
                     </div>
                     <div>
-                        <p className="text-foreground font-bold text-sm">Notifications Active</p>
-                        <p className="text-muted-foreground text-xs">You will receive updates on tournaments</p>
+                        <h4 className="font-black text-sm uppercase tracking-wider text-foreground">
+                            {permission === 'granted' ? 'Notifications Active' : 
+                             permission === 'denied' ? 'Access Restricted' : 
+                             'Push Notifications'}
+                        </h4>
+                        <p className="text-xs text-muted-foreground font-medium max-w-[240px]">
+                            {permission === 'granted' ? 'You are all set! We will notify you of match updates.' : 
+                             permission === 'denied' ? 'Enable in browser settings to receive match alerts.' : 
+                             'Get instant alerts for match starts, room IDs, and chat messages.'}
+                        </p>
                     </div>
                 </div>
-                <div className="flex items-center gap-3 w-full sm:w-auto relative z-10">
-                    <Link href="/dashboard/settings" className="flex-1 sm:flex-none px-4 py-2 bg-background border border-border text-foreground hover:bg-muted font-bold rounded-xl text-xs transition-all text-center">
-                        Manage Settings
-                    </Link>
+
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                    {permission === 'default' && (
+                        <button
+                            onClick={handleRequest}
+                            disabled={isSubscribing}
+                            className="flex-1 sm:flex-none px-6 py-3 bg-primary text-primary-foreground font-black uppercase tracking-widest text-[10px] rounded-xl hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
+                        >
+                            {isSubscribing ? 'Processing...' : 'Enable Now'}
+                        </button>
+                    )}
+                    {permission === 'denied' && (
+                        <div className="flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-xl">
+                            <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">Blocked by Browser</span>
+                        </div>
+                    )}
+                    {permission === 'granted' && (
+                        <div className="flex items-center gap-2 px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-xl">
+                            <span className="text-[10px] font-black text-green-500 uppercase tracking-widest">Running Live</span>
+                        </div>
+                    )}
+                    <button className="p-3 bg-muted/50 border border-border text-muted-foreground rounded-xl hover:bg-muted transition-colors">
+                        <Settings size={18} />
+                    </button>
                 </div>
             </div>
-        );
-    }
-
-    // Default state: Prompt to enable
-    return (
-        <div className="bg-card backdrop-blur-md border border-border rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative overflow-hidden group shadow-sm">
-            <div className="absolute inset-0 bg-primary/5 blur-xl group-hover:bg-primary/10 transition-colors duration-500 pointer-events-none" />
-
-            <div className="flex items-center gap-3 relative z-10">
-                <div className="p-2 bg-primary/10 text-primary rounded-lg border border-primary/20">
-                    <Bell size={20} />
-                </div>
-                <div>
-                    <p className="text-foreground font-bold text-sm">Enable Notifications</p>
-                    <p className="text-muted-foreground text-xs">Don't miss out on tournament updates</p>
-                </div>
-            </div>
-
-            <div className="flex items-center gap-3 w-full sm:w-auto relative z-10">
-                <button
-                    onClick={requestPermission}
-                    className="flex-1 sm:flex-none px-4 py-2 bg-primary text-primary-foreground font-bold rounded-xl text-xs hover:opacity-90 transition-opacity shadow-lg shadow-primary/20 whitespace-nowrap"
-                >
-                    Allow Push
-                </button>
-                <Link href="/dashboard/settings" className="p-2 bg-muted/50 border border-border text-muted-foreground rounded-xl hover:bg-muted transition-colors" aria-label="Settings">
-                    <ArrowUpRight size={18} />
-                </Link>
-            </div>
-        </div>
+        </motion.div>
     );
 }
+

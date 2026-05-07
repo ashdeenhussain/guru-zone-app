@@ -15,7 +15,7 @@ import {
     ScrollText,
     Gift
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession, signOut } from "next-auth/react";
@@ -34,12 +34,35 @@ export default function MobileNavigation() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isDailyRewardOpen, setIsDailyRewardOpen] = useState(false);
     const { data: session } = useSession();
+    const [unreadCounts, setUnreadCounts] = useState({ admin: 0, chat: 0, total: 0 });
+
+    const fetchUnreadCounts = async () => {
+        try {
+            const res = await fetch('/api/notifications/unread-count');
+            if (res.ok) {
+                const data = await res.json();
+                if (data.success) {
+                    setUnreadCounts(data.counts);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to fetch unread counts', error);
+        }
+    };
+
+    useEffect(() => {
+        if (session?.user) {
+            fetchUnreadCounts();
+            const interval = setInterval(fetchUnreadCounts, 15000);
+            return () => clearInterval(interval);
+        }
+    }, [session?.user]);
 
     const navItems = [
         { icon: LayoutDashboard, label: "Home", href: "/dashboard" },
         { icon: Trophy, label: "Tournaments", href: "/dashboard/tournaments" },
         // Middle Space for Menu
-        { icon: Swords, label: "Battle Zone", href: "/battle-zone" },
+        { icon: Swords, label: "Battle Zone", href: "/battle-zone", badge: unreadCounts.chat },
         { icon: ShoppingBag, label: "Shop", href: "/dashboard/shop" },
         { icon: Wallet, label: "Wallet", href: "/dashboard/wallet" },
     ];
@@ -123,13 +146,17 @@ export default function MobileNavigation() {
                                 className={`${isActive('/battle-zone') ? 'text-primary' : 'text-muted-foreground'} relative z-10 drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]`}
                             />
                             
-                            {/* "NEW" Badge */}
-                            <span className="absolute -top-1 -right-1 flex h-4 w-4 z-20">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-4 w-4 bg-primary border-2 border-background flex items-center justify-center">
-                                    <span className="text-[6px] text-primary-foreground font-black leading-none">N</span>
+                            {/* "MESSENGER" Style Badge */}
+                            {unreadCounts.chat > 0 && (
+                                <span className="absolute -top-1 -right-1 flex h-4 w-4 z-20">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-4 w-4 bg-red-600 border-2 border-background flex items-center justify-center shadow-[0_0_10px_rgba(220,38,38,0.5)]">
+                                        <span className="text-[7px] text-white font-black leading-none">
+                                            {unreadCounts.chat > 9 ? '9+' : unreadCounts.chat}
+                                        </span>
+                                    </span>
                                 </span>
-                            </span>
+                            )}
                         </div>
                         <span className="text-[10px] font-bold">Battle Zone</span>
                     </Link>

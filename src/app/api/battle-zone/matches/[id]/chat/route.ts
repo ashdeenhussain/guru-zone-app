@@ -95,8 +95,8 @@ export async function POST(
             url: `/battle-zone/${id}`
         };
 
-        const pushPromises = others.map((p: any) => sendPushNotification(p.userId.toString(), payload));
-        if (notifyHost) pushPromises.push(sendPushNotification(hostId, payload));
+        const pushPromises = others.map((p: any) => sendPushNotification(p.userId.toString(), payload, 'chat'));
+        if (notifyHost) pushPromises.push(sendPushNotification(hostId, payload, 'chat'));
 
         Promise.all(pushPromises).catch(console.error);
 
