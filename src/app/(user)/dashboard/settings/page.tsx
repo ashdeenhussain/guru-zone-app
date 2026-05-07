@@ -32,6 +32,9 @@ export default function SettingsPage() {
     const [notifications, setNotifications] = useState({
         email: true,
         tournaments: true,
+        chat: true,
+        wallet: true,
+        system: true,
     });
 
     // Loading State for Notifications
@@ -287,7 +290,7 @@ export default function SettingsPage() {
                                         </div>
                                     </div>
                                     <button
-                                        onClick={() => toggleNotification('tournaments' as any)}
+                                        onClick={() => toggleNotification('tournaments')}
                                         className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${notifications.tournaments ? 'bg-green-500' : 'bg-input'}`}
                                     >
                                         <div className={`w-4 h-4 rounded-full bg-white transition-transform ${notifications.tournaments ? 'translate-x-6' : 'translate-x-0'}`} />
@@ -308,7 +311,7 @@ export default function SettingsPage() {
                                         </div>
                                     </div>
                                     <button
-                                        onClick={() => toggleNotification('chat' as any)}
+                                        onClick={() => toggleNotification('chat')}
                                         className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${notifications.chat ? 'bg-green-500' : 'bg-input'}`}
                                     >
                                         <div className={`w-4 h-4 rounded-full bg-white transition-transform ${notifications.chat ? 'translate-x-6' : 'translate-x-0'}`} />
@@ -329,7 +332,7 @@ export default function SettingsPage() {
                                         </div>
                                     </div>
                                     <button
-                                        onClick={() => toggleNotification('wallet' as any)}
+                                        onClick={() => toggleNotification('wallet')}
                                         className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${notifications.wallet ? 'bg-green-500' : 'bg-input'}`}
                                     >
                                         <div className={`w-4 h-4 rounded-full bg-white transition-transform ${notifications.wallet ? 'translate-x-6' : 'translate-x-0'}`} />
@@ -350,7 +353,7 @@ export default function SettingsPage() {
                                         </div>
                                     </div>
                                     <button
-                                        onClick={() => toggleNotification('system' as any)}
+                                        onClick={() => toggleNotification('system')}
                                         className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${notifications.system ? 'bg-green-500' : 'bg-input'}`}
                                     >
                                         <div className={`w-4 h-4 rounded-full bg-white transition-transform ${notifications.system ? 'translate-x-6' : 'translate-x-0'}`} />
