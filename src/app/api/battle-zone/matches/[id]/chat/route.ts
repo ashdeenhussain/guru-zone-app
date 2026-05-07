@@ -90,7 +90,7 @@ export async function POST(
         const notifyHost = hostId && hostId !== userId && !others.some((p: any) => p.userId.toString() === hostId);
 
         const payload = {
-            title: `Match Chat: ${message.senderName}`,
+            title: `Battle Chat: ${message.senderName}`,
             body: message.content,
             url: `/battle-zone/${id}`
         };

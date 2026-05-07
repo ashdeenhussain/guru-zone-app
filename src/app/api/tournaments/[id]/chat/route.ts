@@ -104,9 +104,9 @@ export async function POST(
 
         const notificationPromises = [];
         const payload = {
-            title: `New Message from ${message.senderName}`,
+            title: `Tournament Chat: ${message.senderName}`,
             body: message.content,
-            url: `/battle-zone/match/${id}`
+            url: `/tournaments/${id}`
         };
 
         for (const participant of otherParticipants) {

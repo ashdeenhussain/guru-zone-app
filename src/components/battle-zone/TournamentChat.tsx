@@ -49,7 +49,7 @@ export default function TournamentChat({ tournamentId, isHost, isParticipant, is
                 // If there are new messages and a callback exists
                 if (messages.length > 0 && newMessages.length > messages.length) {
                     const lastMsg = newMessages[newMessages.length - 1];
-                    const isMe = lastMsg.sender === (session?.user as any)?.id;
+                    const isMe = lastMsg.sender?.toString() === (session?.user as any)?.id?.toString();
                     
                     if (!isMe && onNewMessage) {
                         onNewMessage();
@@ -137,27 +137,27 @@ export default function TournamentChat({ tournamentId, isHost, isParticipant, is
                     </div>
                 ) : (
                     messages.map((msg) => {
-                        const isMe = msg.sender === (session?.user as any)?.id;
+                        const isMe = msg.sender?.toString() === (session?.user as any)?.id?.toString();
                         return (
-                            <div key={msg._id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                                <div className={`flex items-end gap-2 max-w-[80%] ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                            <div key={msg._id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-2`}>
+                                {/* Sender Name for others */}
+                                {!isMe && !msg.isSystem && (
+                                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 ml-2">
+                                        {msg.senderName || 'Player'}
+                                    </span>
+                                )}
+                                
+                                <div className={`flex items-end gap-2 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
                                     {/* Message Bubble Container */}
                                     <div className="group/msg relative flex items-center gap-2">
                                         <div
-                                            className={`px-4 py-2 rounded-2xl text-sm break-words
+                                            className={`px-4 py-2.5 rounded-2xl text-[13px] font-medium leading-relaxed shadow-sm
                                                 ${isMe
                                                     ? 'bg-primary text-primary-foreground rounded-tr-none'
-                                                    : 'bg-muted border border-border rounded-tl-none'
+                                                    : 'bg-muted/80 border border-border/50 text-foreground rounded-tl-none'
                                                 }
                                             `}
                                         >
-                                            {!isMe && (
-                                                <div className="flex justify-between items-start gap-4 mb-1">
-                                                    <span className="text-[10px] font-bold opacity-70 text-primary">
-                                                        {msg.senderName || 'Unknown'}
-                                                    </span>
-                                                </div>
-                                            )}
                                             {msg.content}
                                         </div>
 
@@ -179,8 +179,8 @@ export default function TournamentChat({ tournamentId, isHost, isParticipant, is
                                             </button>
                                         )}
                                     </div>
-                                    <span className="text-[10px] text-muted-foreground min-w-fit mb-1">
-                                        {format(new Date(msg.createdAt), 'HH:mm')}
+                                    <span className="text-[9px] font-bold text-muted-foreground/60 min-w-fit mb-1">
+                                        {format(new Date(msg.createdAt), 'h:mm a')}
                                     </span>
                                 </div>
                             </div>
