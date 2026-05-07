@@ -25,7 +25,7 @@ interface TournamentChatProps {
 }
 
 export default function TournamentChat({ tournamentId, isHost, isParticipant, isAdmin, onNewMessage }: TournamentChatProps) {
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [isLoading, setIsLoading] = useState(true);

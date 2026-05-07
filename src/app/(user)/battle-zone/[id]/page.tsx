@@ -167,7 +167,22 @@ Here is my video proof:`;
                 const searchId = id.toString().trim();
                 const key = Object.keys(data.counts.breakdown).find(k => k.toString().trim() === searchId);
                 if (key) {
-                    setUnreadCounts(data.counts.breakdown[key]);
+                    const counts = data.counts.breakdown[key];
+                    
+                    // If we are currently active on a tab that has unread counts,
+                    // proactively mark as read and zero out local state to prevent flicker
+                    if ((activeTab === 'chat' && counts.chat > 0) || (activeTab === 'room' && counts.system > 0)) {
+                        fetch('/api/notifications/read-chat', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ tournamentId: match?._id || id }),
+                        }).catch(() => {});
+                        
+                        if (activeTab === 'chat') counts.chat = 0;
+                        if (activeTab === 'room') counts.system = 0;
+                    }
+
+                    setUnreadCounts(counts);
                 } else {
                     setUnreadCounts({ chat: 0, system: 0 });
                 }
@@ -401,10 +416,19 @@ Here is my video proof:`;
                                     if (!tab.disabled) {
                                         setActiveTab(tab.id);
                                         // Smart Clearing: Update local state immediately
-                                        if (tab.id === 'chat') {
-                                            setUnreadCounts((prev: any) => ({ ...prev, chat: 0 }));
-                                        } else if (tab.id === 'room') {
-                                            setUnreadCounts((prev: any) => ({ ...prev, system: 0 }));
+                                        if (tab.id === 'chat' || tab.id === 'room') {
+                                            if (tab.id === 'chat') {
+                                                setUnreadCounts((prev: any) => ({ ...prev, chat: 0 }));
+                                            } else {
+                                                setUnreadCounts((prev: any) => ({ ...prev, system: 0 }));
+                                            }
+                                            
+                                            // Back up with server call
+                                            fetch('/api/notifications/read-chat', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ tournamentId: match?._id || id }),
+                                            }).catch(() => {});
                                         }
                                     }
                                 }}
