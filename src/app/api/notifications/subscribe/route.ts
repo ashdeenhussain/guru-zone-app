@@ -11,11 +11,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
-        const subscription = await req.json();
-
-        if (!subscription || !subscription.endpoint) {
-            return NextResponse.json({ success: false, error: 'Invalid subscription object' }, { status: 400 });
-        }
+        const data = await req.json();
 
         await connectToDatabase();
         const userId = (session.user as any).id;
@@ -25,16 +21,29 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
         }
 
-        // Initialize array if it doesn't exist
-        const subscriptions = Array.isArray(user.pushSubscriptions) ? user.pushSubscriptions : [];
+        // 1. Handle Native FCM Token
+        if (data.fcmToken) {
+            const fcmTokens = Array.isArray(user.fcmTokens) ? user.fcmTokens : [];
+            if (!fcmTokens.includes(data.fcmToken)) {
+                fcmTokens.push(data.fcmToken);
+                user.fcmTokens = fcmTokens;
+                await user.save();
+            }
+            return NextResponse.json({ success: true, message: 'Native token saved' });
+        }
 
-        // Check if this subscription already exists (by endpoint)
+        // 2. Handle Standard Web Push Subscription
+        const subscription = data;
+        if (!subscription || !subscription.endpoint) {
+            return NextResponse.json({ success: false, error: 'Invalid subscription object' }, { status: 400 });
+        }
+
+        const subscriptions = Array.isArray(user.pushSubscriptions) ? user.pushSubscriptions : [];
         const subExists = subscriptions.some(
             (sub: any) => sub.endpoint === subscription.endpoint
         );
 
         if (!subExists) {
-            // Push the new subscription and save
             subscriptions.push(subscription);
             user.pushSubscriptions = subscriptions;
             await user.save();

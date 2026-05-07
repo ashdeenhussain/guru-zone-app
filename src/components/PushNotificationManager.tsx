@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, BellRing, X, ShieldCheck, Zap, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
+import { setupNativeChannels, registerNativePush } from '@/lib/native-notifications';
 
 function urlBase64ToUint8Array(base64String: string) {
     const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -26,6 +27,25 @@ export default function PushNotificationManager() {
         // Only run on client and if user is logged in
         if (typeof window === 'undefined' || status !== 'authenticated' || !session?.user) return;
 
+        // 1. Native Capacitor Registration
+        const handleNativeRegistration = async () => {
+            try {
+                await setupNativeChannels();
+                await registerNativePush(async (token) => {
+                    await fetch('/api/notifications/subscribe', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ fcmToken: token }),
+                    });
+                });
+            } catch (err) {
+                console.error('Native registration failed:', err);
+            }
+        };
+
+        handleNativeRegistration();
+
+        // 2. Standard Web Push (PWA) Registration
         // Check if service worker and push are supported
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
             console.warn('Push notifications are not supported in this browser.');
@@ -38,10 +58,7 @@ export default function PushNotificationManager() {
             
             // Check current permission status
             if (Notification.permission === 'default') {
-                // Show our premium prompt after a short delay
                 const timer = setTimeout(() => {
-                    // Don't show if they already saw it this session? 
-                    // For now, show once per login session if default.
                     const hasSeenPrompt = sessionStorage.getItem('hasSeenPushPrompt');
                     if (!hasSeenPrompt) {
                         setShowPrompt(true);
@@ -49,7 +66,6 @@ export default function PushNotificationManager() {
                 }, 3000);
                 return () => clearTimeout(timer);
             } else if (Notification.permission === 'granted') {
-                // Ensure subscription is synced with backend
                 syncSubscription(registration);
             }
         }).catch(err => console.error('SW registration failed:', err));

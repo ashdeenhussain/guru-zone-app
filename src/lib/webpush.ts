@@ -1,25 +1,39 @@
 import webpush from 'web-push';
 import User from '@/models/User';
+import admin from 'firebase-admin';
 
 let isInitialized = false;
 
-export function initWebPush() {
+export function initNotifications() {
     if (isInitialized) return;
 
+    // 1. Web Push Initialization
     const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
     const privateVapidKey = process.env.VAPID_PRIVATE_KEY;
 
-    if (!publicVapidKey || !privateVapidKey) {
-        console.warn('VAPID keys must be set for push notifications.');
-        return;
+    if (publicVapidKey && privateVapidKey) {
+        webpush.setVapidDetails(
+            'mailto:admin@guru-zone.com',
+            publicVapidKey,
+            privateVapidKey
+        );
     }
 
-    // You should set these in env, but fallback to a dummy mailto
-    webpush.setVapidDetails(
-        'mailto:admin@guru-zone.com',
-        publicVapidKey,
-        privateVapidKey
-    );
+    // 2. Firebase Admin Initialization (for Native Android)
+    const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
+    if (serviceAccount) {
+        try {
+            const cert = JSON.parse(serviceAccount);
+            if (!admin.apps.length) {
+                admin.initializeApp({
+                    credential: admin.credential.cert(cert),
+                });
+            }
+        } catch (e) {
+            console.error('Failed to initialize Firebase Admin:', e);
+        }
+    }
+
     isInitialized = true;
 }
 
@@ -33,8 +47,8 @@ export async function sendPushNotification(
     category: 'chat' | 'tournaments' | 'wallet' | 'system' = 'system'
 ) {
     try {
-        initWebPush();
-        const user = await User.findById(userId).select('pushSubscriptions notifications');
+        initNotifications();
+        const user = await User.findById(userId).select('pushSubscriptions fcmTokens notifications');
 
         if (!user) return;
 
@@ -44,40 +58,77 @@ export async function sendPushNotification(
             return;
         }
 
-        if (!user.pushSubscriptions || user.pushSubscriptions.length === 0) {
-            return; // No subscriptions
-        }
+        // --- 1. HANDLE WEB PUSH (Standard PWA) ---
+        if (user.pushSubscriptions && user.pushSubscriptions.length > 0) {
+            const payloadWithCategory = {
+                ...payload,
+                category: category,
+                tag: category,
+                renotify: true
+            };
+            const stringPayload = JSON.stringify(payloadWithCategory);
+            const subscriptionsToKeep = [];
+            let webChanges = false;
 
-        const payloadWithCategory = {
-            ...payload,
-            category: category,
-            tag: category, // Use category as tag to group notifications
-            renotify: true
-        };
-        const stringPayload = JSON.stringify(payloadWithCategory);
-        const subscriptionsToKeep = [];
-        let hasChanges = false;
-
-        for (const sub of user.pushSubscriptions) {
-            try {
-                await webpush.sendNotification(sub as any, stringPayload);
-                subscriptionsToKeep.push(sub);
-            } catch (error: any) {
-                // If the subscription is no longer valid, we catch a 410 (Gone) or 404
-                if (error.statusCode === 410 || error.statusCode === 404) {
-                    console.log(`Removing expired subscription for user ${userId}`);
-                    hasChanges = true;
-                } else {
-                    console.error('Push Notification Error:', error);
-                    // Keep it just in case it was a temporary network error
+            for (const sub of user.pushSubscriptions) {
+                try {
+                    await webpush.sendNotification(sub as any, stringPayload);
                     subscriptionsToKeep.push(sub);
+                } catch (error: any) {
+                    if (error.statusCode === 410 || error.statusCode === 404) {
+                        webChanges = true;
+                    } else {
+                        subscriptionsToKeep.push(sub);
+                    }
                 }
+            }
+
+            if (webChanges) {
+                user.pushSubscriptions = subscriptionsToKeep;
+                await user.save();
             }
         }
 
-        if (hasChanges) {
-            user.pushSubscriptions = subscriptionsToKeep;
-            await user.save();
+        // --- 2. HANDLE NATIVE PUSH (Capacitor FCM) ---
+        if (user.fcmTokens && user.fcmTokens.length > 0 && admin.apps.length > 0) {
+            const tokensToKeep = [];
+            let nativeChanges = false;
+
+            for (const token of user.fcmTokens) {
+                try {
+                    await admin.messaging().send({
+                        token: token,
+                        notification: {
+                            title: payload.title,
+                            body: payload.body,
+                        },
+                        android: {
+                            notification: {
+                                channelId: category, // Matches native-notifications.ts channels
+                                sound: 'default',
+                                priority: (category === 'tournaments' || category === 'wallet') ? 'high' : 'normal',
+                            }
+                        },
+                        data: {
+                            url: payload.url || '/',
+                            category: category,
+                        }
+                    });
+                    tokensToKeep.push(token);
+                } catch (error: any) {
+                    // Check if token is invalid/expired
+                    if (error.code === 'messaging/registration-token-not-registered' || error.code === 'messaging/invalid-argument') {
+                        nativeChanges = true;
+                    } else {
+                        tokensToKeep.push(token);
+                    }
+                }
+            }
+
+            if (nativeChanges) {
+                user.fcmTokens = tokensToKeep;
+                await user.save();
+            }
         }
 
     } catch (error) {

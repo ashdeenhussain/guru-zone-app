@@ -180,6 +180,7 @@ const UserSchema = new Schema(
                 auth: String
             }
         }],
+        fcmTokens: [String],
         lastChatReadAt: {
             type: Map,
             of: Date,
