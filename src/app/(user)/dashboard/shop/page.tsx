@@ -71,6 +71,29 @@ export default async function ShopPage() {
 
     return (
         <div>
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{
+                __html: JSON.stringify({
+                  "@context": "https://schema.org",
+                  "@type": "Product",
+                  "name": "Free Fire Diamond Top Up — Pakistan",
+                  "description": "Sasta aur fast Free Fire Diamond Top Up Pakistan mein. JazzCash aur EasyPaisa se payment karo.",
+                  "brand": {
+                    "@type": "Brand",
+                    "name": "Guru Zone"
+                  },
+                  "offers": {
+                    "@type": "AggregateOffer",
+                    "priceCurrency": "PKR",
+                    "lowPrice": "150",
+                    "highPrice": "5000",
+                    "offerCount": "10",
+                    "availability": "https://schema.org/InStock"
+                  }
+                })
+              }}
+            />
             <ShopMaintenanceWrapper isActive={false}>
                 <ShopContent
                     products={serializedProducts}

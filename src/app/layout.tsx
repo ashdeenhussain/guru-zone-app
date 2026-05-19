@@ -112,6 +112,34 @@ export default function RootLayout({
       <body
         className={`${inter.className} antialiased pb-20 bg-background text-foreground`}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SportsOrganization",
+              "name": "Guru Zone",
+              "url": "https://www.guru-zone.com",
+              "logo": "https://www.guru-zone.com/logo.png",
+              "description": "Pakistan ka #1 Free Fire tournament platform. Khelo, jeeto aur JazzCash/EasyPaisa pe instant cash withdraw karo.",
+              "foundingLocation": {
+                "@type": "Place",
+                "name": "Pakistan"
+              },
+              "sameAs": [
+                "https://www.facebook.com/guruzone",
+                "https://www.tiktok.com/@guruzone"
+              ],
+              "offers": {
+                "@type": "Offer",
+                "description": "Free Fire Tournament Entry",
+                "price": "0",
+                "priceCurrency": "PKR",
+                "availability": "https://schema.org/InStock"
+              }
+            })
+          }}
+        />
         <Providers>
           <Navbar />
           {children}
