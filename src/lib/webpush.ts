@@ -106,7 +106,7 @@ export async function sendPushNotification(
                             notification: {
                                 channelId: category, // Matches native-notifications.ts channels
                                 sound: 'default',
-                                priority: (category === 'tournaments' || category === 'wallet') ? 'high' : 'normal',
+                                priority: (category === 'tournaments' || category === 'wallet') ? 'high' : 'default',
                             }
                         },
                         data: {

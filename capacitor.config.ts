@@ -4,7 +4,6 @@ const config: CapacitorConfig = {
   appId: 'com.guruzone.app',
   appName: 'Guru Zone',
   webDir: 'public',
-  bundledWebRuntime: false,
   server: {
     // For development, we can point to localhost
     // For production, this will be your live domain

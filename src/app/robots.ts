@@ -5,8 +5,14 @@ export default function robots(): MetadataRoute.Robots {
         rules: {
             userAgent: '*',
             allow: '/',
-            disallow: ['/admin/', '/api/'], // Disallow admin and api routes
+            disallow: [
+                '/dashboard/',
+                '/wallet/',
+                '/api/',
+                '/admin/',
+                '/_next/'
+            ],
         },
-        sitemap: 'https://guru-zone.com/sitemap.xml',
+        sitemap: 'https://www.guru-zone.com/sitemap.xml',
     }
 }

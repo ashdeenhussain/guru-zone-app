@@ -7,6 +7,16 @@ import { authOptions } from "@/lib/auth";
 import ShopContent from "./ShopContent";
 import ShopMaintenanceWrapper from "@/components/shop/ShopMaintenanceWrapper";
 import { redirect } from "next/navigation";
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: "Free Fire Top Up Pakistan — Sasta aur Fast | Guru Zone",
+  description: "Pakistan mein sabse sasta Free Fire Diamond Top Up. Apni gaming earnings se seedha FF diamonds kharido. JazzCash aur EasyPaisa accepted.",
+  keywords: "free fire top up pakistan, FF diamonds cheap pakistan, free fire top up jazzcash, free fire membership pakistan, garena top up pakistan, free fire diamonds buy online pakistan",
+  alternates: {
+    canonical: "https://www.guru-zone.com/topup",
+  },
+};
 
 export const dynamic = 'force-dynamic';
 
