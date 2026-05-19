@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { ChevronLeft, Mail, Phone, MapPin, MessageCircle, Send } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 interface ContactContentProps {
     content: any;
@@ -23,7 +24,7 @@ export default function ContactContent({ content }: ContactContentProps) {
                         Back to Home
                     </Link>
                     <div className="flex items-center gap-3">
-                        <img src="/logo.jpg" alt="Logo" className="w-10 h-10 rounded-xl" />
+                        <Image src="/logo.jpg" alt="Logo" width={40} height={40} className="rounded-xl" loading="lazy" />
                         <span className="font-black text-xl tracking-tighter uppercase">GURU <span className="text-primary">ZONE</span></span>
                     </div>
                     <div className="w-24"></div>

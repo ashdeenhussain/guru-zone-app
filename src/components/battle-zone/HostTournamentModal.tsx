@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Swords, Users, Shield, ArrowRight, Coins, Trophy, Loader2 } from 'lucide-react';
+import Image from 'next/image';
 
 interface HostTournamentModalProps {
     isOpen: boolean;
@@ -315,7 +316,7 @@ export default function HostTournamentModal({ isOpen, onClose, onSuccess }: Host
                                                     mapName === map.name ? 'border-primary shadow-[0_0_15px_rgba(var(--primary),0.4)]' : 'border-transparent opacity-60 hover:opacity-100'
                                                 }`}
                                             >
-                                                <img src={map.img} alt={map.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                                <Image src={map.img} alt={map.name} fill sizes="120px" className="object-cover group-hover:scale-110 transition-transform duration-500" />
                                                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2 text-center">
                                                     <span className={`text-[10px] font-black uppercase ${mapName === map.name ? 'text-primary' : 'text-white'}`}>
                                                         {map.name}

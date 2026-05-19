@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Info, Trophy, Target, Heart, ChevronLeft } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 interface AboutContentProps {
     content: any;
@@ -21,7 +22,7 @@ export default function AboutContent({ content }: AboutContentProps) {
                         Back to Home
                     </Link>
                     <div className="flex items-center gap-3">
-                        <img src="/logo.jpg" alt="Logo" className="w-10 h-10 rounded-xl" />
+                        <Image src="/logo.jpg" alt="Logo" width={40} height={40} className="rounded-xl" loading="lazy" />
                         <span className="font-black text-xl">GURU <span className="text-primary">ZONE</span></span>
                     </div>
                     <div className="w-24"></div> {/* Spacer */}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronLeft, ShieldCheck, ScrollText, RefreshCcw } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -51,7 +52,7 @@ export default function PolicyPage({ type }: { type: 'privacy' | 'terms' | 'refu
                         Back to Home
                     </Link>
                     <div className="flex items-center gap-3">
-                        <img src="/logo.jpg" alt="Logo" className="w-10 h-10 rounded-xl" />
+                        <Image src="/logo.jpg" alt="Logo" width={40} height={40} className="rounded-xl" loading="lazy" />
                         <span className="font-black text-xl tracking-tighter">GURU <span className="text-primary">ZONE</span></span>
                     </div>
                     <div className="w-24"></div>

@@ -1,15 +1,19 @@
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
+import { Inter } from 'next/font/google'
 import Navbar from "@/components/Navbar";
 import Providers from "@/components/Providers";
 import PromoModal from "@/components/PromoModal";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-const outfit = Outfit({ subsets: ["latin"] });
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+})
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://guru-zone.com"),
+  metadataBase: new URL("https://www.guru-zone.com"),
   title: {
     default: "Guru Zone | Pakistan's No.1 Free Fire & Esports Platform",
     template: "%s | Guru Zone Esports",
@@ -100,8 +104,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://firebasestorage.googleapis.com" />
+      </head>
       <body
-        className={`${outfit.className} antialiased pb-20 bg-background text-foreground`}
+        className={`${inter.className} antialiased pb-20 bg-background text-foreground`}
       >
         <Providers>
           <Navbar />

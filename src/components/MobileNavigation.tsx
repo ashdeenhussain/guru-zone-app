@@ -76,7 +76,7 @@ export default function MobileNavigation() {
                 {/* Left Side: Brand Logo */}
                 <Link href={session ? "/dashboard" : "/"} className="flex items-center gap-2">
                     <div className="relative h-8 w-8 overflow-hidden rounded-lg">
-                        <img src="/logo.jpg" alt="Guru Zone Logo" className="h-full w-full object-cover" />
+                        <Image src="/logo.jpg" alt="Guru Zone Logo" width={32} height={32} className="object-cover" loading="lazy" />
                     </div>
                     <span className="text-lg font-bold bg-gradient-to-r from-primary to-yellow-200 bg-clip-text text-transparent tracking-tighter">
                         GURU ZONE

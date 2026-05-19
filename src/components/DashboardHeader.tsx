@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Bell, Sun, Moon, Sunset } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 
@@ -31,7 +32,7 @@ export default function DashboardHeader() {
             {/* Left Side: Logo/Title */}
             <div className="flex items-center gap-3">
                 <div className="relative h-10 w-10 overflow-hidden rounded-lg">
-                    <img src="/logo.jpg" alt="Guru Zone Logo" className="h-full w-full object-cover" />
+                    <Image src="/logo.jpg" alt="Guru Zone Logo" width={40} height={40} className="object-cover" loading="lazy" />
                 </div>
                 <span className="text-xl font-bold bg-gradient-to-r from-primary to-yellow-200 bg-clip-text text-transparent tracking-tighter block">
                     GURU ZONE

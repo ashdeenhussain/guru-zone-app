@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   images: {
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60,
+    deviceSizes: [640, 750, 828, 1080, 1200],
     remotePatterns: [
       {
         protocol: 'https',
@@ -25,6 +28,11 @@ const nextConfig: NextConfig = {
         hostname: 'drive.google.com',
       }
     ],
+  },
+  compress: true,
+  poweredByHeader: false,
+  experimental: {
+    optimizeCss: true,
   },
   webpack: (config, { dev }) => {
     if (dev) {

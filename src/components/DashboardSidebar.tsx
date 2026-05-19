@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
     LayoutDashboard,
@@ -114,7 +115,7 @@ export default function DashboardSidebar() {
                         <Link href="/dashboard" className="flex items-center gap-3 overflow-hidden whitespace-nowrap">
                             {/* Logo Icon */}
                             <div className="min-w-[24px]">
-                                <img src="/logo.jpg" alt="Logo" className="w-8 h-8 rounded-full" />
+                                <Image src="/logo.jpg" alt="Logo" width={32} height={32} className="rounded-full" loading="lazy" />
                             </div>
 
                             {/* Text */}
