@@ -28,9 +28,11 @@ import {
 } from "lucide-react";
 import NotificationDropdown from "@/components/dashboard/NotificationDropdown";
 import DailyRewardModal from "@/components/dashboard/DailyRewardModal";
+import { useGuest } from "@/context/GuestContext";
 
 export default function MobileNavigation() {
     const pathname = usePathname();
+    const { isGuest, logoutGuest } = useGuest();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isDailyRewardOpen, setIsDailyRewardOpen] = useState(false);
     const { data: session } = useSession();
@@ -51,12 +53,12 @@ export default function MobileNavigation() {
     };
 
     useEffect(() => {
-        if (session?.user) {
+        if (session?.user && !isGuest) {
             fetchUnreadCounts();
             const interval = setInterval(fetchUnreadCounts, 15000);
             return () => clearInterval(interval);
         }
-    }, [session?.user]);
+    }, [session?.user, isGuest]);
 
     const navItems = [
         { icon: LayoutDashboard, label: "Home", href: "/dashboard" },
@@ -74,7 +76,7 @@ export default function MobileNavigation() {
             {/* Top Bar */}
             <div className="fixed top-0 left-0 right-0 z-[60] h-16 px-4 bg-background/80 backdrop-blur-xl border-b border-border flex items-center justify-between shadow-sm">
                 {/* Left Side: Brand Logo */}
-                <Link href={session ? "/dashboard" : "/"} className="flex items-center gap-2">
+                <Link href={session || isGuest ? "/dashboard" : "/"} className="flex items-center gap-2">
                     <div className="relative h-8 w-8 overflow-hidden rounded-lg">
                         <Image src="/logo.jpg" alt="Guru Zone Logo" width={32} height={32} className="object-cover" loading="lazy" />
                     </div>
@@ -351,7 +353,14 @@ export default function MobileNavigation() {
                                 </div>
 
                                 <button
-                                    onClick={() => { signOut(); setIsMenuOpen(false); }}
+                                    onClick={() => {
+                                        if (isGuest) {
+                                            logoutGuest();
+                                        } else {
+                                            signOut();
+                                        }
+                                        setIsMenuOpen(false);
+                                    }}
                                     className="flex w-full items-center gap-4 p-4 rounded-2xl bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 active:scale-[0.98] transition-all"
                                 >
                                     <div className="p-3 bg-red-500/10 text-red-500 rounded-xl">

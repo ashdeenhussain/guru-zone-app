@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectToDatabase from "@/lib/db";
 import User from "@/models/User";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import {
     Wallet,
     Trophy,
@@ -31,20 +32,37 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
     const session = await getServerSession(authOptions);
+    const cookieStore = await cookies();
+    const isGuest = cookieStore.get("isGuest")?.value === "true";
 
-    if (!session?.user?.email) {
+    if (!session?.user?.email && !isGuest) {
         redirect("/login");
     }
 
     await connectToDatabase();
 
-    // Fetch user data with all new stats
-    const user = await User.findOne({ email: session.user.email }).lean();
-    const settings = await SystemSetting.findOne().lean();
-
-    if (!user) {
+    let user: any = null;
+    if (isGuest) {
+        user = {
+            _id: "guest-user-id",
+            name: "Guest User",
+            avatarId: 1,
+            walletBalance: 0,
+            totalWins: 0,
+            netEarnings: 0,
+            tournamentsPlayed: [],
+            rankPoints: 0,
+        };
+    } else if (session?.user?.email) {
+        user = await User.findOne({ email: session.user.email }).lean();
+        if (!user) {
+            redirect("/login");
+        }
+    } else {
         redirect("/login");
     }
+
+    const settings = await SystemSetting.findOne().lean();
 
     // Filter banners for Dashboard (Home)
     const allBanners = settings?.bannerImages || [];
@@ -67,10 +85,13 @@ export default async function DashboardPage() {
     }));
 
     // Fetch active tournaments (Real data)
-    const activeTournamentsList = await Tournament.find({
-        "participants.userId": user._id,
-        status: { $in: ["Open", "Live"] }
-    }).sort({ startTime: 1 }).lean();
+    let activeTournamentsList: any[] = [];
+    if (!isGuest && user._id) {
+        activeTournamentsList = await Tournament.find({
+            "participants.userId": user._id,
+            status: { $in: ["Open", "Live"] }
+        }).sort({ startTime: 1 }).lean();
+    }
 
     const activeTournamentsCount = activeTournamentsList.length;
     const nextMatch = activeTournamentsList.find((t: any) => new Date(t.startTime) > new Date());

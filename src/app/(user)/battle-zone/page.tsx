@@ -9,6 +9,7 @@ import { useSession } from 'next-auth/react';
 import HostTournamentModal from '@/components/battle-zone/HostTournamentModal';
 import MaintenanceWrapper from '@/components/shared/MaintenanceWrapper';
 import TrustScoreInfoModal from '@/components/battle-zone/TrustScoreInfoModal';
+import { useGuest } from '@/context/GuestContext';
 
 const MatchCountdown = ({ expiresAt, nowTime }: { expiresAt: string, nowTime: number }) => {
     if (!expiresAt) return null;
@@ -41,6 +42,7 @@ export default function BattleZonePage() {
     const initialTab = searchParams.get('tab') === 'my' ? 'my' : 'all';
 
     const { data: session } = useSession();
+    const { isGuest, requireAuth } = useGuest();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [tournaments, setTournaments] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -241,8 +243,8 @@ export default function BattleZonePage() {
                             {/* Right Section: Action Button */}
                             <div className="flex flex-col items-stretch md:items-end gap-2 shrink-0 w-full md:w-auto mt-2 md:mt-0">
                                 <button 
-                                    onClick={() => setIsHostModalOpen(true)} 
-                                    disabled={session?.user && (session.user as any).trustScore < 80}
+                                    onClick={() => requireAuth(() => setIsHostModalOpen(true))} 
+                                    disabled={!isGuest && session?.user && (session.user as any).trustScore < 80}
                                     className={`px-6 py-3.5 md:py-3 rounded-xl text-sm font-black flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 w-full md:w-auto
                                         ${session?.user && (session.user as any).trustScore < 80 
                                             ? 'bg-muted text-muted-foreground grayscale cursor-not-allowed border border-border/50' 
@@ -325,7 +327,7 @@ export default function BattleZonePage() {
                                     : "No one is hosting at the moment. Be the first to start a challenge!"}
                             </p>
                             {activeTab !== 'my' && (
-                                <button onClick={() => setIsHostModalOpen(true)} className="bg-primary text-primary-foreground px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/20">
+                                <button onClick={() => requireAuth(() => setIsHostModalOpen(true))} className="bg-primary text-primary-foreground px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/20">
                                     Create Challenge
                                 </button>
                             )}
@@ -439,7 +441,13 @@ export default function BattleZonePage() {
                                         </div>
                                         
                                         <button 
-                                            onClick={() => router.push(`/battle-zone/${match._id}`)} 
+                                            onClick={() => {
+                                                if (isGuest) {
+                                                    requireAuth();
+                                                } else {
+                                                    router.push(`/battle-zone/${match._id}`);
+                                                }
+                                            }} 
                                             className="w-full sm:w-auto bg-foreground text-background font-black px-8 py-3.5 rounded-2xl text-xs uppercase tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-xl shadow-foreground/10 flex items-center justify-center gap-3"
                                         >
                                             {isHost || isParticipant ? 'Match Room' : 'Join Battle'}

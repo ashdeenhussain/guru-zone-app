@@ -1,12 +1,13 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Trophy, Zap, Shield, Users, Gamepad2, Timer, Crosshair, Gift, HelpCircle, ChevronRight, Twitter, Instagram, Youtube, Gem, Crown, TrendingUp } from "lucide-react";
+import { ArrowRight, Trophy, Zap, Shield, Users, Gamepad2, Timer, Crosshair, Gift, HelpCircle, ChevronRight, Twitter, Instagram, Youtube, Gem, Crown, TrendingUp, Swords, Wallet, Sparkles, CheckCircle2, Lock, ArrowUpRight, User, PlusCircle, Gamepad, Headphones } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import SplashScreen from "@/components/SplashScreen";
 import ThemeToggle from "@/components/ThemeToggle";
+import HeroSlider from "@/components/HeroSlider";
 
 export default function LandingPage({ initialData }: { initialData?: any }) {
     const [isLoading, setIsLoading] = useState(true);
@@ -95,283 +96,612 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                         </div>
                     </div>
 
-                    {/* HERO Section */}
-                    <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-16 flex flex-col items-center">
+                    {/* HERO Slider Section */}
+                    <div className="relative z-10 w-full pt-20">
+                        <HeroSlider heroData={pageData?.hero} />
+                    </div>
 
+                    {/* Stats Strip overlap */}
+                    <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 md:-mt-12 mb-16">
                         <motion.div
                             variants={containerVariants}
                             initial="hidden"
                             animate="visible"
-                            className="text-center max-w-4xl"
+                            className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-4 w-full max-w-5xl mx-auto p-6 rounded-2xl border border-border bg-card/75 backdrop-blur-lg shadow-xl"
                         >
-                            {/* Badge */}
-                            <motion.div variants={itemVariants} className="flex justify-center mb-8">
-                                <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-primary/30 bg-primary/10 backdrop-blur-md shadow-[0_0_20px_rgba(255,215,0,0.15)]">
-                                    <span className="relative flex h-2 w-2">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-                                    </span>
-                                    <span className="text-xs uppercase tracking-[0.2em] text-primary font-bold">#1 Esports Platform</span>
-                                </div>
-                            </motion.div>
-
-                            {/* Headline */}
-                            <motion.h1
-                                variants={itemVariants}
-                                className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight mb-6 drop-shadow-2xl leading-[0.9] uppercase"
-                            >
-                                {pageData?.hero?.title?.split(' ').slice(0, -2).join(' ')} <br className="hidden md:block" />
-                                <span className="text-transparent bg-clip-text bg-gradient-to-b from-primary to-yellow-600 filter drop-shadow-sm">
-                                    {pageData?.hero?.title?.split(' ').slice(-2).join(' ') || "THE BATTLEGROUND"}
-                                </span>
-                            </motion.h1>
-
-                            {/* Subheadline */}
-                            <motion.p
-                                variants={itemVariants}
-                                className="text-lg md:text-2xl text-muted-foreground mb-10 leading-relaxed max-w-2xl mx-auto font-light"
-                            >
-                                {pageData?.hero?.subtitle || "Experience the best Free Fire tournament app in Pakistan. Join the elite arena to play esports tournaments, earn real money, and climb the ranks to become a legend."}
-                            </motion.p>
-
-                            {/* CTAs */}
-                            <motion.div
-                                variants={itemVariants}
-                                className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-20"
-                            >
-                                <Link href="/signup" className="w-full sm:w-auto">
-                                    <button className="group relative w-full sm:w-auto px-10 py-5 bg-primary text-black font-extrabold text-xl uppercase tracking-widest rounded-xl overflow-hidden hover:scale-105 transition-transform duration-300 shadow-[0_0_40px_-10px_rgba(255,215,0,0.6)]">
-                                        <div className="absolute inset-0 bg-white/40 translate-y-full group-hover:translate-y-0 transition-transform duration-300 skew-y-12" />
-                                        <div className="relative flex items-center justify-center gap-3">
-                                            {pageData?.hero?.primaryCtaText || "Get Started"}
-                                            <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-                                        </div>
-                                    </button>
-                                </Link>
-                                <Link href="/login" className="w-full sm:w-auto">
-                                    <button className="group w-full sm:w-auto px-10 py-5 glass text-foreground font-bold text-xl uppercase tracking-widest rounded-xl hover:bg-white/10 transition-all border border-white/10 hover:border-white/20">
-                                        {pageData?.hero?.secondaryCtaText || "Sign In"}
-                                    </button>
-                                </Link>
-                            </motion.div>
-
-                            {/* Stats Strip */}
-                            <motion.div
-                                variants={itemVariants}
-                                className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-4 w-full max-w-5xl mx-auto p-4 rounded-2xl border border-border bg-card/40 backdrop-blur-md shadow-lg"
-                            >
-                                <StatItem icon={Users} label="Active Players" value="10K+" />
-                                <StatItem icon={Trophy} label="Prize Pool" value="5L+ Coins" />
-                                <StatItem icon={Gamepad2} label="Daily Matches" value="50+" />
-                                <StatItem icon={Timer} label="Instant Payout" value="24/7" />
-                            </motion.div>
+                            <StatItem icon={Users} label="Active Players" value="10K+" />
+                            <StatItem icon={Trophy} label="Prize Pool" value="5L+ Coins" />
+                            <StatItem icon={Gamepad2} label="Daily Matches" value="50+" />
+                            <StatItem icon={Timer} label="Instant Payout" value="24/7" />
                         </motion.div>
                     </div>
 
-                    {/* Features Section */}
-                    <div className="relative z-10 max-w-7xl mx-auto px-4 pb-16">
-                        <div className="text-center mb-12">
-                            <span className="text-primary font-bold tracking-wider uppercase text-sm">Why Choose Guru Zone?</span>
-                            <h2 className="text-3xl md:text-5xl font-black text-foreground mt-2">PAKISTAN&apos;S BEST FREE FIRE TOURNAMENT APP</h2>
+                    {/* Features Showcase Section (Zig-Zag Layout) */}
+                    <div className="relative z-10 max-w-7xl mx-auto px-4 pb-24 pt-8">
+                        {/* Section Header */}
+                        <div className="text-center mb-20">
+                            <span className="inline-flex items-center gap-1.5 text-primary font-black tracking-widest uppercase text-xs px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-4">
+                                <Sparkles className="w-3.5 h-3.5" /> GURU ZONE ECOSYSTEM
+                            </span>
+                            <h2 className="text-3xl md:text-6xl font-black text-foreground mt-2 tracking-tighter uppercase">
+                                PAKISTAN&apos;S BEST <span className="text-primary text-stroke-primary dark:text-primary">FREE FIRE ESPORTS</span> APP
+                            </h2>
+                            <p className="text-muted-foreground mt-4 max-w-xl mx-auto text-sm md:text-base leading-relaxed">
+                                Experience professional tournament rooms, custom 1v1 challenges, instant diamond top-ups, and blazing-fast payouts directly to your local wallets.
+                            </p>
                         </div>
-                        <div className="grid md:grid-cols-3 gap-6">
-                            <FeatureCard
-                                icon={Trophy}
-                                title="Pro Tournaments"
-                                desc="Compete in professionally managed rooms with fair play monitoring and live scoring."
-                            />
-                            <FeatureCard
-                                icon={Zap}
-                                title="Instant Withdrawals"
-                                desc="Win matches and get your earnings transferred directly to your account instantly."
-                            />
-                            <FeatureCard
-                                icon={Shield}
-                                title="Anti-Cheat Systems"
-                                desc="Our advanced detection ensures a level playing field. Zero tolerance for hackers."
-                            />
+
+                        {/* Zig-Zag Showcase Rows */}
+                        <div className="space-y-24 md:space-y-32">
+                            {/* Block 1: Daily Tournaments */}
+                            <div className="grid md:grid-cols-2 gap-8 md:gap-16 items-center">
+                                {/* Text Column (Left) */}
+                                <motion.div 
+                                    initial={{ opacity: 0, x: -40 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    viewport={{ once: true, margin: "-100px" }}
+                                    transition={{ duration: 0.7, ease: "easeOut" }}
+                                    className="space-y-6 text-left"
+                                >
+                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-bold border border-amber-500/20">
+                                        <Trophy className="w-3.5 h-3.5" /> DAILY TOURNAMENTS
+                                    </div>
+                                    <h3 className="text-2xl md:text-4xl font-black text-foreground leading-tight">
+                                        Play Daily Free Fire Tournaments
+                                    </h3>
+                                    <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
+                                        Join the most competitive Free Fire community in Pakistan. Participate in daily custom rooms, showcase your skills, and win real rewards. Over 50+ major tournaments successfully hosted.
+                                    </p>
+                                    <Link href="/login">
+                                        <button className="px-6 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black font-black rounded-xl shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 hover:scale-105 transition-all flex items-center gap-2 group">
+                                            Join Tournaments <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                                        </button>
+                                    </Link>
+                                </motion.div>
+
+                                {/* Graphic Column (Right) */}
+                                <motion.div 
+                                    initial={{ opacity: 0, x: 40 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    viewport={{ once: true, margin: "-100px" }}
+                                    transition={{ duration: 0.7, ease: "easeOut" }}
+                                    className="relative w-full h-full flex items-center justify-center min-h-[300px]"
+                                >
+                                    {/* Glowing Background Glow */}
+                                    <div className="absolute w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+                                    
+                                    <div className="relative w-full max-w-sm glass rounded-3xl border border-white/10 p-5 overflow-hidden shadow-2xl">
+                                        {/* Blinking Live Badge */}
+                                        <div className="absolute top-4 right-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-bold tracking-wider uppercase animate-pulse">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> Live Lobby
+                                        </div>
+                                        
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
+                                                <Trophy className="w-5 h-5 text-amber-400" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-black text-sm text-foreground">PAK CHAMPIONSHIP</h4>
+                                                <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Room ID: 9482103</p>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Details Grid */}
+                                        <div className="grid grid-cols-3 gap-2 p-3 bg-white/5 dark:bg-black/40 rounded-xl border border-white/5 mb-4 text-center">
+                                            <div>
+                                                <p className="text-[9px] text-muted-foreground uppercase">Prize Pool</p>
+                                                <p className="text-xs font-black text-amber-400">10,000 🪙</p>
+                                            </div>
+                                            <div className="border-x border-white/5">
+                                                <p className="text-[9px] text-muted-foreground uppercase">Map</p>
+                                                <p className="text-xs font-bold text-foreground">Bermuda</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[9px] text-muted-foreground uppercase">Entry Fee</p>
+                                                <p className="text-xs font-bold text-foreground">50 🪙</p>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Registered Squads */}
+                                        <div className="space-y-2 mb-4">
+                                            <div className="flex items-center justify-between text-[11px] text-muted-foreground font-semibold">
+                                                <span>Registered Players</span>
+                                                <span className="text-amber-400">42 / 48 Slots Filled</span>
+                                            </div>
+                                            <div className="w-full bg-white/10 dark:bg-black/60 rounded-full h-1.5 overflow-hidden">
+                                                <div className="bg-amber-400 h-full rounded-full w-[87%] animate-pulse" />
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Squad Details List */}
+                                        <div className="space-y-1.5 text-xs">
+                                            <div className="flex justify-between items-center py-1 border-b border-white/5">
+                                                <span className="text-foreground font-medium flex items-center gap-1.5">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500" /> Squad 1: Team Pakistan
+                                                </span>
+                                                <span className="text-muted-foreground text-[10px]">Ping: 24ms</span>
+                                            </div>
+                                            <div className="flex justify-between items-center py-1 border-b border-white/5">
+                                                <span className="text-foreground font-medium flex items-center gap-1.5">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500" /> Squad 2: Legend Kings
+                                                </span>
+                                                <span className="text-muted-foreground text-[10px]">Ping: 32ms</span>
+                                            </div>
+                                            <div className="flex justify-between items-center py-1">
+                                                <span className="text-muted-foreground font-medium italic flex items-center gap-1.5">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" /> Slot #43 open...
+                                                </span>
+                                                <span className="text-amber-400 text-[10px] font-bold">Join now</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            </div>
+
+                            {/* Block 2: Battle Zone */}
+                            <div className="grid md:grid-cols-2 gap-8 md:gap-16 items-center">
+                                {/* Graphic Column (Left on Desktop, second on Mobile) */}
+                                <motion.div 
+                                    initial={{ opacity: 0, x: -40 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    viewport={{ once: true, margin: "-100px" }}
+                                    transition={{ duration: 0.7, ease: "easeOut" }}
+                                    className="relative w-full h-full flex items-center justify-center min-h-[300px] order-2 md:order-1"
+                                >
+                                    {/* Glowing Background Glow */}
+                                    <div className="absolute w-64 h-64 bg-red-500/10 rounded-full blur-3xl pointer-events-none" />
+                                    
+                                    <div className="relative w-full max-w-sm glass rounded-3xl border border-white/10 p-5 overflow-hidden shadow-2xl">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <span className="text-[10px] bg-red-500/20 text-red-400 border border-red-500/30 px-2.5 py-0.5 rounded font-bold uppercase tracking-wider">
+                                                Battle Lobby
+                                            </span>
+                                            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                                <Lock className="w-3 h-3 text-red-500" /> Escrow Secure
+                                            </span>
+                                        </div>
+                                        
+                                        {/* VS Matchup Graphic */}
+                                        <div className="flex items-center justify-between gap-4 mb-5">
+                                            {/* Player 1 */}
+                                            <div className="flex flex-col items-center flex-1 text-center bg-white/5 dark:bg-black/30 p-3 rounded-xl border border-white/5">
+                                                <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-amber-400 mb-2">
+                                                    <div className="w-full h-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center font-black text-black text-sm">
+                                                        PK
+                                                    </div>
+                                                </div>
+                                                <h5 className="font-bold text-xs text-foreground truncate max-w-[80px]">PK_Legend</h5>
+                                                <span className="text-[9px] text-muted-foreground">Level 72</span>
+                                                <span className="text-[9px] text-green-500 font-bold mt-1">Win: 78%</span>
+                                            </div>
+                                            
+                                            {/* VS Circle */}
+                                            <div className="flex flex-col items-center">
+                                                <div className="w-8 h-8 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center text-red-400 font-black text-xs animate-pulse">
+                                                    VS
+                                                </div>
+                                                <span className="text-[8px] text-muted-foreground mt-2 uppercase tracking-widest">1v1 Solo</span>
+                                            </div>
+                                            
+                                            {/* Player 2 (Waiting) */}
+                                            <div className="flex flex-col items-center flex-1 text-center bg-white/5 dark:bg-black/30 p-3 rounded-xl border border-white/5">
+                                                <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-dashed border-muted-foreground/30 mb-2 flex items-center justify-center bg-muted/20 animate-pulse">
+                                                    <Users className="w-6 h-6 text-muted-foreground/50" />
+                                                </div>
+                                                <h5 className="font-bold text-xs text-muted-foreground truncate max-w-[80px]">Waiting...</h5>
+                                                <span className="text-[9px] text-muted-foreground">Open Slot</span>
+                                                <span className="text-[9px] text-amber-400 font-bold mt-1 animate-pulse">Accept Match</span>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Match Settings */}
+                                        <div className="space-y-2 text-xs">
+                                            <h6 className="font-bold text-[10px] text-muted-foreground uppercase tracking-widest">Match Settings</h6>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div className="flex justify-between items-center p-2 bg-white/5 dark:bg-black/25 rounded border border-white/5">
+                                                    <span className="text-muted-foreground text-[10px]">Ammo:</span>
+                                                    <span className="text-foreground font-bold text-[10px]">Unlimited</span>
+                                                </div>
+                                                <div className="flex justify-between items-center p-2 bg-white/5 dark:bg-black/25 rounded border border-white/5">
+                                                    <span className="text-muted-foreground text-[10px]">Skills:</span>
+                                                    <span className="text-foreground font-bold text-[10px]">Disabled</span>
+                                                </div>
+                                                <div className="flex justify-between items-center p-2 bg-white/5 dark:bg-black/25 rounded border border-white/5">
+                                                    <span className="text-muted-foreground text-[10px]">Property:</span>
+                                                    <span className="text-foreground font-bold text-[10px]">Off</span>
+                                                </div>
+                                                <div className="flex justify-between items-center p-2 bg-white/5 dark:bg-black/25 rounded border border-white/5">
+                                                    <span className="text-muted-foreground text-[10px]">Prize:</span>
+                                                    <span className="text-amber-400 font-bold text-[10px]">200 🪙</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+
+                                {/* Text Column (Right on Desktop, first on Mobile) */}
+                                <motion.div 
+                                    initial={{ opacity: 0, x: 40 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    viewport={{ once: true, margin: "-100px" }}
+                                    transition={{ duration: 0.7, ease: "easeOut" }}
+                                    className="space-y-6 text-left order-1 md:order-2"
+                                >
+                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 text-red-400 text-xs font-bold border border-red-500/20">
+                                        <Swords className="w-3.5 h-3.5" /> BATTLE ZONE
+                                    </div>
+                                    <h3 className="text-2xl md:text-4xl font-black text-foreground leading-tight">
+                                        Custom Battle Zone: 1v1, 2v2 & 4v4
+                                    </h3>
+                                    <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
+                                        Challenge the best! Create your own custom matches or challenge PC Legends. Set your own entry fee, play by your rules, and claim your victory coins instantly with our secure escrow system.
+                                    </p>
+                                    <Link href="/login">
+                                        <button className="px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-black rounded-xl shadow-lg shadow-red-600/20 hover:shadow-red-600/40 hover:scale-105 transition-all flex items-center gap-2 group">
+                                            Explore Battle Zone <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                                        </button>
+                                    </Link>
+                                </motion.div>
+                            </div>
+
+                            {/* Block 3: Official Top Up */}
+                            <div className="grid md:grid-cols-2 gap-8 md:gap-16 items-center">
+                                {/* Text Column (Left) */}
+                                <motion.div 
+                                    initial={{ opacity: 0, x: -40 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    viewport={{ once: true, margin: "-100px" }}
+                                    transition={{ duration: 0.7, ease: "easeOut" }}
+                                    className="space-y-6 text-left"
+                                >
+                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-400 text-xs font-bold border border-cyan-500/20">
+                                        <Gem className="w-3.5 h-3.5" /> OFFICIAL TOP UP
+                                    </div>
+                                    <h3 className="text-2xl md:text-4xl font-black text-foreground leading-tight">
+                                        Fast & Secure Free Fire Top Up
+                                    </h3>
+                                    <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
+                                        Get instant Free Fire Diamonds, Weekly/Monthly Memberships, and Level Up Passes. We provide 100% official and safe top-up services directly to your UID.
+                                    </p>
+                                    <Link href="/topup">
+                                        <button className="px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-black rounded-xl shadow-lg shadow-cyan-600/20 hover:shadow-cyan-600/40 hover:scale-105 transition-all flex items-center gap-2 group">
+                                            Top Up Now <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                                        </button>
+                                    </Link>
+                                </motion.div>
+
+                                {/* Graphic Column (Right) */}
+                                <motion.div 
+                                    initial={{ opacity: 0, x: 40 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    viewport={{ once: true, margin: "-100px" }}
+                                    transition={{ duration: 0.7, ease: "easeOut" }}
+                                    className="relative w-full h-full flex items-center justify-center min-h-[300px]"
+                                >
+                                    {/* Glowing Background Glow */}
+                                    <div className="absolute w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+                                    
+                                    <div className="relative w-full max-w-sm glass rounded-3xl border border-white/10 p-5 overflow-hidden shadow-2xl">
+                                        {/* Mock ID Input */}
+                                        <div className="mb-4">
+                                            <label className="block text-[10px] text-muted-foreground uppercase tracking-widest mb-1.5 font-bold">UID Top-Up Gateway</label>
+                                            <div className="flex items-center gap-2 p-2.5 bg-white/5 dark:bg-black/40 rounded-xl border border-white/10">
+                                                <span className="text-xs text-muted-foreground font-bold">UID:</span>
+                                                <span className="text-xs text-foreground font-black tracking-wide flex-1">5493821038</span>
+                                                <span className="flex items-center gap-1 text-[9px] bg-green-500/20 text-green-400 border border-green-500/30 px-2 py-0.5 rounded font-bold">
+                                                    Verified
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        <h6 className="font-bold text-[10px] text-muted-foreground uppercase tracking-widest mb-2.5">Diamond Offers</h6>
+                                        {/* Diamond Cards Grid */}
+                                        <div className="grid grid-cols-2 gap-3 mb-4">
+                                            {/* Pack 1 */}
+                                            <div className="relative bg-white/5 dark:bg-black/30 p-3 rounded-xl border border-white/5 flex flex-col items-center text-center group hover:border-cyan-500/40 transition-colors">
+                                                <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-cyan-500 text-black text-[8px] font-black uppercase">
+                                                    +10%
+                                                </div>
+                                                <div className="w-10 h-10 rounded-full bg-cyan-500/10 flex items-center justify-center mb-2">
+                                                    <Gem className="w-5 h-5 text-cyan-400" />
+                                                </div>
+                                                <span className="font-black text-sm text-foreground">110 Diamonds</span>
+                                                <span className="text-[10px] text-muted-foreground mt-1">PKR 190</span>
+                                            </div>
+                                            
+                                            {/* Pack 2 */}
+                                            <div className="relative bg-white/5 dark:bg-black/30 p-3 rounded-xl border border-amber-500/30 flex flex-col items-center text-center group hover:border-amber-500/60 transition-colors">
+                                                <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-amber-500 text-black text-[8px] font-black uppercase">
+                                                    Best Value
+                                                </div>
+                                                <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center mb-2">
+                                                    <Crown className="w-5 h-5 text-amber-400" />
+                                                </div>
+                                                <span className="font-black text-sm text-foreground">Weekly Pass</span>
+                                                <span className="text-[10px] text-muted-foreground mt-1">PKR 450</span>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Security Notice */}
+                                        <div className="flex items-center gap-2 p-2.5 bg-cyan-500/5 rounded-xl border border-cyan-500/10 text-[10px] text-cyan-400">
+                                            <Shield className="w-4 h-4 flex-shrink-0" />
+                                            <span>100% Garena Official API. Instant delivery to your account inbox.</span>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            </div>
+
+                            {/* Block 4: Secure Wallet */}
+                            <div className="grid md:grid-cols-2 gap-8 md:gap-16 items-center">
+                                {/* Graphic Column (Left on Desktop, second on Mobile) */}
+                                <motion.div 
+                                    initial={{ opacity: 0, x: -40 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    viewport={{ once: true, margin: "-100px" }}
+                                    transition={{ duration: 0.7, ease: "easeOut" }}
+                                    className="relative w-full h-full flex items-center justify-center min-h-[300px] order-2 md:order-1"
+                                >
+                                    {/* Glowing Background Glow */}
+                                    <div className="absolute w-64 h-64 bg-green-500/10 rounded-full blur-3xl pointer-events-none" />
+                                    
+                                    <div className="relative w-full max-w-sm glass rounded-3xl border border-white/10 p-5 overflow-hidden shadow-2xl">
+                                        {/* Balance Info */}
+                                        <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
+                                            <div>
+                                                <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Available Balance</p>
+                                                <p className="text-xl font-black text-foreground mt-0.5">PKR 4,850.00</p>
+                                            </div>
+                                            <div className="px-2 py-1 rounded bg-green-500/10 border border-green-500/20 text-green-500 text-[10px] font-bold">
+                                                Verified Account
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Transactions */}
+                                        <h6 className="font-bold text-[10px] text-muted-foreground uppercase tracking-widest mb-2.5">Recent Payouts</h6>
+                                        <div className="space-y-2 mb-4">
+                                            {/* EP Payout */}
+                                            <div className="flex items-center justify-between p-2.5 bg-white/5 dark:bg-black/30 rounded-xl border border-white/5 text-xs">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-8 h-8 rounded-lg bg-green-600/20 border border-green-600/30 flex items-center justify-center font-bold text-green-500 text-[9px]">
+                                                        EP
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-foreground">Withdrawal to EasyPaisa</p>
+                                                        <p className="text-[9px] text-muted-foreground">Today, 04:12 PM</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="font-black text-red-400">-PKR 2,500</p>
+                                                    <p className="text-[9px] text-green-500 font-bold">🟢 Success</p>
+                                                </div>
+                                            </div>
+                                            
+                                            {/* JC Deposit */}
+                                            <div className="flex items-center justify-between p-2.5 bg-white/5 dark:bg-black/30 rounded-xl border border-white/5 text-xs">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-8 h-8 rounded-lg bg-red-600/20 border border-red-600/30 flex items-center justify-center font-bold text-red-500 text-[9px]">
+                                                        JC
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-foreground">Deposit via JazzCash</p>
+                                                        <p className="text-[9px] text-muted-foreground">Yesterday, 08:30 PM</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="font-black text-green-400">+PKR 1,500</p>
+                                                    <p className="text-[9px] text-green-500 font-bold">🟢 Success</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Escrow Lock Indicator */}
+                                        <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                                            <span className="flex items-center gap-1"><Lock className="w-3 h-3 text-amber-400" /> Funds Protected</span>
+                                            <span>24/7 Support Available</span>
+                                        </div>
+                                    </div>
+                                </motion.div>
+
+                                {/* Text Column (Right on Desktop, first on Mobile) */}
+                                <motion.div 
+                                    initial={{ opacity: 0, x: 40 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    viewport={{ once: true, margin: "-100px" }}
+                                    transition={{ duration: 0.7, ease: "easeOut" }}
+                                    className="space-y-6 text-left order-1 md:order-2"
+                                >
+                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold border border-emerald-500/20">
+                                        <Wallet className="w-3.5 h-3.5" /> SECURE WALLET
+                                    </div>
+                                    <h3 className="text-2xl md:text-4xl font-black text-foreground leading-tight">
+                                        Instant Deposits & Withdrawals
+                                    </h3>
+                                    <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
+                                        Manage your winnings with ease. Guru Zone supports fast, secure, and automated deposits and withdrawals via JazzCash and EasyPaisa. Your funds are always safe with us.
+                                    </p>
+                                    <Link href="/login">
+                                        <button className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-black rounded-xl shadow-lg shadow-emerald-600/20 hover:shadow-emerald-600/40 hover:scale-105 transition-all flex items-center gap-2 group">
+                                            Manage Wallet <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                                        </button>
+                                    </Link>
+                                </motion.div>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Trending Tournaments / Live Action */}
-                    <section className="relative z-10 py-16 overflow-hidden">
+
+                    {/* How Guru Zone Works Section */}
+                    <section className="relative z-10 py-20 border-y border-border bg-gradient-to-b from-transparent via-card/20 to-transparent">
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <div className="text-center mb-12">
-                                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 text-red-500 text-xs font-bold tracking-wider uppercase mb-4 animate-pulse border border-red-500/20">
-                                    <span className="w-2 h-2 rounded-full bg-red-500"></span> Live Action
+                            <div className="text-center mb-16">
+                                <span className="inline-flex items-center gap-1.5 text-primary font-black tracking-widest uppercase text-xs px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-4">
+                                    START EARNING
                                 </span>
-                                <h2 className="text-3xl md:text-5xl font-black text-foreground px-2">
-                                    TRENDING BATTLES
+                                <h2 className="text-3xl md:text-5xl font-black text-foreground mt-2 tracking-tighter uppercase">
+                                    HOW TO <span className="text-primary text-stroke-primary dark:text-primary">START WINNING</span>
                                 </h2>
-                                <p className="text-muted-foreground mt-4 max-w-lg mx-auto">
-                                    Spots are filling fast. Choose your battleground and prove your worth.
+                                <p className="text-muted-foreground mt-4 max-w-lg mx-auto text-sm">
+                                    Follow three simple steps to start competing in your favorite game modes and withdraw rewards.
                                 </p>
                             </div>
 
-                            <div className="grid md:grid-cols-3 gap-6">
-                                {/* Card 1 */}
-                                <TournamentCard
-                                    map="BERMUDA"
-                                    mode="SOLO"
-                                    modeColor="bg-primary text-black"
-                                    title="Daily Survival #42"
-                                    prize="1,000 Coins"
-                                    entry="20 Coins"
-                                    filled="41/48 Players"
-                                    status="Filling Fast"
-                                    statusColor="text-green-500"
-                                    progress={85}
-                                    progressColor="bg-green-500"
-                                />
+                            <div className="grid md:grid-cols-3 gap-8 relative z-10">
+                                {/* Connecting Dashed Line for Desktop */}
+                                <div className="hidden md:block absolute top-[25%] left-[12%] right-[12%] h-0.5 border-t-2 border-dashed border-border -z-10" />
 
-                                {/* Card 2 */}
-                                <TournamentCard
-                                    map="PURGATORY"
-                                    mode="SQUAD"
-                                    modeColor="bg-purple-500 text-white"
-                                    title="Pro League Qualifier"
-                                    prize="5,000 Coins"
-                                    entry="100 Coins"
-                                    filled="6/12 Squads"
-                                    status="Open"
-                                    statusColor="text-yellow-500"
-                                    progress={45}
-                                    progressColor="bg-yellow-500"
-                                />
+                                {/* Step 1 */}
+                                <motion.div
+                                    initial={{ opacity: 0, y: 30 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ duration: 0.5, delay: 0.1 }}
+                                    className="group relative bg-card/45 backdrop-blur-md border border-border rounded-2xl p-8 transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/50 hover:shadow-[0_0_25px_rgba(255,215,0,0.25)] flex flex-col items-center text-center"
+                                >
+                                    <div className="absolute top-4 right-6 text-5xl font-black text-foreground/5 select-none font-mono">01</div>
+                                    <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-6 group-hover:bg-primary group-hover:text-black transition-all duration-300">
+                                        <User className="w-7 h-7 text-primary group-hover:text-black transition-colors" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-foreground mb-3">Create Account</h3>
+                                    <p className="text-muted-foreground text-sm leading-relaxed">
+                                        Sign up and set up your Free Fire Game ID in seconds.
+                                    </p>
+                                </motion.div>
 
-                                {/* Card 3 */}
-                                <TournamentCard
-                                    map="KALAHARI"
-                                    mode="DUO vs DUO"
-                                    modeColor="bg-blue-500 text-white"
-                                    title="Sniper Only Challenge"
-                                    prize="2,000 Coins"
-                                    entry="50 Coins"
-                                    filled="23/24 Duos"
-                                    status="Last Spot!"
-                                    statusColor="text-red-500"
-                                    progress={95}
-                                    progressColor="bg-red-500"
-                                />
+                                {/* Step 2 */}
+                                <motion.div
+                                    initial={{ opacity: 0, y: 30 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ duration: 0.5, delay: 0.2 }}
+                                    className="group relative bg-card/45 backdrop-blur-md border border-border rounded-2xl p-8 transition-all duration-300 hover:-translate-y-1.5 hover:border-cyan-500/50 hover:shadow-[0_0_25px_rgba(6,182,212,0.25)] flex flex-col items-center text-center"
+                                >
+                                    <div className="absolute top-4 right-6 text-5xl font-black text-foreground/5 select-none font-mono">02</div>
+                                    <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-6 group-hover:bg-cyan-500 group-hover:text-black transition-all duration-300">
+                                        <PlusCircle className="w-7 h-7 text-cyan-400 group-hover:text-black transition-colors" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-foreground mb-3">Add Funds</h3>
+                                    <p className="text-muted-foreground text-sm leading-relaxed">
+                                        Top up your wallet securely using local payment methods.
+                                    </p>
+                                </motion.div>
+
+                                {/* Step 3 */}
+                                <motion.div
+                                    initial={{ opacity: 0, y: 30 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ duration: 0.5, delay: 0.3 }}
+                                    className="group relative bg-card/45 backdrop-blur-md border border-border rounded-2xl p-8 transition-all duration-300 hover:-translate-y-1.5 hover:border-emerald-500/50 hover:shadow-[0_0_25px_rgba(16,185,129,0.25)] flex flex-col items-center text-center"
+                                >
+                                    <div className="absolute top-4 right-6 text-5xl font-black text-foreground/5 select-none font-mono">03</div>
+                                    <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-6 group-hover:bg-emerald-500 group-hover:text-black transition-all duration-300">
+                                        <Gamepad className="w-7 h-7 text-emerald-400 group-hover:text-black transition-colors" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-foreground mb-3">Play & Earn</h3>
+                                    <p className="text-muted-foreground text-sm leading-relaxed">
+                                        Join tournaments or Battle Zone matches and withdraw your winnings instantly.
+                                    </p>
+                                </motion.div>
                             </div>
                         </div>
                     </section>
 
-                    {/* How It Works Section */}
-                    <section className="relative z-10 bg-card/30 py-16 border-y border-border">
+                    {/* Why Choose Guru Zone Section */}
+                    <section className="relative z-10 py-20 bg-background/40">
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                             <div className="text-center mb-16">
-                                <span className="text-primary font-bold tracking-wider uppercase text-sm">Start Your Journey</span>
-                                <h2 className="text-3xl md:text-5xl font-black text-foreground mt-2">HOW IT WORKS</h2>
+                                <span className="inline-flex items-center gap-1.5 text-primary font-black tracking-widest uppercase text-xs px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-4">
+                                    TRUSTED GAMING PLATFORM
+                                </span>
+                                <h2 className="text-3xl md:text-5xl font-black text-foreground mt-2 tracking-tighter uppercase">
+                                    THE GAMER&apos;S <span className="text-primary text-stroke-primary dark:text-primary">FIRST CHOICE</span> SINCE 2023
+                                </h2>
+                                <p className="text-muted-foreground mt-4 max-w-lg mx-auto text-sm">
+                                    We offer a premium esports experience built around security, speed, and player support.
+                                </p>
                             </div>
 
-                            <div className="grid md:grid-cols-3 gap-8 relative">
-                                {/* Connecting Line (Desktop) */}
-                                <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-transparent via-primary/30 to-transparent dashed-line" />
-
-                                <StepCard
-                                    number="01"
-                                    icon={Users}
-                                    title="Create Account"
-                                    desc="Sign up in seconds and verified your profile to join the elite community."
-                                />
-                                <StepCard
-                                    number="02"
-                                    icon={Crosshair}
-                                    title="Join Room"
-                                    desc="Browse daily tournaments, pick your squad, and enter the battle room."
-                                />
-                                <StepCard
-                                    number="03"
-                                    icon={Gift}
-                                    title="Win & Withdraw"
-                                    desc="Dominate the game, claim your rewards, and withdraw cash instantly."
-                                />
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Breaking the Flow: Diamond Top-up Section */}
-                    <section className="relative z-10 py-16 bg-gradient-to-r from-blue-900/20 to-purple-900/20 border-y border-white/5 overflow-hidden">
-                        {/* Decorative background elements */}
-                        <div className="absolute top-0 right-0 p-20 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-                        <div className="absolute bottom-0 left-0 p-20 bg-purple-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
-
-                        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <div className="grid md:grid-cols-2 gap-12 items-center">
-                                {/* Left Content */}
-                                <div className="text-center md:text-left">
-                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-bold tracking-wider uppercase mb-6 border border-blue-500/20">
-                                        <Zap className="w-3 h-3" /> Instant Delivery
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                                {/* Point 1: 100% Safe & Secure */}
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    whileInView={{ opacity: 1, scale: 1 }}
+                                    viewport={{ once: true }}
+                                    transition={{ duration: 0.4, delay: 0.1 }}
+                                    className="group bg-card/50 backdrop-blur-sm border border-border p-6 rounded-2xl text-center flex flex-col items-center hover:border-amber-400/40 hover:shadow-[0_0_20px_rgba(251,191,36,0.15)] hover:-translate-y-1 transition-all duration-300"
+                                >
+                                    <div className="w-12 h-12 rounded-xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                                        <Shield className="w-6 h-6 text-amber-400" />
                                     </div>
-                                    <h2 className="text-3xl md:text-5xl font-black text-foreground mb-6">
-                                        GEAR UP WITH <br />
-                                        <span className="text-blue-500">OFFICIAL TOP-UPS</span>
-                                    </h2>
-                                    <p className="text-muted-foreground text-lg mb-8 max-w-md mx-auto md:mx-0">
-                                        Running low on diamonds? Top-up instantly with your tournament winnings. 100% safe, official ID-based transfer.
-                                    </p>
+                                    <h3 className="text-sm md:text-base font-black text-foreground mb-1 group-hover:text-amber-400 transition-colors">100% Safe & Secure</h3>
+                                    <p className="text-[10px] md:text-[11px] text-muted-foreground leading-normal">Certified escrow & account protection</p>
+                                </motion.div>
 
-                                    <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-                                        <div className="flex items-center gap-2 text-sm text-foreground font-bold bg-card/50 px-4 py-2 rounded-lg border border-border">
-                                            <Shield className="w-4 h-4 text-green-500" /> 100% Safe
-                                        </div>
-                                        <div className="flex items-center gap-2 text-sm text-foreground font-bold bg-card/50 px-4 py-2 rounded-lg border border-border">
-                                            <Timer className="w-4 h-4 text-primary" /> 24/7 Available
-                                        </div>
+                                {/* Point 2: Instant Payouts */}
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    whileInView={{ opacity: 1, scale: 1 }}
+                                    viewport={{ once: true }}
+                                    transition={{ duration: 0.4, delay: 0.2 }}
+                                    className="group bg-card/50 backdrop-blur-sm border border-border p-6 rounded-2xl text-center flex flex-col items-center hover:border-red-500/40 hover:shadow-[0_0_20px_rgba(239,68,68,0.15)] hover:-translate-y-1 transition-all duration-300"
+                                >
+                                    <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                                        <Zap className="w-6 h-6 text-red-500" />
                                     </div>
-                                </div>
+                                    <h3 className="text-sm md:text-base font-black text-foreground mb-1 group-hover:text-red-500 transition-colors">Instant Payouts</h3>
+                                    <p className="text-[10px] md:text-[11px] text-muted-foreground leading-normal">EasyPaisa & JazzCash within 15 minutes</p>
+                                </motion.div>
 
-                                {/* Right Cards (Topup Store Preview) */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-                                    {/* Category 1: Diamond Top-up */}
-                                    <div className="bg-card border border-border rounded-xl p-6 flex flex-col items-center hover:border-blue-500/50 transition-all hover:-translate-y-1 group relative overflow-hidden">
-                                        <div className="absolute top-0 right-0 p-16 bg-blue-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-500/20 transition-all"></div>
-                                        <div className="w-16 h-16 mb-4 rounded-2xl bg-blue-500/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                                            <Gem className="w-8 h-8 text-blue-500" />
-                                        </div>
-                                        <h3 className="text-xl font-black text-foreground mb-2">DIAMOND TOP-UP</h3>
-                                        <p className="text-sm text-muted-foreground text-center mb-6">Instant delivery to your UID. Regular & Bonus packs available.</p>
-                                        <button className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-colors shadow-lg shadow-blue-900/20">
-                                            Top-up Now
-                                        </button>
+                                {/* Point 3: Anti-Cheat System */}
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    whileInView={{ opacity: 1, scale: 1 }}
+                                    viewport={{ once: true }}
+                                    transition={{ duration: 0.4, delay: 0.3 }}
+                                    className="group bg-card/50 backdrop-blur-sm border border-border p-6 rounded-2xl text-center flex flex-col items-center hover:border-cyan-400/40 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] hover:-translate-y-1 transition-all duration-300"
+                                >
+                                    <div className="w-12 h-12 rounded-xl bg-cyan-400/10 border border-cyan-400/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                                        <Lock className="w-6 h-6 text-cyan-400" />
                                     </div>
+                                    <h3 className="text-sm md:text-base font-black text-foreground mb-1 group-hover:text-cyan-400 transition-colors">Anti-Cheat System</h3>
+                                    <p className="text-[10px] md:text-[11px] text-muted-foreground leading-normal">Rigorous monitoring & zero hack tolerance</p>
+                                </motion.div>
 
-                                    {/* Category 2: Memberships */}
-                                    <div className="bg-card border border-border rounded-xl p-6 flex flex-col items-center hover:border-yellow-500/50 transition-all hover:-translate-y-1 group relative overflow-hidden">
-                                        <div className="absolute top-0 right-0 p-16 bg-yellow-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:bg-yellow-500/20 transition-all"></div>
-                                        <div className="absolute top-3 right-3 bg-yellow-500 text-black text-[10px] font-black px-2 py-0.5 rounded uppercase">Best Value</div>
-                                        <div className="w-16 h-16 mb-4 rounded-2xl bg-yellow-500/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                                            <Crown className="w-8 h-8 text-yellow-500" />
-                                        </div>
-                                        <h3 className="text-xl font-black text-foreground mb-2">MEMBERSHIPS</h3>
-                                        <p className="text-sm text-muted-foreground text-center mb-6">Weekly & Monthly subscriptions. Save up to 60%.</p>
-                                        <button className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-xl transition-colors shadow-lg shadow-yellow-900/20">
-                                            View Plans
-                                        </button>
+                                {/* Point 4: 24/7 Support */}
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    whileInView={{ opacity: 1, scale: 1 }}
+                                    viewport={{ once: true }}
+                                    transition={{ duration: 0.4, delay: 0.4 }}
+                                    className="group bg-card/50 backdrop-blur-sm border border-border p-6 rounded-2xl text-center flex flex-col items-center hover:border-emerald-400/40 hover:shadow-[0_0_20px_rgba(52,211,153,0.15)] hover:-translate-y-1 transition-all duration-300"
+                                >
+                                    <div className="w-12 h-12 rounded-xl bg-emerald-400/10 border border-emerald-400/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                                        <Headphones className="w-6 h-6 text-emerald-400" />
                                     </div>
-
-                                    {/* Category 3: Level Up Pass */}
-                                    <div className="bg-card border border-border rounded-xl p-6 flex flex-col items-center hover:border-purple-500/50 transition-all hover:-translate-y-1 group relative overflow-hidden">
-                                        <div className="absolute top-0 right-0 p-16 bg-purple-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:bg-purple-500/20 transition-all"></div>
-                                        <div className="w-16 h-16 mb-4 rounded-2xl bg-purple-500/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                                            <TrendingUp className="w-8 h-8 text-purple-500" />
-                                        </div>
-                                        <h3 className="text-xl font-black text-foreground mb-2">LEVEL UP PASS</h3>
-                                        <p className="text-sm text-muted-foreground text-center mb-6">Get 5x value. Claim diamonds as you level up your account.</p>
-                                        <button className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition-colors shadow-lg shadow-purple-900/20">
-                                            Get Pass
-                                        </button>
-                                    </div>
-                                </div>
+                                    <h3 className="text-sm md:text-base font-black text-foreground mb-1 group-hover:text-emerald-400 transition-colors">24/7 Support</h3>
+                                    <p className="text-[10px] md:text-[11px] text-muted-foreground leading-normal">Direct WhatsApp & ticket support anytime</p>
+                                </motion.div>
                             </div>
                         </div>
                     </section>
+
 
                     {/* FAQ Section */}
-                    <section className="relative z-10 py-16 bg-background/50 max-w-4xl mx-auto px-4">
-                        <div className="text-center mb-12">
-                            <h2 className="text-3xl md:text-4xl font-black text-foreground">FREQUENTLY ASKED QUESTIONS</h2>
+                    <section 
+                        itemScope 
+                        itemType="https://schema.org/FAQPage"
+                        className="relative z-10 py-24 bg-background/50 max-w-4xl mx-auto px-4"
+                    >
+                        <div className="text-center mb-16">
+                            <span className="inline-flex items-center gap-1.5 text-primary font-black tracking-widest uppercase text-xs px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-4">
+                                QUESTIONS & ANSWERS
+                            </span>
+                            <h2 className="text-3xl md:text-5xl font-black text-foreground tracking-tighter uppercase px-2">
+                                FREQUENTLY ASKED <span className="text-primary text-stroke-primary dark:text-primary">QUESTIONS</span>
+                            </h2>
+                            <p className="text-muted-foreground mt-4 max-w-md mx-auto text-sm">
+                                Find answers to common queries about deposits, tournament rules, and diamond deliveries.
+                            </p>
                         </div>
                         <div className="space-y-4">
                             {pageData?.faqs?.length > 0 ? (
@@ -380,9 +710,22 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                                 ))
                             ) : (
                                 <>
-                                    <FaqItem q="Is it safe to deposit money?" a="Absolutely. We use secure, encrypted payment gateways. Your funds are held safely until you withdraw." />
-                                    <FaqItem q="How do I get the Room ID & Password?" a="Once you join a tournament, the Room ID and Password will be displayed in your 'My Matches' section 15 minutes before start." />
-                                    <FaqItem q="What is the minimum withdrawal?" a="You can withdraw as low as PKR 50 directly to your account. Withdrawals are processed 24/7." />
+                                    <FaqItem 
+                                        q="How do I buy Free Fire Diamonds in Pakistan?" 
+                                        a="You can easily buy Free Fire Diamonds through Guru Zone's official Top Up section using your game UID. We support secure payments via JazzCash and EasyPaisa." 
+                                    />
+                                    <FaqItem 
+                                        q="Is Battle Zone safe to play?" 
+                                        a="Yes! Our Battle Zone features an automated 15-minute room ID system and a strict dispute resolution process requiring screen recordings to ensure 100% fair play." 
+                                    />
+                                    <FaqItem 
+                                        q="How long do withdrawals take?" 
+                                        a="Withdrawals requested to JazzCash or EasyPaisa are processed extremely fast, often within a few minutes to a few hours depending on the queue." 
+                                    />
+                                    <FaqItem 
+                                        q="Can I challenge PC players on mobile?" 
+                                        a="Absolutely. Guru Zone allows you to specifically host or join matches against PC Legends or keep it strictly mobile-only in our Battle Zone." 
+                                    />
                                 </>
                             )}
                         </div>
@@ -457,33 +800,42 @@ function FeatureCard({ icon: Icon, title, desc }: { icon: any, title: string, de
     );
 }
 
-function StepCard({ number, icon: Icon, title, desc }: { number: string, icon: any, title: string, desc: string }) {
-    return (
-        <div className="relative flex flex-col items-center text-center group">
-            <div className="w-16 h-16 rounded-full glass border border-white/10 flex items-center justify-center mb-6 z-10 group-hover:border-primary group-hover:shadow-[0_0_25px_rgba(255,215,0,0.4)] transition-all duration-300 bg-black/50">
-                <Icon className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
-            </div>
-            <h3 className="text-xl font-bold text-foreground mb-3">{title}</h3>
-            <p className="text-muted-foreground text-sm leading-relaxed max-w-xs">{desc}</p>
-            <span className="absolute -top-6 right-1/4 text-8xl font-black text-foreground/5 select-none -z-10">{number}</span>
-        </div>
-    );
-}
+
 
 function FaqItem({ q, a }: { q: string, a: string }) {
     const [isOpen, setIsOpen] = useState(false);
     return (
-        <div className="border border-border rounded-xl bg-card overflow-hidden">
+        <div 
+            itemScope 
+            itemProp="mainEntity" 
+            itemType="https://schema.org/Question"
+            className="border border-border rounded-2xl bg-card/40 backdrop-blur-sm overflow-hidden hover:border-primary/40 transition-colors duration-300"
+        >
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex items-center justify-between p-4 text-left font-bold text-foreground hover:bg-muted/50 transition-colors"
+                className="w-full flex items-center justify-between p-5 text-left font-black text-foreground hover:bg-muted/30 transition-colors group"
+                aria-expanded={isOpen}
             >
-                {q}
-                <ChevronRight className={`w-5 h-5 text-muted-foreground transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+                <span itemProp="name" className="text-sm md:text-base tracking-tight">{q}</span>
+                <span className="ml-4 flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center border border-border group-hover:border-primary/30 transition-colors">
+                    <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform duration-300 ${isOpen ? 'rotate-90 text-primary' : ''}`} />
+                </span>
             </button>
-            <div className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-40 p-4 pt-0' : 'max-h-0'}`}>
-                <p className="text-muted-foreground text-sm leading-relaxed">{a}</p>
-            </div>
+            <motion.div
+                initial={false}
+                animate={{ height: isOpen ? "auto" : 0 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="overflow-hidden"
+            >
+                <div 
+                    itemProp="acceptedAnswer" 
+                    itemScope 
+                    itemType="https://schema.org/Answer"
+                    className="p-5 pt-0 border-t border-border/20 text-xs md:text-sm text-muted-foreground leading-relaxed"
+                >
+                    <p itemProp="text">{a}</p>
+                </div>
+            </motion.div>
         </div>
     );
 }
@@ -501,50 +853,4 @@ function SocialIcon({ icon: Icon, href }: { icon: any, href?: string }) {
     );
 }
 
-function TournamentCard({ map, mode, modeColor, title, prize, entry, filled, status, statusColor, progress, progressColor }: any) {
-    return (
-        <div className="group relative bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/50 transition-all duration-300 hover:shadow-lg shadow-sm">
-            <div className="h-32 bg-muted relative">
-                {/* Placeholder for map - in real app would be image */}
-                <div className="absolute inset-0 bg-gradient-to-br from-background/50 to-background/90" />
-                <div className="absolute top-4 left-4 bg-background/80 backdrop-blur-md px-3 py-1 rounded-md text-xs font-bold text-foreground border border-white/10">
-                    {map}
-                </div>
-                <div className={`absolute top-4 right-4 ${modeColor} px-3 py-1 rounded-md text-xs font-bold`}>
-                    {mode}
-                </div>
-                <div className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-background to-transparent">
-                    <div className="flex items-center justify-between">
-                        <span className="text-foreground font-bold text-lg">{title}</span>
-                    </div>
-                </div>
-            </div>
-            <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex flex-col">
-                        <span className="text-muted-foreground text-xs uppercase tracking-wider">Prize Pool</span>
-                        <span className="text-2xl font-black text-primary">{prize}</span>
-                    </div>
-                    <div className="flex flex-col items-end">
-                        <span className="text-muted-foreground text-xs uppercase tracking-wider">Entry</span>
-                        <span className="text-xl font-bold text-foreground">{entry}</span>
-                    </div>
-                </div>
-                <div className="space-y-3 mb-6">
-                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                        <div className={`${progressColor} h-full rounded-full relative`} style={{ width: `${progress}%` }}>
-                            {progress > 80 && <div className="absolute right-0 top-0 bottom-0 w-2 bg-white/50 animate-pulse"></div>}
-                        </div>
-                    </div>
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>{filled}</span>
-                        <span className={`${statusColor} font-bold`}>{status}</span>
-                    </div>
-                </div>
-                <button className="w-full py-3 bg-muted hover:bg-primary hover:text-black border border-border hover:border-primary text-foreground font-bold rounded-xl transition-all duration-200">
-                    Join Now
-                </button>
-            </div>
-        </div>
-    );
-}
+

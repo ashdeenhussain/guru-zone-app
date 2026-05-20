@@ -29,8 +29,10 @@ import {
 import { useTheme } from "@/context/ThemeContext";
 import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
+import { useGuest } from "@/context/GuestContext";
 
 export default function DashboardSidebar() {
+    const { isGuest, logoutGuest } = useGuest();
     const [isOpen, setIsOpen] = useState(false); // Mobile toggle
     const [isHovered, setIsHovered] = useState(false); // Desktop hover state
     const pathname = usePathname();
@@ -52,12 +54,12 @@ export default function DashboardSidebar() {
     };
 
     useEffect(() => {
-        if (session?.user) {
+        if (session?.user && !isGuest) {
             fetchUnreadCounts();
             const interval = setInterval(fetchUnreadCounts, 15000);
             return () => clearInterval(interval);
         }
-    }, [session?.user]);
+    }, [session?.user, isGuest]);
 
     const sidebarItems = [
         { icon: Gift, label: "Daily Reward", href: "/dashboard/daily-reward", special: true },
@@ -216,7 +218,13 @@ export default function DashboardSidebar() {
                     <div className="mt-auto pt-4 border-t border-border overflow-hidden">
                         <div className="pt-2">
                             <button
-                                onClick={() => signOut({ callbackUrl: '/' })}
+                                onClick={() => {
+                                    if (isGuest) {
+                                        logoutGuest();
+                                    } else {
+                                        signOut({ callbackUrl: '/' });
+                                    }
+                                }}
                                 className="flex items-center px-3 py-3 w-full text-left text-red-500 hover:text-red-600 hover:bg-red-500/10 rounded-xl transition-colors whitespace-nowrap"
                                 title={!isHovered ? "Sign Out" : ''}
                             >

@@ -7,6 +7,7 @@ import Link from "next/link";
 import BuyCoinsModal from "@/components/wallet/BuyCoinsModal";
 import TransactionHistory from "@/components/wallet/TransactionHistory";
 import PageHeader from "@/components/PageHeader";
+import { useGuest } from "@/context/GuestContext";
 
 interface Transaction {
     _id: string;
@@ -19,6 +20,7 @@ interface Transaction {
 }
 
 export default function WalletPage() {
+    const { isGuest, requireAuth } = useGuest();
     const [balance, setBalance] = useState(0);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
@@ -26,8 +28,12 @@ export default function WalletPage() {
 
     // Initial Fetch
     useEffect(() => {
-        fetchData();
-    }, []);
+        if (isGuest) {
+            setLoading(false);
+        } else {
+            fetchData();
+        }
+    }, [isGuest]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -53,8 +59,11 @@ export default function WalletPage() {
     };
 
     const handleRefresh = () => {
-        fetchData();
+        if (!isGuest) {
+            fetchData();
+        }
     };
+
 
     return (
         <div className="space-y-8 pb-24 lg:pb-8">
@@ -74,6 +83,21 @@ export default function WalletPage() {
             />
 
             <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-8">
+                {/* Guest Banner */}
+                {isGuest && (
+                    <div className="flex items-center gap-4 bg-primary/5 border border-primary/20 rounded-2xl px-5 py-4">
+                        <div className="p-2 bg-primary/10 rounded-xl shrink-0">
+                            <Wallet size={20} className="text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-foreground">Sign in to unlock your wallet</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">Deposit coins, track transactions, and withdraw earnings.</p>
+                        </div>
+                        <a href="/auth/signin" className="shrink-0 bg-primary text-primary-foreground text-xs font-black px-4 py-2 rounded-xl hover:bg-primary/90 transition-colors">
+                            Sign Up
+                        </a>
+                    </div>
+                )}
                 {/* Hero Card */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -101,17 +125,26 @@ export default function WalletPage() {
 
                         <div className="flex items-center gap-3">
                             <button
-                                onClick={() => setShowBuyModal(true)}
+                                onClick={() => requireAuth(() => setShowBuyModal(true))}
                                 className="flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-bold text-primary-foreground shadow-lg shadow-primary/20 transition-transform hover:scale-105 active:scale-95"
                             >
-                                <Plus size={20} /> Buy Coins
+                                <Plus size={20} /> {isGuest ? 'Deposit Coins' : 'Buy Coins'}
                             </button>
-                            <Link
-                                href="/dashboard/wallet/withdraw"
-                                className="flex items-center gap-2 rounded-xl border border-input bg-background/50 px-6 py-3 font-bold text-foreground transition-colors hover:bg-accent hover:text-accent-foreground active:scale-95"
-                            >
-                                <ArrowUpRight size={20} /> Withdraw
-                            </Link>
+                            {isGuest ? (
+                                <button
+                                    onClick={() => requireAuth()}
+                                    className="flex items-center gap-2 rounded-xl border border-input bg-background/50 px-6 py-3 font-bold text-foreground transition-colors hover:bg-accent hover:text-accent-foreground active:scale-95"
+                                >
+                                    <ArrowUpRight size={20} /> Withdraw
+                                </button>
+                            ) : (
+                                <Link
+                                    href="/dashboard/wallet/withdraw"
+                                    className="flex items-center gap-2 rounded-xl border border-input bg-background/50 px-6 py-3 font-bold text-foreground transition-colors hover:bg-accent hover:text-accent-foreground active:scale-95"
+                                >
+                                    <ArrowUpRight size={20} /> Withdraw
+                                </Link>
+                            )}
                         </div>
                     </div>
                 </motion.div>

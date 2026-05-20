@@ -6,9 +6,11 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { useGuest } from '@/context/GuestContext';
 
 export default function LoginPage() {
     const router = useRouter();
+    const { loginAsGuest } = useGuest();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -129,7 +131,7 @@ export default function LoginPage() {
                 <button
                     onClick={() => signIn('google', { callbackUrl: '/' })}
                     type="button"
-                    className="mt-6 w-full bg-card hover:bg-muted border border-border text-foreground font-bold py-3 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                    className="mt-6 w-full bg-card hover:bg-muted border border-border text-foreground font-bold py-3 rounded-lg transition-colors flex items-center justify-center space-x-2 shadow-sm"
                 >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                         <path
@@ -150,6 +152,14 @@ export default function LoginPage() {
                         />
                     </svg>
                     <span>Sign in with Google</span>
+                </button>
+
+                <button
+                    onClick={loginAsGuest}
+                    type="button"
+                    className="mt-4 w-full bg-transparent hover:bg-muted/30 border border-dashed border-border text-muted-foreground hover:text-foreground font-semibold py-3 rounded-lg transition-all flex items-center justify-center space-x-2 text-sm shadow-sm"
+                >
+                    <span>Explore as a Guest</span>
                 </button>
             </div>
 

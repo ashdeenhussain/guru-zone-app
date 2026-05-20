@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import ThemeToggle from '@/components/ThemeToggle';
+import { useGuest } from '@/context/GuestContext';
 
 interface Tournament {
     _id: string;
@@ -74,6 +75,7 @@ interface TournamentDetailsClientProps {
 
 export default function TournamentDetailsClient({ tournament, user }: TournamentDetailsClientProps) {
     const router = useRouter();
+    const { isGuest, requireAuth } = useGuest();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [hasJoined, setHasJoined] = useState(false);
     const [credentials, setCredentials] = useState<{ roomID?: string; roomPassword?: string } | null>(null);
@@ -143,6 +145,10 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
     }, [activeTab, showRoomDot, tournament._id]);
 
     const handleJoinClick = () => {
+        if (isGuest) {
+            requireAuth();
+            return;
+        }
         if (!user) {
             alert('Please login to join');
             return;

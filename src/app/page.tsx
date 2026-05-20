@@ -13,14 +13,14 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Guru Zone — Pakistan Ka #1 Free Fire Tournament | JazzCash Withdrawal",
-  description: "Guru Zone pe Free Fire tournaments khelo, 1v1 Battle Zone mein challenge do, aur JazzCash/EasyPaisa pe instant cash withdraw karo. Pakistan ka sabse trusted FF earning platform.",
-  keywords: "free fire tournament pakistan, free fire earning app pakistan, FF tournament JazzCash, free fire top up pakistan, online earning game pakistan, free fire diamonds cheap pakistan, battle zone free fire, guru zone",
+  title: "Free Fire Tournament Pakistan — Guru Zone | No.1 FF Earning App",
+  description: "Khelo aur jeeto! Guru Zone pe free fire tournament pakistan khelo, 1v1 Battle Zone join karo, aur fast ff tournament jazzcash withdrawal aur easypaisa payouts hasil karo. Pakistan ka trusted online earning game pakistan.",
+  keywords: "free fire tournament pakistan, free fire earning app pakistan, ff tournament app pakistan, ff tournament jazzcash withdrawal, online earning game pakistan, free fire 1v1 pakistan, free fire top up pakistan, guru zone",
   authors: [{ name: "Guru Zone" }],
   robots: "index, follow",
   openGraph: {
-    title: "Guru Zone — Pakistan Ka #1 Free Fire Tournament",
-    description: "Khelo, jeeto, aur JazzCash pe withdraw karo. Pakistan ka #1 Free Fire tournament platform.",
+    title: "Free Fire Tournament Pakistan — Guru Zone | Earning App",
+    description: "Guru Zone pe Free Fire tournaments khelo, 1v1 challenges jeeto aur instant cash reward withdraw karo.",
     url: "https://www.guru-zone.com",
     type: "website",
   },

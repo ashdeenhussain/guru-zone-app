@@ -26,8 +26,11 @@ import {
 import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useGuest } from "@/context/GuestContext";
+import LoginRequired from "@/components/shared/LoginRequired";
 
 export default function SettingsPage() {
+    const { isGuest } = useGuest();
     const router = useRouter();
     const [notifications, setNotifications] = useState({
         email: true,
@@ -69,24 +72,26 @@ export default function SettingsPage() {
 
     // Fetch Notification Settings
     useEffect(() => {
-        const fetchSettings = async () => {
-            try {
-                const res = await fetch('/api/settings/notifications');
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.notifications) {
-                        setNotifications(data.notifications);
+        if (!isGuest) {
+            const fetchSettings = async () => {
+                try {
+                    const res = await fetch('/api/settings/notifications');
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.notifications) {
+                            setNotifications(data.notifications);
+                        }
                     }
+                } catch (error) {
+                    console.error("Failed to fetch notification settings");
+                } finally {
+                    setLoadingNotifications(false);
                 }
-            } catch (error) {
-                console.error("Failed to fetch notification settings");
-            } finally {
-                setLoadingNotifications(false);
-            }
-        };
+            };
 
-        fetchSettings();
-    }, []);
+            fetchSettings();
+        }
+    }, [isGuest]);
 
     const toggleNotification = async (key: keyof typeof notifications) => {
         const newState = { ...notifications, [key]: !notifications[key] };
@@ -182,6 +187,17 @@ export default function SettingsPage() {
         hidden: { opacity: 0, x: -20 },
         visible: { opacity: 1, x: 0 }
     };
+
+    if (isGuest) {
+        return (
+            <div className="pt-6">
+                <LoginRequired
+                    title="Settings Restricted"
+                    description="Please sign in or create an account to customize your preferences, update account security, or configure notifications."
+                />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8 pb-24 lg:pb-8">

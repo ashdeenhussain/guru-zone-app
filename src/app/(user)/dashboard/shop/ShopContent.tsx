@@ -9,6 +9,7 @@ import Link from "next/link";
 import LuckyWheelGame from "./spin/LuckyWheelGame";
 import PromotionalBanners from "@/components/shared/PromotionalBanners";
 import PageHeader from "@/components/PageHeader";
+import { useGuest } from "@/context/GuestContext";
 
 // Types
 interface Product {
@@ -55,9 +56,11 @@ interface ShopContentProps {
         spinsAvailable: number;
     };
     bannerImages?: string[];
+    isGuest?: boolean;
 }
 
-export default function ShopContent({ products, spinItems, userBalance, userProfile, loyaltyData, bannerImages = [] }: ShopContentProps) {
+export default function ShopContent({ products, spinItems, userBalance, userProfile, loyaltyData, bannerImages = [], isGuest = false }: ShopContentProps) {
+    const { requireAuth } = useGuest();
     const [activeTab, setActiveTab] = useState<"Shop" | "Orders">("Shop");
     const [orders, setOrders] = useState<Order[]>([]);
     const [loadingOrders, setLoadingOrders] = useState(false);
@@ -98,10 +101,13 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
     const router = useRouter();
 
     const handleProductClick = (product: Product) => {
+        if (isGuest) {
+            requireAuth();
+            return;
+        }
         setSelectedProduct(product);
         setPurchaseStatus("idle");
         setMessage("");
-        // Pre-fill form if available
         setFormData({
             inGameName: userProfile.inGameName || "",
             uid: userProfile.uid || "",
@@ -215,7 +221,10 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
                                 </div>
                             </div>
                             <button
-                                onClick={() => setIsSpinModalOpen(true)}
+                                onClick={() => {
+                                    if (isGuest) { requireAuth(); return; }
+                                    setIsSpinModalOpen(true);
+                                }}
                                 className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg shadow-purple-500/20 transition-all active:scale-95"
                             >
                                 Free Spin

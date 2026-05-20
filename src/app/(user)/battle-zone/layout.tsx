@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "Free Fire 1v1 Battle Zone Pakistan — Direct Challenge | Guru Zone",
-  description: "Pakistan ka pehla 1v1 aur 2v2 Free Fire direct challenge platform. Kisi bhi player ko challenge do, jeeto aur cash kamao. Sirf Guru Zone pe!",
-  keywords: "free fire 1v1 pakistan, FF battle challenge, free fire direct challenge app, free fire earning challenge pakistan",
+  title: "Free Fire 1v1 Pakistan — Battle Zone Challenges | Guru Zone",
+  description: "Pakistan's premium Free Fire 1v1 Pakistan gaming zone. Set entry fees, challenge players 1v1 or 2v2, win custom matches, and withdraw cash instantly via JazzCash or EasyPaisa.",
+  keywords: "free fire 1v1 pakistan, free fire tournament pakistan, 1v1 free fire pakistan, ff tournament app pakistan, guru zone, free fire challenge custom",
   alternates: {
     canonical: "https://www.guru-zone.com/battle-zone",
   },

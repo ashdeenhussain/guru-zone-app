@@ -6,9 +6,11 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { useGuest } from '@/context/GuestContext';
 
 export default function SignupPage() {
     const router = useRouter();
+    const { loginAsGuest } = useGuest();
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -195,7 +197,7 @@ export default function SignupPage() {
                 <button
                     onClick={() => signIn('google', { callbackUrl: '/' })}
                     type="button"
-                    className="mt-6 w-full bg-card hover:bg-muted border border-border text-foreground font-bold py-3 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                    className="mt-6 w-full bg-card hover:bg-muted border border-border text-foreground font-bold py-3 rounded-lg transition-colors flex items-center justify-center space-x-2 shadow-sm"
                 >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                         <path
@@ -216,6 +218,14 @@ export default function SignupPage() {
                         />
                     </svg>
                     <span>Sign up with Google</span>
+                </button>
+
+                <button
+                    onClick={loginAsGuest}
+                    type="button"
+                    className="mt-4 w-full bg-transparent hover:bg-muted/30 border border-dashed border-border text-muted-foreground hover:text-foreground font-semibold py-3 rounded-lg transition-all flex items-center justify-center space-x-2 text-sm shadow-sm"
+                >
+                    <span>Explore as a Guest</span>
                 </button>
             </div>
 

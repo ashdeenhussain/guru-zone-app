@@ -16,6 +16,8 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import PageHeader from "@/components/PageHeader";
 import Link from "next/link";
+import { useGuest } from "@/context/GuestContext";
+import LoginRequired from "@/components/shared/LoginRequired";
 
 interface Tournament {
     _id: string;
@@ -32,6 +34,7 @@ interface Tournament {
 }
 
 export default function TournamentHistoryPage() {
+    const { isGuest } = useGuest();
     const [tournaments, setTournaments] = useState<Tournament[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -40,8 +43,10 @@ export default function TournamentHistoryPage() {
     const [formatFilter, setFormatFilter] = useState<'All' | 'Solo' | 'Duo' | 'Squad'>('All');
 
     useEffect(() => {
-        fetchTournaments();
-    }, []);
+        if (!isGuest) {
+            fetchTournaments();
+        }
+    }, [isGuest]);
 
     const fetchTournaments = async () => {
         try {
@@ -73,6 +78,17 @@ export default function TournamentHistoryPage() {
             default: return "bg-gray-500/10 text-gray-400 border-gray-500/20";
         }
     };
+
+    if (isGuest) {
+        return (
+            <div className="pt-6">
+                <LoginRequired
+                    title="History Restricted"
+                    description="Please sign in or create an account to view your past tournament history, matches joined, and achievements."
+                />
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-background text-foreground pb-24 lg:pb-8">
