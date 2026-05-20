@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import Image from "next/image";
 
 export interface Banner {
     storageUrl: string;
@@ -132,14 +133,14 @@ export default function PromotionalBanners({ images = [], context }: Promotional
                         onDragEnd={handleDragEnd}
                         className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing"
                     >
-                        <div
-                            className="w-full h-full bg-cover bg-center"
-                            style={{ backgroundImage: `url('${finalImages[currentIndex]}')` }}
-                        />
-                        <img
+                        <Image
                             src={finalImages[currentIndex]}
                             alt={`Promotional Banner ${currentIndex + 1}`}
-                            className="hidden"
+                            fill
+                            className="object-cover"
+                            loading="lazy"
+                            quality={70}
+                            sizes="(max-width: 768px) 100vw, 50vw"
                         />
                     </motion.div>
                 </AnimatePresence>

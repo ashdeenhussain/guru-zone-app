@@ -196,8 +196,11 @@ export default function HeroSlider({ heroData }: { heroData?: any }) {
                             src={currentSlide.image}
                             alt={currentSlide.badge}
                             fill
-                            priority
-                            sizes="100vw"
+                            {...(activeIndex === 0
+                                ? { priority: true, quality: 85 }
+                                : { loading: "lazy", quality: 70 }
+                            )}
+                            sizes="(max-width: 768px) 100vw, 50vw"
                             className="object-cover object-center"
                         />
                     </motion.div>

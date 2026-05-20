@@ -66,6 +66,7 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                             fill
                             className="object-cover opacity-10 dark:opacity-40 transition-opacity duration-300"
                             priority
+                            quality={85}
                         />
                         <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/50 to-background pointer-events-none" />
                         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent opacity-40" />
@@ -81,7 +82,9 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                                         alt="Guru Zone Logo"
                                         fill
                                         className="object-cover"
-                                        priority
+                                        loading="lazy"
+                                        quality={70}
+                                        sizes="(max-width: 768px) 100vw, 50vw"
                                     />
                                 </div>
                                 <span className="font-black text-lg md:text-xl tracking-tighter text-foreground drop-shadow-md">
