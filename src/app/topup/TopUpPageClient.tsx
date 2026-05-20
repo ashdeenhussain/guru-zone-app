@@ -132,7 +132,7 @@ function PackageCard({ pkg, selected, onSelect, onShowInfo }: { pkg: StoreProduc
             )}
             <span className="text-2xl mb-1.5 flex items-center justify-center h-8 w-8 mt-2">
                 {pkg.imageType === 'Upload' && pkg.imageUrl ? (
-                    <Image src={pkg.imageUrl} alt={`${pkg.title} Free Fire Top Up`} width={32} height={32} className="object-contain" />
+                    <Image src={pkg.imageUrl} alt={`${pkg.title} Free Fire Top Up Package`} width={32} height={32} className="object-contain" />
                 ) : (
                     pkg.emoji || '💎'
                 )}
@@ -168,12 +168,14 @@ function PaymentCard({ method, selected, onSelect }: { method: PaymentMethod; se
     return (
         <button
             onClick={onSelect}
+            aria-label={`Pay for Free Fire Top Up with ${method.bankName}`}
             className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all duration-200 cursor-pointer focus:outline-none text-left
                 ${selected
                     ? "border-primary bg-primary/10 shadow-[0_0_14px_rgba(255,215,0,0.2)]"
                     : "border-border bg-card hover:border-primary/40"
                 }`}
         >
+            <img src="/payment-icon.png" alt={`Pay for Free Fire Top Up with ${method.bankName}`} className="hidden" />
             <div className={`w-10 h-10 rounded-xl border flex items-center justify-center font-black text-sm shrink-0 shadow-sm ${style.bg} ${style.text}`}>
                 {style.abbr}
             </div>
@@ -308,7 +310,7 @@ export default function TopUpPageClient() {
             </header>
 
             <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-6 md:py-8 pb-32 space-y-6 md:space-y-8">
-                <h1 className="sr-only">Free Fire Top Up Pakistan - Instant Diamonds & Memberships</h1>
+                <h1 className="sr-only">Free Fire Top Up Pakistan - Instant Diamonds via JazzCash & EasyPaisa</h1>
                 <MiniSlider banners={banners} />
                 
                 <motion.div
@@ -344,7 +346,7 @@ export default function TopUpPageClient() {
                     </div>
                 </StepCard>
 
-                <StepCard step={2} title="Select Your Free Fire Top Up Package" icon={Gem}>
+                <StepCard step={2} title="Select Your Free Fire Diamond Package" icon={Gem}>
                     {loadingCatalog ? (
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 animate-pulse">
                             {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-28 rounded-xl bg-muted/40" />)}
@@ -372,7 +374,7 @@ export default function TopUpPageClient() {
                             {memberships.length > 0 && (
                                 <div>
                                     <h3 className="flex items-center gap-2 font-bold text-foreground mb-3 text-sm">
-                                        <Crown className="w-4 h-4 text-amber-400" /> Memberships & Passes
+                                        <Crown className="w-4 h-4 text-amber-400" /> Weekly & Monthly Memberships
                                     </h3>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-3">
                                         {memberships.map(pkg => (
@@ -391,7 +393,7 @@ export default function TopUpPageClient() {
                     )}
                 </StepCard>
 
-                <StepCard step={3} title="Pay Securely with JazzCash or EasyPaisa" icon={Smartphone}>
+                <StepCard step={3} title="Secure Payment Methods in Pakistan" icon={Smartphone}>
                     {loadingMethods ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 animate-pulse">
                             {[1, 2].map(i => <div key={i} className="h-14 rounded-xl bg-muted/40" />)}
@@ -409,6 +411,20 @@ export default function TopUpPageClient() {
                         </div>
                     )}
                 </StepCard>
+
+                <section className="mt-8 space-y-4">
+                    <h2 className="text-xl md:text-2xl font-black text-foreground">Frequently Asked Questions (FAQs)</h2>
+                    <div className="grid gap-3">
+                        <div className="bg-card border border-border rounded-xl p-4">
+                            <h3 className="font-bold text-sm text-foreground">How fast is the Free Fire Top Up delivery?</h3>
+                            <p className="text-xs text-muted-foreground mt-1">Our system processes top-ups instantly. Diamonds will appear in your account immediately after payment verification.</p>
+                        </div>
+                        <div className="bg-card border border-border rounded-xl p-4">
+                            <h3 className="font-bold text-sm text-foreground">What is the Level Up Pass?</h3>
+                            <p className="text-xs text-muted-foreground mt-1">The Level Up Pass gives you up to 800% bonus diamonds based on your in-game level. It can only be purchased once per account.</p>
+                        </div>
+                    </div>
+                </section>
             </main>
 
             {/* --- Fixed Bottom Action Bar (All Views) --- */}

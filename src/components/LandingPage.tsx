@@ -52,6 +52,7 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                 <SplashScreen key="splash" />
             ) : (
                 <main className="min-h-screen relative overflow-hidden bg-background text-foreground selection:bg-primary/30 font-sans transition-colors duration-300">
+                    <h1 className="sr-only">Guru Zone: Pakistan's Premium Free Fire Tournaments & Top Up Platform</h1>
 
                     {/* Theme Toggle Button (Fixed Bottom Right) */}
                     <div className="fixed bottom-6 right-6 z-[100] shadow-2xl rounded-xl">
@@ -62,7 +63,7 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                     <div className="absolute inset-0 z-0 select-none fixed">
                         <Image
                             src="/hero-bg.png"
-                            alt="Gaming Background"
+                            alt="Free Fire Tournaments and Custom Matches Background"
                             fill
                             className="object-cover opacity-10 dark:opacity-40 transition-opacity duration-300"
                             priority
@@ -79,7 +80,7 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                                 <div className="relative w-10 h-10 md:w-11 md:h-11 rounded-xl overflow-hidden shadow-lg border border-white/10">
                                     <Image
                                         src="/logo.jpg"
-                                        alt="Guru Zone Logo"
+                                        alt="Guru Zone Free Fire Earning App Logo"
                                         fill
                                         className="object-cover"
                                         loading="lazy"
@@ -149,9 +150,9 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-bold border border-amber-500/20">
                                         <Trophy className="w-3.5 h-3.5" /> DAILY TOURNAMENTS
                                     </div>
-                                    <h3 className="text-2xl md:text-4xl font-black text-foreground leading-tight">
-                                        Play Daily Free Fire Tournaments
-                                    </h3>
+                                    <h2 className="text-2xl md:text-4xl font-black text-foreground leading-tight">
+                                        Compete in Daily Free Fire Tournaments
+                                    </h2>
                                     <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
                                         Join the most competitive Free Fire community in Pakistan. Participate in daily custom rooms, showcase your skills, and win real rewards. Over 50+ major tournaments successfully hosted.
                                     </p>
@@ -283,7 +284,7 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                                                 <div className="w-8 h-8 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center text-red-400 font-black text-xs animate-pulse">
                                                     VS
                                                 </div>
-                                                <span className="text-[8px] text-muted-foreground mt-2 uppercase tracking-widest">1v1 Solo</span>
+                                                <h3 className="text-[8px] text-muted-foreground mt-2 uppercase tracking-widest">1v1 Solo</h3>
                                             </div>
                                             
                                             {/* Player 2 (Waiting) */}
@@ -333,8 +334,11 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 text-red-400 text-xs font-bold border border-red-500/20">
                                         <Swords className="w-3.5 h-3.5" /> BATTLE ZONE
                                     </div>
-                                    <h3 className="text-2xl md:text-4xl font-black text-foreground leading-tight">
-                                        Custom Battle Zone: 1v1, 2v2 & 4v4
+                                    <h2 className="text-2xl md:text-4xl font-black text-foreground leading-tight">
+                                        Create Custom Matches in Battle Zone
+                                    </h2>
+                                    <h3 className="text-lg md:text-xl font-bold text-muted-foreground mt-[-1rem]">
+                                        1v1, 2v2 & 4v4 Challenges
                                     </h3>
                                     <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
                                         Challenge the best! Create your own custom matches or challenge PC Legends. Set your own entry fee, play by your rules, and claim your victory coins instantly with our secure escrow system.
@@ -360,9 +364,9 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-400 text-xs font-bold border border-cyan-500/20">
                                         <Gem className="w-3.5 h-3.5" /> OFFICIAL TOP UP
                                     </div>
-                                    <h3 className="text-2xl md:text-4xl font-black text-foreground leading-tight">
+                                    <h2 className="text-2xl md:text-4xl font-black text-foreground leading-tight">
                                         Fast & Secure Free Fire Top Up
-                                    </h3>
+                                    </h2>
                                     <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
                                         Get instant Free Fire Diamonds, Weekly/Monthly Memberships, and Level Up Passes. We provide 100% official and safe top-up services directly to your UID.
                                     </p>
@@ -617,7 +621,7 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                                     TRUSTED GAMING PLATFORM
                                 </span>
                                 <h2 className="text-3xl md:text-5xl font-black text-foreground mt-2 tracking-tighter uppercase">
-                                    THE GAMER&apos;S <span className="text-primary text-stroke-primary dark:text-primary">FIRST CHOICE</span> SINCE 2023
+                                    Why Gamers Trust Guru Zone Since 2023
                                 </h2>
                                 <p className="text-muted-foreground mt-4 max-w-lg mx-auto text-sm">
                                     We offer a premium esports experience built around security, speed, and player support.
