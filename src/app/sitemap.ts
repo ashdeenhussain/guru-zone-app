@@ -1,6 +1,18 @@
 import { MetadataRoute } from 'next'
 
+const CITY_SLUGS = [
+  'lahore', 'karachi', 'islamabad', 'faisalabad',
+  'multan', 'peshawar', 'gujranwala', 'rawalpindi'
+]
+
 export default function sitemap(): MetadataRoute.Sitemap {
+  const cityEntries: MetadataRoute.Sitemap = CITY_SLUGS.map((city) => ({
+    url: `https://www.guru-zone.com/topup/${city}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.85,
+  }))
+
   return [
     {
       url: 'https://www.guru-zone.com',
@@ -20,35 +32,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 0.9,
     },
+    ...cityEntries,
     {
       url: 'https://www.guru-zone.com/dashboard/shop',
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
-    },
-    {
-      url: 'https://www.guru-zone.com/lahore',
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: 'https://www.guru-zone.com/karachi',
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: 'https://www.guru-zone.com/islamabad',
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: 'https://www.guru-zone.com/gujranwala',
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.7,
     },
     {
       url: 'https://www.guru-zone.com/blog',
@@ -61,6 +50,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.8,
+    },
+    {
+      url: 'https://www.guru-zone.com/about',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
+    {
+      url: 'https://www.guru-zone.com/contact',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.6,
     },
   ]
 }
