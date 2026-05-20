@@ -60,7 +60,7 @@ function MiniSlider({ banners }: { banners: { url: string }[] }) {
                 >
                     <Image
                         src={displayBanners[idx].url || '/banner1.png'}
-                        alt="Promo Banner"
+                        alt={`Free Fire Promotional Banner ${idx + 1} - Guru Zone`}
                         fill
                         className="object-cover object-center"
                         priority={idx === 0}
@@ -100,7 +100,7 @@ function StepCard({ step, title, icon: Icon, children }: { step: number; title: 
             <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-gradient-to-r from-card to-muted/30">
                 <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-black font-black text-xs shrink-0">{step}</div>
                 <Icon className="w-4 h-4 text-primary shrink-0" />
-                <span className="font-bold text-sm text-foreground">{title}</span>
+                <h2 className="font-bold text-sm text-foreground">{title}</h2>
             </div>
             <div className="p-3 md:p-4 flex-1">{children}</div>
         </motion.div>
@@ -132,7 +132,7 @@ function PackageCard({ pkg, selected, onSelect, onShowInfo }: { pkg: StoreProduc
             )}
             <span className="text-2xl mb-1.5 flex items-center justify-center h-8 w-8 mt-2">
                 {pkg.imageType === 'Upload' && pkg.imageUrl ? (
-                    <Image src={pkg.imageUrl} alt={pkg.title} width={32} height={32} className="object-contain" />
+                    <Image src={pkg.imageUrl} alt={`${pkg.title} Free Fire Top Up`} width={32} height={32} className="object-contain" />
                 ) : (
                     pkg.emoji || '💎'
                 )}
@@ -294,7 +294,7 @@ export default function TopUpPageClient() {
                 <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
                     <Link href="/" className="flex items-center gap-3">
                         <div className="relative w-9 h-9 rounded-xl overflow-hidden shadow-lg border border-white/10">
-                            <Image src="/logo.jpg" alt="Guru Zone Logo" fill className="object-cover" />
+                            <Image src="/logo.jpg" alt="Guru Zone Official Free Fire Top Up Logo" fill className="object-cover" />
                         </div>
                         <span className="font-black text-lg tracking-tighter">
                             GURU <span className="text-primary">ZONE</span>
@@ -308,6 +308,7 @@ export default function TopUpPageClient() {
             </header>
 
             <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-6 md:py-8 pb-32 space-y-6 md:space-y-8">
+                <h1 className="sr-only">Free Fire Top Up Pakistan - Instant Diamonds & Memberships</h1>
                 <MiniSlider banners={banners} />
                 
                 <motion.div
@@ -343,7 +344,7 @@ export default function TopUpPageClient() {
                     </div>
                 </StepCard>
 
-                <StepCard step={2} title="Select Package" icon={Gem}>
+                <StepCard step={2} title="Select Your Free Fire Top Up Package" icon={Gem}>
                     {loadingCatalog ? (
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 animate-pulse">
                             {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-28 rounded-xl bg-muted/40" />)}
@@ -390,7 +391,7 @@ export default function TopUpPageClient() {
                     )}
                 </StepCard>
 
-                <StepCard step={3} title="Payment Method" icon={Smartphone}>
+                <StepCard step={3} title="Pay Securely with JazzCash or EasyPaisa" icon={Smartphone}>
                     {loadingMethods ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 animate-pulse">
                             {[1, 2].map(i => <div key={i} className="h-14 rounded-xl bg-muted/40" />)}
@@ -507,7 +508,7 @@ export default function TopUpPageClient() {
                                 <h3 className="font-black text-base flex items-center gap-2">
                                     <span className="text-xl">
                                         {infoModalPkg.imageType === 'Upload' && infoModalPkg.imageUrl ? (
-                                            <Image src={infoModalPkg.imageUrl} alt={infoModalPkg.title} width={24} height={24} className="object-contain inline-block" />
+                                            <Image src={infoModalPkg.imageUrl} alt={`${infoModalPkg.title} Package Info`} width={24} height={24} className="object-contain inline-block" />
                                         ) : (
                                             infoModalPkg.emoji || '💎'
                                         )}
