@@ -9,9 +9,10 @@ import SplashScreen from "@/components/SplashScreen";
 import ThemeToggle from "@/components/ThemeToggle";
 import HeroSlider from "@/components/HeroSlider";
 
-export default function LandingPage({ initialData }: { initialData?: any }) {
+export default function LandingPage({ initialData, city }: { initialData?: any, city?: string }) {
     const [isLoading, setIsLoading] = useState(true);
     const [pageData, setPageData] = useState<any>(initialData || null);
+    const cityName = city ? city.charAt(0).toUpperCase() + city.slice(1) : "";
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -52,7 +53,11 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                 <SplashScreen key="splash" />
             ) : (
                 <main className="min-h-screen relative overflow-hidden bg-background text-foreground selection:bg-primary/30 font-sans transition-colors duration-300">
-                    <h1 className="sr-only">Guru Zone: Pakistan's Premium Free Fire Tournaments & Top Up Platform</h1>
+                    {city ? (
+                        <h1 className="sr-only">Premium Free Fire Top Up & Custom Tournaments in {cityName}</h1>
+                    ) : (
+                        <h1 className="sr-only">Guru Zone: Pakistan's Premium Free Fire Tournaments & Top Up Platform</h1>
+                    )}
 
                     {/* Theme Toggle Button (Fixed Bottom Right) */}
                     <div className="fixed bottom-6 right-6 z-[100] shadow-2xl rounded-xl">
@@ -128,10 +133,16 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                                 <Sparkles className="w-3.5 h-3.5" /> GURU ZONE ECOSYSTEM
                             </span>
                             <h2 className="text-3xl md:text-6xl font-black text-foreground mt-2 tracking-tighter uppercase">
-                                PAKISTAN&apos;S BEST <span className="text-primary text-stroke-primary dark:text-primary">FREE FIRE ESPORTS</span> APP
+                                {city ? (
+                                    <>Premium Free Fire Top Up in <span className="text-primary text-stroke-primary dark:text-primary">{cityName}</span></>
+                                ) : (
+                                    <>PAKISTAN&apos;S BEST <span className="text-primary text-stroke-primary dark:text-primary">FREE FIRE ESPORTS</span> APP</>
+                                )}
                             </h2>
                             <p className="text-muted-foreground mt-4 max-w-xl mx-auto text-sm md:text-base leading-relaxed">
-                                Experience professional tournament rooms, custom 1v1 challenges, instant diamond top-ups, and blazing-fast payouts directly to your local wallets.
+                                {city 
+                                    ? `Looking for the fastest and most secure Free Fire Top Up in ${cityName}? Guru Zone is the #1 trusted platform for gamers across ${cityName} to buy diamonds, weekly memberships, and level up passes via JazzCash and EasyPaisa.`
+                                    : `Experience professional tournament rooms, custom 1v1 challenges, instant diamond top-ups, and blazing-fast payouts directly to your local wallets.`}
                             </p>
                         </div>
 
@@ -368,7 +379,7 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                                         Fast & Secure Free Fire Top Up
                                     </h2>
                                     <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
-                                        Get instant Free Fire Diamonds, Weekly/Monthly Memberships, and Level Up Passes. We provide 100% official and safe top-up services directly to your UID.
+                                        Get instant Free Fire Diamonds, Weekly/Monthly Memberships, and Level Up Passes{city ? ` in ${cityName}` : ""}. We provide 100% official and safe top-up services directly to your UID.
                                     </p>
                                     <Link href="/topup">
                                         <button className="px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-black rounded-xl shadow-lg shadow-cyan-600/20 hover:shadow-cyan-600/40 hover:scale-105 transition-all flex items-center gap-2 group">
@@ -621,10 +632,12 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                                     TRUSTED GAMING PLATFORM
                                 </span>
                                 <h2 className="text-3xl md:text-5xl font-black text-foreground mt-2 tracking-tighter uppercase">
-                                    Why Gamers Trust Guru Zone Since 2023
+                                    {city ? `Why Gamers in ${cityName} Trust Guru Zone` : "Why Gamers Trust Guru Zone Since 2023"}
                                 </h2>
                                 <p className="text-muted-foreground mt-4 max-w-lg mx-auto text-sm">
-                                    We offer a premium esports experience built around security, speed, and player support.
+                                    {city 
+                                        ? `Join thousands of players in ${cityName} who trust us for a premium esports experience built around security, speed, and local support.` 
+                                        : "We offer a premium esports experience built around security, speed, and player support."}
                                 </p>
                             </div>
 
@@ -641,7 +654,7 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                                         <Shield className="w-6 h-6 text-amber-400" />
                                     </div>
                                     <h3 className="text-sm md:text-base font-black text-foreground mb-1 group-hover:text-amber-400 transition-colors">100% Safe & Secure</h3>
-                                    <p className="text-[10px] md:text-[11px] text-muted-foreground leading-normal">Certified escrow & account protection</p>
+                                    <p className="text-[10px] md:text-[11px] text-muted-foreground leading-normal">{city ? `Trusted by the ${cityName} eSports Community.` : "Certified escrow & account protection"}</p>
                                 </motion.div>
 
                                 {/* Point 2: Instant Payouts */}
@@ -686,7 +699,7 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                                         <Headphones className="w-6 h-6 text-emerald-400" />
                                     </div>
                                     <h3 className="text-sm md:text-base font-black text-foreground mb-1 group-hover:text-emerald-400 transition-colors">24/7 Support</h3>
-                                    <p className="text-[10px] md:text-[11px] text-muted-foreground leading-normal">Direct WhatsApp & ticket support anytime</p>
+                                    <p className="text-[10px] md:text-[11px] text-muted-foreground leading-normal">{city ? `Instant WhatsApp delivery for all ${cityName} players.` : "Direct WhatsApp & ticket support anytime"}</p>
                                 </motion.div>
                             </div>
                         </div>
@@ -719,20 +732,28 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                             ) : (
                                 <>
                                     <FaqItem 
-                                        q="How do I buy Free Fire Diamonds in Pakistan?" 
-                                        a={
+                                        q={city ? `How to buy Free Fire Diamonds in ${cityName}?` : "How do I buy Free Fire Diamonds in Pakistan?"} 
+                                        a={city ? (
+                                            <>
+                                                Guru Zone offers instant Free Fire top-ups in {cityName} without any hassle. Simply enter your UID, select your package, and pay securely via local methods like JazzCash or EasyPaisa.
+                                            </>
+                                        ) : (
                                             <>
                                                 You can easily buy Free Fire Diamonds through Guru Zone's official <Link href="/topup" className="text-primary hover:underline font-bold">Top Up section</Link> using your game UID. We support secure payments via JazzCash and EasyPaisa.
                                             </>
-                                        } 
+                                        )} 
                                     />
                                     <FaqItem 
-                                        q="Is Battle Zone safe to play?" 
-                                        a={
+                                        q={city ? `Are there any custom Free Fire tournaments in ${cityName}?` : "Is Battle Zone safe to play?"} 
+                                        a={city ? (
+                                            <>
+                                                Yes! Gamers from {cityName} can join our daily custom rooms and Battle Zone matches to compete and earn real rewards.
+                                            </>
+                                        ) : (
                                             <>
                                                 Yes! Our <Link href="/battle-zone" className="text-primary hover:underline font-bold">Battle Zone</Link> features an automated 15-minute room ID system and a strict dispute resolution process requiring screen recordings to ensure 100% fair play.
                                             </>
-                                        } 
+                                        )} 
                                     />
                                     <FaqItem 
                                         q="How long do withdrawals take?" 
