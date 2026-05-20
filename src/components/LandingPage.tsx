@@ -156,9 +156,9 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                                     <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
                                         Join the most competitive Free Fire community in Pakistan. Participate in daily custom rooms, showcase your skills, and win real rewards. Over 50+ major tournaments successfully hosted.
                                     </p>
-                                    <Link href="/login">
+                                    <Link href="/tournaments">
                                         <button className="px-6 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black font-black rounded-xl shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 hover:scale-105 transition-all flex items-center gap-2 group">
-                                            Join Tournaments <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                                            Join Free Fire Tournaments <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                                         </button>
                                     </Link>
                                 </motion.div>
@@ -343,9 +343,9 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                                     <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
                                         Challenge the best! Create your own custom matches or challenge PC Legends. Set your own entry fee, play by your rules, and claim your victory coins instantly with our secure escrow system.
                                     </p>
-                                    <Link href="/login">
+                                    <Link href="/battle-zone">
                                         <button className="px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-black rounded-xl shadow-lg shadow-red-600/20 hover:shadow-red-600/40 hover:scale-105 transition-all flex items-center gap-2 group">
-                                            Explore Battle Zone <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                                            Join 1v1 Battle Zone <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                                         </button>
                                     </Link>
                                 </motion.div>
@@ -372,7 +372,7 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                                     </p>
                                     <Link href="/topup">
                                         <button className="px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-black rounded-xl shadow-lg shadow-cyan-600/20 hover:shadow-cyan-600/40 hover:scale-105 transition-all flex items-center gap-2 group">
-                                            Top Up Now <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                                            Get Free Fire Diamonds <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                                         </button>
                                     </Link>
                                 </motion.div>
@@ -697,6 +697,7 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                     <section 
                         itemScope 
                         itemType="https://schema.org/FAQPage"
+                        id="faqs"
                         className="relative z-10 py-24 bg-background/50 max-w-4xl mx-auto px-4"
                     >
                         <div className="text-center mb-16">
@@ -719,11 +720,19 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                                 <>
                                     <FaqItem 
                                         q="How do I buy Free Fire Diamonds in Pakistan?" 
-                                        a="You can easily buy Free Fire Diamonds through Guru Zone's official Top Up section using your game UID. We support secure payments via JazzCash and EasyPaisa." 
+                                        a={
+                                            <>
+                                                You can easily buy Free Fire Diamonds through Guru Zone's official <Link href="/topup" className="text-primary hover:underline font-bold">Top Up section</Link> using your game UID. We support secure payments via JazzCash and EasyPaisa.
+                                            </>
+                                        } 
                                     />
                                     <FaqItem 
                                         q="Is Battle Zone safe to play?" 
-                                        a="Yes! Our Battle Zone features an automated 15-minute room ID system and a strict dispute resolution process requiring screen recordings to ensure 100% fair play." 
+                                        a={
+                                            <>
+                                                Yes! Our <Link href="/battle-zone" className="text-primary hover:underline font-bold">Battle Zone</Link> features an automated 15-minute room ID system and a strict dispute resolution process requiring screen recordings to ensure 100% fair play.
+                                            </>
+                                        } 
                                     />
                                     <FaqItem 
                                         q="How long do withdrawals take?" 
@@ -739,7 +748,7 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                     </section>
 
                     <footer className="relative z-10 border-t border-border bg-card text-card-foreground pt-16 pb-8">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-12 mb-12 text-center md:text-left">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-5 gap-12 mb-12 text-center md:text-left">
                             <div className="col-span-1 md:col-span-2">
                                 <h3 className="text-2xl font-black text-primary mb-4 uppercase tracking-tighter">GURU ZONE</h3>
                                 <p className="text-muted-foreground max-w-sm mx-auto md:mx-0 mb-6">
@@ -752,20 +761,24 @@ export default function LandingPage({ initialData }: { initialData?: any }) {
                                 </div>
                             </div>
                             <div>
-                                <h4 className="font-bold text-foreground mb-4">Quick Links</h4>
+                                <h4 className="font-bold text-foreground mb-4">Play</h4>
                                 <ul className="space-y-2 text-muted-foreground text-sm">
-                                    <Link href="/login"><li className="hover:text-primary cursor-pointer transition-colors">Tournaments</li></Link>
-                                    <Link href="/login"><li className="hover:text-primary cursor-pointer transition-colors">Leaderboard</li></Link>
-                                    <Link href="/about"><li className="hover:text-primary cursor-pointer transition-colors">About Us</li></Link>
-                                    <Link href="/contact"><li className="hover:text-primary cursor-pointer transition-colors">Contact Support</li></Link>
+                                    <li><Link href="/tournaments" className="hover:text-primary transition-colors">Tournaments</Link></li>
+                                    <li><Link href="/battle-zone" className="hover:text-primary transition-colors">Battle Zone</Link></li>
                                 </ul>
                             </div>
                             <div>
-                                <h4 className="font-bold text-foreground mb-4">Legal</h4>
+                                <h4 className="font-bold text-foreground mb-4">Store</h4>
                                 <ul className="space-y-2 text-muted-foreground text-sm">
-                                    <Link href="/privacy"><li className="hover:text-primary cursor-pointer transition-colors">Privacy Policy</li></Link>
-                                    <Link href="/terms"><li className="hover:text-primary cursor-pointer transition-colors">Terms of Service</li></Link>
-                                    <Link href="/refund"><li className="hover:text-primary cursor-pointer transition-colors">Refund Policy</li></Link>
+                                    <li><Link href="/topup" className="hover:text-primary transition-colors">Free Fire Top Up</Link></li>
+                                    <li><Link href="/topup" className="hover:text-primary transition-colors">Memberships & Passes</Link></li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-foreground mb-4">Support</h4>
+                                <ul className="space-y-2 text-muted-foreground text-sm">
+                                    <li><Link href="/#faqs" className="hover:text-primary transition-colors">FAQs</Link></li>
+                                    <li><Link href="/contact" className="hover:text-primary transition-colors">Contact Us</Link></li>
                                 </ul>
                             </div>
                         </div>
@@ -809,7 +822,7 @@ function FeatureCard({ icon: Icon, title, desc }: { icon: any, title: string, de
 
 
 
-function FaqItem({ q, a }: { q: string, a: string }) {
+function FaqItem({ q, a }: { q: string, a: React.ReactNode }) {
     const [isOpen, setIsOpen] = useState(false);
     return (
         <div 

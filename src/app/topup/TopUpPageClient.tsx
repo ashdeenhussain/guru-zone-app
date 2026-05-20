@@ -311,6 +311,19 @@ export default function TopUpPageClient() {
 
             <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-6 md:py-8 pb-32 space-y-6 md:space-y-8">
                 <h1 className="sr-only">Free Fire Top Up Pakistan - Instant Diamonds via JazzCash & EasyPaisa</h1>
+                <nav aria-label="Breadcrumb" className="mb-2">
+                    <ol className="flex items-center space-x-2 text-xs md:text-sm text-muted-foreground">
+                        <li>
+                            <Link href="/" className="hover:text-primary transition-colors">Home</Link>
+                        </li>
+                        <li>
+                            <ChevronRight className="w-3 h-3" />
+                        </li>
+                        <li>
+                            <span className="text-foreground font-semibold" aria-current="page">Free Fire Top Up Pakistan</span>
+                        </li>
+                    </ol>
+                </nav>
                 <MiniSlider banners={banners} />
                 
                 <motion.div
