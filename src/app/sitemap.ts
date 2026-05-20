@@ -1,4 +1,5 @@
 import { MetadataRoute } from 'next'
+import { getAllPosts } from '@/lib/blog'
 
 const CITY_SLUGS = [
   'lahore', 'karachi', 'islamabad', 'faisalabad',
@@ -11,6 +12,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(),
     changeFrequency: 'weekly',
     priority: 0.85,
+  }))
+
+  // Dynamically include all blog posts
+  const blogEntries: MetadataRoute.Sitemap = getAllPosts().map((post) => ({
+    url: `https://www.guru-zone.com/blog/${post.slug}`,
+    lastModified: new Date(post.dateModified),
+    changeFrequency: 'monthly',
+    priority: 0.8,
   }))
 
   return [
@@ -45,12 +54,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 0.8,
     },
-    {
-      url: 'https://www.guru-zone.com/blog/free-fire-se-paise-kaise-kamayein',
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    },
+    ...blogEntries,
     {
       url: 'https://www.guru-zone.com/about',
       lastModified: new Date(),
