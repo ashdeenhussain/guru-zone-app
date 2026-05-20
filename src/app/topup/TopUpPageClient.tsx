@@ -281,8 +281,8 @@ export default function TopUpPageClient() {
     };
 
     const confirmAndProceed = () => {
-        const url = `https://wa.me/${whatsappNumber}?text=${buildWhatsAppMsg()}`;
-        window.open(url, "_blank", "noopener,noreferrer");
+        const whatsappUrl = `https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${buildWhatsAppMsg()}`;
+        window.open(whatsappUrl, "_blank", "noopener,noreferrer");
         setShowModal(false);
         toast.success("Opening WhatsApp…", { description: "Complete payment & send proof.", icon: "✅" });
     };
