@@ -39,6 +39,9 @@ export default function MobileNavigation() {
     const [unreadCounts, setUnreadCounts] = useState({ admin: 0, chat: 0, total: 0 });
 
     const fetchUnreadCounts = async () => {
+        if (typeof document !== 'undefined' && document.visibilityState !== 'visible') {
+            return;
+        }
         try {
             const res = await fetch('/api/notifications/unread-count');
             if (res.ok) {
@@ -55,7 +58,7 @@ export default function MobileNavigation() {
     useEffect(() => {
         if (session?.user && !isGuest) {
             fetchUnreadCounts();
-            const interval = setInterval(fetchUnreadCounts, 15000);
+            const interval = setInterval(fetchUnreadCounts, 60000);
             return () => clearInterval(interval);
         }
     }, [session?.user, isGuest]);

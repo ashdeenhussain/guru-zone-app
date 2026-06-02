@@ -3,6 +3,8 @@ import type { Metadata } from 'next';
 import connectDB from "@/lib/db";
 import LandingPageContent from "@/models/LandingPageContent";
 
+export const revalidate = 60;
+
 type Props = {
     params: Promise<{ city: string }>
 };

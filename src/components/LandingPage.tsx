@@ -19,14 +19,16 @@ export default function LandingPage({ initialData, city }: { initialData?: any, 
             setIsLoading(false);
         }, 1500);
 
-        // Fetch dynamic content
-        fetch("/api/landing-page")
-            .then(res => res.json())
-            .then(data => setPageData(data))
-            .catch(err => console.error("Error loading landing page data:", err));
+        if (!initialData) {
+            // Fetch dynamic content
+            fetch("/api/landing-page")
+                .then(res => res.json())
+                .then(data => setPageData(data))
+                .catch(err => console.error("Error loading landing page data:", err));
+        }
 
         return () => clearTimeout(timer);
-    }, []);
+    }, [initialData]);
 
     const containerVariants = {
         hidden: { opacity: 0 },

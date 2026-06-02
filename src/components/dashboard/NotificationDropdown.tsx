@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, Check, X } from "lucide-react";
+import { Bell, Check, X, RotateCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -14,7 +14,11 @@ export default function NotificationDropdown() {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
 
-    const fetchNotifications = async () => {
+    const fetchNotifications = async (force = false) => {
+        if (!force && typeof document !== 'undefined' && document.visibilityState !== 'visible') {
+            return;
+        }
+        setIsLoading(true);
         try {
             const res = await fetch("/api/notifications");
             if (res.ok) {
@@ -24,13 +28,15 @@ export default function NotificationDropdown() {
             }
         } catch (error) {
             console.error("Failed to fetch notifications", error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    // Poll for notifications every 60 seconds
+    // Poll for notifications every 180 seconds
     useEffect(() => {
-        fetchNotifications();
-        const interval = setInterval(fetchNotifications, 60000);
+        fetchNotifications(true);
+        const interval = setInterval(() => fetchNotifications(false), 180000);
         return () => clearInterval(interval);
     }, []);
 
@@ -108,6 +114,14 @@ export default function NotificationDropdown() {
                                     )}
                                 </div>
                                 <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => fetchNotifications(true)}
+                                        disabled={isLoading}
+                                        className="p-1.5 hover:bg-muted/50 rounded-full text-muted-foreground hover:text-foreground transition-colors mr-1 flex items-center justify-center"
+                                        title="Refresh notifications"
+                                    >
+                                        <RotateCw size={14} className={isLoading ? "animate-spin text-primary" : ""} />
+                                    </button>
                                     {unreadCount > 0 && (
                                         <button
                                             onClick={markAllAsRead}

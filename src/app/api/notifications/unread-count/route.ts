@@ -50,9 +50,11 @@ export async function GET() {
         if (tournamentsJoined.length > 0) {
             const lastReadMap = user.lastChatReadAt || new Map();
             
+            const cutoffDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
             const unreadMessages = await Message.find({
                 tournamentId: { $in: tournamentsJoined },
-                sender: { $ne: userId }
+                sender: { $ne: userId },
+                createdAt: { $gt: cutoffDate }
             }).lean();
 
             unreadMessages.forEach((msg: any) => {

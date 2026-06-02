@@ -7,7 +7,7 @@ import PageHeader from '@/components/PageHeader';
 import { 
     Swords, Trophy, Users, Calendar, Coins, Loader2, MapPin, 
     Shield, Crosshair, ArrowLeft, MessageSquare, Gamepad2, Info,
-    User, Crown, AlertCircle
+    User, Crown, AlertCircle, RotateCw
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -109,7 +109,12 @@ Here is my video proof:`;
 
     const whatsappUrl = `https://wa.me/${adminWhatsapp}?text=${encodeURIComponent(whatsappMessage)}`;
 
-    const fetchMatch = async (isInitial = false) => {
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
+    const fetchMatch = async (isInitial = false, force = false) => {
+        if (!force && !isInitial && typeof document !== 'undefined' && document.visibilityState !== 'visible') {
+            return;
+        }
         try {
             const res = await fetch(`/api/battle-zone/matches/${id}`);
             const data = await res.json();
@@ -158,7 +163,10 @@ Here is my video proof:`;
 
     const [unreadCounts, setUnreadCounts] = useState<any>(null);
 
-    const fetchUnreadCounts = async () => {
+    const fetchUnreadCounts = async (force = false) => {
+        if (!force && typeof document !== 'undefined' && document.visibilityState !== 'visible') {
+            return;
+        }
         if (!session) return;
         try {
             const res = await fetch('/api/notifications/unread-count');
@@ -190,14 +198,30 @@ Here is my video proof:`;
         } catch (e) {}
     };
 
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        try {
+            await Promise.all([
+                fetchMatch(false, true),
+                fetchUnreadCounts(true),
+                fetchUserProfile()
+            ]);
+            toast.success("Match details updated!");
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsRefreshing(false);
+        }
+    };
+
     useEffect(() => {
-        fetchMatch(true);
+        fetchMatch(true, true);
         fetchUserProfile();
-        fetchUnreadCounts();
+        fetchUnreadCounts(true);
         const interval = setInterval(() => {
-            fetchMatch();
-            fetchUnreadCounts();
-        }, 10000);
+            fetchMatch(false, false);
+            fetchUnreadCounts(false);
+        }, 45000);
         return () => clearInterval(interval);
     }, [id, session]);
 
@@ -263,8 +287,18 @@ Here is my video proof:`;
                     <ArrowLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
                 </Link>
                 <div className="flex-1 min-w-0">
-                    <h1 className="font-black text-lg leading-tight truncate tracking-tight">{match.title}</h1>
                     <div className="flex items-center gap-2">
+                        <h1 className="font-black text-lg leading-tight truncate tracking-tight">{match.title}</h1>
+                        <button
+                            onClick={handleRefresh}
+                            disabled={isRefreshing}
+                            className="p-1.5 bg-muted/40 hover:bg-muted border border-border/50 rounded-lg transition-all active:scale-95 flex items-center justify-center shrink-0"
+                            title="Refresh Match Room"
+                        >
+                            <RotateCw className={`w-3.5 h-3.5 text-muted-foreground hover:text-foreground ${isRefreshing ? 'animate-spin text-primary' : ''}`} />
+                        </button>
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
                         <span className={`w-2 h-2 rounded-full animate-pulse ${match.status === 'open' ? 'bg-green-500' : 'bg-yellow-500'}`} />
                         <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] leading-none">
                             {match.status} • {match.format}

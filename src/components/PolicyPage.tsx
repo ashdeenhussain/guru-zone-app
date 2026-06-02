@@ -1,20 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronLeft, ShieldCheck, ScrollText, RefreshCcw } from "lucide-react";
 import { motion } from "framer-motion";
 
-export default function PolicyPage({ type }: { type: 'privacy' | 'terms' | 'refund' }) {
-    const [content, setContent] = useState<any>(null);
-
-    useEffect(() => {
-        fetch("/api/landing-page")
-            .then(res => res.json())
-            .then(data => setContent(data));
-    }, []);
-
+export default function PolicyPage({ type, content }: { type: 'privacy' | 'terms' | 'refund', content: any }) {
     if (!content) return null;
 
     const config = {

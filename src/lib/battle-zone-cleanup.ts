@@ -6,12 +6,20 @@ import Notification from '@/models/Notification';
 import Escrow from '@/models/Escrow';
 import { sendPushNotification } from '@/lib/webpush';
 
+let lastCleanupRun = 0;
+
 export async function runExpiredMatchesCleanup() {
+    const nowTime = Date.now();
+    if (nowTime - lastCleanupRun < 60000) {
+        return 0;
+    }
+    lastCleanupRun = nowTime;
+    
     const now = new Date();
     
     // Find expired open matches
     const expiredMatches = await BattleMatch.find({
-        status: { $in: ['open', 'Open'] },
+        status: 'open',
         expiresAt: { $lt: now }
     });
 

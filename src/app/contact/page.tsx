@@ -3,6 +3,8 @@ import ContactContent from "@/components/ContactContent";
 import connectDB from "@/lib/db";
 import LandingPageContent from "@/models/LandingPageContent";
 
+export const revalidate = 300;
+
 export const metadata: Metadata = {
     title: "Contact Us",
     description: "Contact the Guru Zone support team for assistance with tournaments, withdrawals, or partnerships. We're here to help you with Pakistan's best esports experience.",

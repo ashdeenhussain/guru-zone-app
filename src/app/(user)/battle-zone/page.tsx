@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Swords, Plus, Users, Calendar, Trophy, Coins, Loader2, ShieldAlert, Info } from 'lucide-react';
+import { Swords, Plus, Users, Calendar, Trophy, Coins, Loader2, ShieldAlert, Info, RotateCw } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { useSession } from 'next-auth/react';
@@ -52,6 +52,7 @@ export default function BattleZonePage() {
     const [isTrustInfoModalOpen, setIsTrustInfoModalOpen] = useState(false);
     const [balance, setBalance] = useState<number | null>(null);
     const [now, setNow] = useState<number>(Date.now());
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     useEffect(() => {
         const interval = setInterval(() => setNow(Date.now()), 1000);
@@ -122,7 +123,10 @@ export default function BattleZonePage() {
         return Number(data.chat || 0) + Number(data.system || 0);
     };
 
-    const fetchUnreadCounts = async () => {
+    const fetchUnreadCounts = async (force = false) => {
+        if (!force && typeof document !== 'undefined' && document.visibilityState !== 'visible') {
+            return;
+        }
         if (!session) return;
         try {
             const res = await fetch('/api/notifications/unread-count');
@@ -133,13 +137,29 @@ export default function BattleZonePage() {
         } catch (e) {}
     };
 
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        try {
+            await Promise.all([
+                fetchTournaments(),
+                fetchJoinedTournaments(),
+                fetchBalance(),
+                fetchUnreadCounts(true)
+            ]);
+        } catch (error) {
+            console.error('Failed to refresh data', error);
+        } finally {
+            setIsRefreshing(false);
+        }
+    };
+
     useEffect(() => {
         fetchTournaments();
         fetchJoinedTournaments();
         fetchBalance();
-        fetchUnreadCounts();
+        fetchUnreadCounts(true);
 
-        const poll = setInterval(fetchUnreadCounts, 10000);
+        const poll = setInterval(() => fetchUnreadCounts(false), 60000);
         return () => clearInterval(poll);
     }, [session]);
 
@@ -213,6 +233,14 @@ export default function BattleZonePage() {
                                     <h1 className="text-xl md:text-3xl font-black tracking-tight text-foreground leading-tight">
                                         Battle Zone Community Challenge
                                     </h1>
+                                    <button
+                                        onClick={handleRefresh}
+                                        disabled={isRefreshing}
+                                        className="p-2 bg-muted/40 hover:bg-muted border border-border/50 rounded-xl transition-all active:scale-95 flex items-center justify-center shrink-0"
+                                        title="Refresh matches"
+                                    >
+                                        <RotateCw className={`w-4 h-4 text-muted-foreground hover:text-foreground ${isRefreshing ? 'animate-spin text-primary' : ''}`} />
+                                    </button>
                                 </div>
                                 
                                 {session?.user && (

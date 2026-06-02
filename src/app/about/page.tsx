@@ -3,6 +3,8 @@ import AboutContent from "@/components/AboutContent";
 import connectDB from "@/lib/db";
 import LandingPageContent from "@/models/LandingPageContent";
 
+export const revalidate = 300;
+
 export const metadata: Metadata = {
     title: "About Us",
     description: "Learn more about Guru Zone, Pakistan's leading esports platform. Our mission, vision, and the team behind the ultimate Free Fire tournament experience.",

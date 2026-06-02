@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import TournamentCard from '@/components/TournamentCard';
-import { Trophy, Filter, Wallet, ArrowRight } from 'lucide-react';
+import { Trophy, Filter, Wallet, ArrowRight, RotateCw } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 import { useSearchParams } from 'next/navigation';
 
@@ -34,6 +34,22 @@ export default function TournamentsPage() {
     const [activeTab, setActiveTab] = useState<'all' | 'my'>(initialTab); // Initialize from URL
     const [filterFormat, setFilterFormat] = useState('All');
     const [filterGameType, setFilterGameType] = useState('All');
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        try {
+            await Promise.all([
+                fetchTournaments(),
+                fetchBalance(),
+                fetchJoinedTournaments()
+            ]);
+        } catch (error) {
+            console.error('Failed to refresh tournaments data', error);
+        } finally {
+            setIsRefreshing(false);
+        }
+    };
 
     useEffect(() => {
         const loadData = async () => {
@@ -162,9 +178,19 @@ export default function TournamentsPage() {
 
                 {/* Filters Card */}
                 <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
-                    <div className="flex items-center gap-2 mb-6">
-                        <Filter className="w-5 h-5 text-primary" />
-                        <h2 className="text-lg font-bold text-foreground">Filters</h2>
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-2">
+                            <Filter className="w-5 h-5 text-primary" />
+                            <h2 className="text-lg font-bold text-foreground">Filters</h2>
+                        </div>
+                        <button
+                            onClick={handleRefresh}
+                            disabled={isRefreshing}
+                            className="p-2 bg-muted/40 hover:bg-muted border border-border/50 rounded-xl transition-all active:scale-95 flex items-center justify-center shrink-0"
+                            title="Refresh Tournaments"
+                        >
+                            <RotateCw className={`w-4 h-4 text-muted-foreground hover:text-foreground ${isRefreshing ? 'animate-spin text-primary' : ''}`} />
+                        </button>
                     </div>
 
                     <div className="space-y-6">
