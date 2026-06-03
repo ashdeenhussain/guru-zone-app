@@ -37,11 +37,6 @@ export default function LuckyWheelGame({ items, spinsAvailable, userProgress, on
     const handleSpin = async () => {
         if (spinning) return;
 
-        if (userProgress < 2500) {
-            setAlertMsg("Please top-up 2500 Coins to unlock!");
-            return;
-        }
-
         if (availableSpins <= 0) {
             setAlertMsg("No Spins Available! Top-up to earn more.");
             return;
@@ -85,11 +80,29 @@ export default function LuckyWheelGame({ items, spinsAvailable, userProgress, on
 
         setRotation(targetRotation);
 
-        setTimeout(() => {
-            setSpinning(false);
-            setWinItem(winningItem);
-            setAvailableSpins(finalSpins);
-            if (finalSpins !== availableSpins) router.refresh();
+        setTimeout(async () => {
+            try {
+                const claimRes = await fetch("/api/wallet/add-spin-reward", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" }
+                });
+                const claimData = await claimRes.json();
+
+                if (!claimRes.ok) {
+                    setAlertMsg(claimData.error || "Failed to claim reward.");
+                    setSpinning(false);
+                    return;
+                }
+
+                setSpinning(false);
+                setWinItem(winningItem);
+                setAvailableSpins(claimData.remainingSpins !== undefined ? claimData.remainingSpins : 0);
+
+            } catch (error) {
+                console.error("Claim reward failed:", error);
+                setAlertMsg("Network error. Reward could not be claimed.");
+                setSpinning(false);
+            }
         }, 5000);
     };
 
@@ -222,7 +235,7 @@ export default function LuckyWheelGame({ items, spinsAvailable, userProgress, on
                             Loyalty Progress <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse" />
                         </p>
                         <h3 className="font-black text-lg text-yellow-500 leading-none tracking-tight">
-                            {userProgress >= 2500 ? "GOAL REACHED!" : `${(2500 - userProgress).toLocaleString()} COINS LEFT`}
+                            {availableSpins > 0 ? `${availableSpins} FREE SPIN${availableSpins > 1 ? 'S' : ''} AVAILABLE!` : (userProgress >= 2500 ? "GOAL REACHED!" : `${(2500 - userProgress).toLocaleString()} COINS LEFT`)}
                         </h3>
                     </div>
                     <div className="text-right">
@@ -246,9 +259,18 @@ export default function LuckyWheelGame({ items, spinsAvailable, userProgress, on
                             }`}
                     />
                 </div>
-                <p className="text-xs text-center text-muted-foreground font-medium">
-                    Top-up total of <span className="text-yellow-400 font-bold mx-1">2,500 Coins</span> to unlock a Free Spin!
-                </p>
+                <div className="flex items-center justify-between pt-1">
+                    <span className="text-xs text-muted-foreground font-medium">
+                        Top-up total of <span className="text-yellow-400 font-bold">2,500 Coins</span> to earn a spin.
+                    </span>
+                    <div className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                        availableSpins > 0 
+                            ? "bg-green-500/20 text-green-400 border-green-500/30 animate-pulse" 
+                            : "bg-white/5 text-muted-foreground border-white/10"
+                    }`}>
+                        {availableSpins} Spin{availableSpins !== 1 ? 's' : ''} Left
+                    </div>
+                </div>
             </div>
 
             {/* Spin Functionality */}
@@ -258,15 +280,17 @@ export default function LuckyWheelGame({ items, spinsAvailable, userProgress, on
                     disabled={spinning}
                     className={`w-full py-4 rounded-xl font-black text-xl tracking-wider uppercase transition-all transform active:scale-95 shadow-xl shadow-purple-900/20 ${spinning
                         ? "bg-muted text-muted-foreground cursor-wait"
-                        : userProgress >= 2500 && availableSpins > 0
+                        : availableSpins > 0
                             ? "bg-gradient-to-r from-purple-600 via-fuchsia-600 to-purple-600 bg-[length:200%_auto] text-white hover:brightness-110 border border-purple-400/30 animate-pulse"
                             : "bg-muted text-muted-foreground cursor-pointer border border-white/5 opacity-50 hover:opacity-75"
                         }`}
                 >
                     {spinning ? (
                         <span className="flex items-center justify-center gap-2"><Loader2 className="animate-spin" /> Spinning</span>
+                    ) : availableSpins > 0 ? (
+                        `Spin Now! (${availableSpins} Left)`
                     ) : (
-                        "Spin Now!"
+                        "Locked"
                     )}
                 </button>
             </div>
@@ -305,13 +329,24 @@ export default function LuckyWheelGame({ items, spinsAvailable, userProgress, on
                             <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-yellow-600 mb-2 uppercase italic tracking-tighter">
                                 Big Win!
                             </h2>
-                            <p className="text-xl text-foreground mb-8 font-medium">
-                                You received <br />
-                                <span className="text-3xl font-bold text-yellow-500">{winItem.label}</span>
+                            <p className="text-lg text-foreground mb-8 font-medium">
+                                {winItem.type === 'coins' ? (
+                                    <>
+                                        You won <span className="font-bold text-yellow-500">{winItem.label}</span>! They have been added to your wallet.
+                                    </>
+                                ) : (
+                                    <>
+                                        You won <span className="font-bold text-yellow-500">{winItem.label}</span>! An order has been placed for your reward.
+                                    </>
+                                )}
                             </p>
 
                             <button
-                                onClick={() => { setWinItem(null); if (onClose) onClose(); }}
+                                onClick={() => {
+                                    setWinItem(null);
+                                    if (onClose) onClose();
+                                    router.refresh();
+                                }}
                                 className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-700 text-white font-black text-lg rounded-xl hover:scale-105 transition-transform shadow-lg shadow-green-500/30 uppercase tracking-widest"
                             >
                                 Claim Prize

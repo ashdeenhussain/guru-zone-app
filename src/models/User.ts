@@ -185,6 +185,13 @@ const UserSchema = new Schema(
             type: Map,
             of: Date,
             default: {}
+        },
+        pendingSpinReward: {
+            itemId: String,
+            value: Number,
+            label: String,
+            rewardType: String,
+            product: String,
         }
     },
     { timestamps: true }

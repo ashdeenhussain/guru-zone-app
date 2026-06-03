@@ -29,21 +29,23 @@ export async function POST(req: Request) {
 
         await connectToDatabase();
 
-        // Start Transaction
-        const sessionDB = await mongoose.startSession();
-        sessionDB.startTransaction();
-
         try {
             // @ts-ignore
             const userId = session.user.id;
-            const user = await User.findById(userId).session(sessionDB);
+            const user = await User.findById(userId);
 
             if (!user) {
                 throw new Error("User not found");
             }
 
             if ((user.spinsAvailable || 0) <= 0) {
-                throw new Error("No spins available");
+                if ((user.loyaltyProgress || 0) >= 2500) {
+                    const extraSpins = Math.floor(user.loyaltyProgress / 2500);
+                    user.spinsAvailable = (user.spinsAvailable || 0) + extraSpins;
+                    user.loyaltyProgress = user.loyaltyProgress % 2500;
+                } else {
+                    throw new Error("No spins available");
+                }
             }
 
             // Fetch Items - Sorted by _id to match frontend order
@@ -53,67 +55,50 @@ export async function POST(req: Request) {
                 throw new Error("No active spin items");
             }
 
-            // Weighed Random Selection
-            // 1. Calculate total weight
-            const totalWeight = items.reduce((sum, item) => sum + (item.probability || 0), 0);
-
-            // 2. Random value between 0 and totalWeight
-            let randomValue = Math.random() * totalWeight;
-
-            // 3. Find winner
             let winningItem = null;
-            for (const item of items) {
-                randomValue -= (item.probability || 0);
-                if (randomValue <= 0) {
-                    winningItem = item;
-                    break;
+
+            // Check if there is already a pending spin reward to prevent rerolling
+            if (user.pendingSpinReward && user.pendingSpinReward.itemId) {
+                const existingItem = items.find(i => i._id.toString() === user.pendingSpinReward.itemId);
+                if (existingItem) {
+                    winningItem = existingItem;
                 }
             }
 
-            // Fallback (rare float issues)
             if (!winningItem) {
-                winningItem = items[items.length - 1];
+                // Weighed Random Selection
+                // 1. Calculate total weight
+                const totalWeight = items.reduce((sum, item) => sum + (item.probability || 0), 0);
+
+                // 2. Random value between 0 and totalWeight
+                let randomValue = Math.random() * totalWeight;
+
+                // 3. Find winner
+                for (const item of items) {
+                    randomValue -= (item.probability || 0);
+                    if (randomValue <= 0) {
+                        winningItem = item;
+                        break;
+                    }
+                }
+
+                // Fallback (rare float issues)
+                if (!winningItem) {
+                    winningItem = items[items.length - 1];
+                }
+
+                // Save reward as pending (do not credit or decrement yet)
+                user.pendingSpinReward = {
+                    itemId: winningItem._id.toString(),
+                    value: Number(winningItem.value),
+                    label: winningItem.label,
+                    rewardType: winningItem.type?.toLowerCase(),
+                    product: winningItem.product ? winningItem.product.toString() : (winningItem.type?.toLowerCase() === 'product' ? winningItem.value.toString() : undefined)
+                };
+                console.log("Saving pendingSpinReward for user:", user._id, user.pendingSpinReward);
             }
 
-            // Process Reward
-            user.spinsAvailable -= 1;
-
-            const rewardType = winningItem.type?.toLowerCase();
-
-            if (rewardType === 'coins' || rewardType === 'coin') {
-                const amount = Number(winningItem.value);
-                if (isNaN(amount)) throw new Error("Invalid coin value in spin item");
-
-                user.walletBalance += amount; // Auto-commit to wallet
-
-                await Transaction.create([{
-                    user: user._id,
-                    amount: amount,
-                    type: 'prize_winnings',
-                    description: `Won from Lucky Spin: ${winningItem.label}`,
-                    status: 'approved'
-                }], { session: sessionDB });
-
-            } else if (rewardType === 'product') {
-                // Create Order for Product Win
-                await Order.create([{
-                    userId: user._id,
-                    productId: winningItem.product || winningItem.value, // Expecting ID here
-                    pricePaid: 0,
-                    status: 'Pending',
-                    source: 'spin',
-                    userDetails: {
-                        inGameName: user.inGameName || "Unknown",
-                        uid: user.freeFireUid || "Unknown"
-                    },
-                    adminComment: `Won via Lucky Spin: ${winningItem.label}`
-                }], { session: sessionDB });
-            }
-
-            await user.save({ session: sessionDB });
-
-            await sessionDB.commitTransaction();
-            sessionDB.endSession();
+            await user.save();
 
             // Return Winner & Index for Frontend Animation
             const winnerIndex = items.findIndex(i => i._id.toString() === winningItem._id.toString());
@@ -126,8 +111,6 @@ export async function POST(req: Request) {
             });
 
         } catch (error: any) {
-            await sessionDB.abortTransaction();
-            sessionDB.endSession();
             return Response.json({ error: error.message || "Spin failed" }, { status: 400 });
         }
 

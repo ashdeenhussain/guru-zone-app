@@ -209,7 +209,15 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
                             <div className="flex items-center gap-4">
                                 <div className="flex flex-col">
                                     <h3 className="font-black text-xl text-foreground leading-none tracking-tight">Lucky Spin</h3>
-                                    <p className="text-[11px] text-muted-foreground mt-1 font-bold uppercase tracking-wider opacity-80">Win Exclusive Prizes</p>
+                                    <p className={`text-[11px] mt-1 font-bold uppercase tracking-wider ${
+                                        loyaltyData.spinsAvailable > 0 
+                                            ? "text-green-400 animate-pulse" 
+                                            : "text-muted-foreground opacity-80"
+                                    }`}>
+                                        {loyaltyData.spinsAvailable > 0 
+                                            ? `${loyaltyData.spinsAvailable} Free Spin${loyaltyData.spinsAvailable > 1 ? 's' : ''} Ready!` 
+                                            : "Win Exclusive Prizes"}
+                                    </p>
                                 </div>
                                 <div className="w-14 h-14 relative flex items-center justify-center shrink-0 drop-shadow-[0_0_15px_rgba(168,85,247,0.4)]">
                                     <Image
@@ -220,15 +228,31 @@ export default function ShopContent({ products, spinItems, userBalance, userProf
                                     />
                                 </div>
                             </div>
-                            <button
-                                onClick={() => {
-                                    if (isGuest) { requireAuth(); return; }
-                                    setIsSpinModalOpen(true);
-                                }}
-                                className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg shadow-purple-500/20 transition-all active:scale-95"
-                            >
-                                Free Spin
-                            </button>
+                            <div className="relative">
+                                <button
+                                    onClick={() => {
+                                        if (isGuest) { requireAuth(); return; }
+                                        setIsSpinModalOpen(true);
+                                    }}
+                                    className={`text-xs font-bold px-4 py-2 rounded-full shadow-lg transition-all active:scale-95 duration-300 ${
+                                        loyaltyData.spinsAvailable > 0 
+                                            ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-green-500/20 hover:brightness-110 animate-pulse" 
+                                            : "bg-purple-600 hover:bg-purple-700 text-white shadow-purple-500/20"
+                                    }`}
+                                >
+                                    {loyaltyData.spinsAvailable > 0 
+                                        ? `Spin Available (${loyaltyData.spinsAvailable})` 
+                                        : "Free Spin"}
+                                </button>
+                                
+                                {/* Pulsing Badge Dot */}
+                                {loyaltyData.spinsAvailable > 0 && (
+                                    <span className="absolute -top-1 -right-1 flex h-3 w-3 z-20">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500 border border-[#1a1a24] shadow-md"></span>
+                                    </span>
+                                )}
+                            </div>
                         </div>
 
                         {/* Mini Progress */}
