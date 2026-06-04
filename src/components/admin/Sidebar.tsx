@@ -58,6 +58,7 @@ export default function Sidebar({ onClose }: AdminSidebarProps) {
         { name: 'Battle Zone', href: '/admin/battle-zone', icon: Swords, permission: 'manage_tournaments' },
         { name: 'Users', href: '/admin/users', icon: Users, permission: 'manage_support' },
         { name: 'Finance', href: '/admin/finance', icon: Wallet, permission: 'manage_finance' },
+        { name: 'Finance Visibility', href: '/admin/finance-visibility', icon: Wallet, permission: 'view_finance_visibility' },
         { name: 'Transactions', href: '/admin/transactions', icon: ArrowUpRight, permission: 'manage_finance' },
         { name: 'Landing Page', href: '/admin/landing-page', icon: Globe, permission: 'manage_system' },
         { name: 'App Promo', href: '/admin/promo-banner', icon: Layout, permission: 'manage_system' },

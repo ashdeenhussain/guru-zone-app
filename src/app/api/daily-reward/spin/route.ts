@@ -5,6 +5,7 @@ import connectToDB from "@/lib/db";
 import User from "@/models/User";
 import DailyRewardSpinItem from "@/models/DailyRewardSpinItem";
 import Transaction from "@/models/Transaction";
+import FinancialLog from "@/models/FinancialLog";
 
 // Minimum coins required to use daily spin
 const MIN_COINS_REQUIRED = 1000;
@@ -103,13 +104,28 @@ export async function POST() {
 
         // Record transaction
         if (coinsWon > 0) {
-            await Transaction.create({
+            const tx = await Transaction.create({
                 user: userId,
                 amount: coinsWon,
                 type: "daily_reward_spin",
                 status: "approved",
                 description: `Daily Reward Spin — Won ${coinsWon} Coins`,
             });
+
+            // ── Financial Log Event ──
+            try {
+                await FinancialLog.create({
+                    type: 'free_spin',
+                    amount: coinsWon,
+                    currency: 'Coins',
+                    userId: userId,
+                    referenceId: tx._id,
+                    description: `Daily Reward Spin — Won ${coinsWon} Coins`,
+                    timestamp: new Date()
+                });
+            } catch (logErr) {
+                console.error("Failed to write daily reward spin to FinancialLog:", logErr);
+            }
         }
 
         return NextResponse.json({

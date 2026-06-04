@@ -6,6 +6,7 @@ import Transaction from '@/models/Transaction';
 import Notification from '@/models/Notification';
 import connectDB from '@/lib/db';
 import mongoose from 'mongoose';
+import FinancialLog from '@/models/FinancialLog';
 
 export async function POST(req: Request) {
     try {
@@ -54,7 +55,7 @@ export async function POST(req: Request) {
             await user.save({ session: sessionDb });
 
             // Create Transaction Record
-            await Transaction.create([{
+            const txs = await Transaction.create([{
                 user: userId,
                 amount: amount,
                 type: 'ADMIN_ADJUSTMENT',
@@ -64,6 +65,18 @@ export async function POST(req: Request) {
                     adjustedBy: session.user.email,
                     adjustmentType: type
                 }
+            }], { session: sessionDb });
+
+            // Create Financial Log Record
+            await FinancialLog.create([{
+                type: 'admin_adjustment',
+                amount: type === 'CREDIT' ? amount : -amount,
+                currency: 'Coins',
+                userId: userId,
+                adminId: (session.user as any).id,
+                referenceId: txs[0]._id,
+                description: reason,
+                timestamp: new Date()
             }], { session: sessionDb });
 
             // Create Notification

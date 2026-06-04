@@ -36,20 +36,29 @@ export async function GET(req: Request) {
         // Only for 'Completed' tournaments to be accurate, or maybe all Non-Cancelled?
         // Prompt says "completed tournaments".
 
-        const tournaments = await Tournament.find({ status: { $in: ['completed', 'Completed'] } });
+        const tournaments = await Tournament.find({ 
+            status: { $in: ['completed', 'Completed', 'cancelled', 'Cancelled'] } 
+        }).sort({ createdAt: -1 });
 
         let totalRevenue = 0;
         const profitTable = tournaments.map(t => {
-            const fees = t.entryFee * t.joinedCount;
-            const expenses = t.prizePool;
+            const isCancelled = ['cancelled', 'Cancelled'].includes(t.status);
+            const fees = isCancelled ? 0 : (t.entryFee * t.joinedCount);
+            const expenses = isCancelled ? 0 : t.prizePool;
             const net = fees - expenses;
-            totalRevenue += net;
+            
+            if (!isCancelled) {
+                totalRevenue += net;
+            }
+            
             return {
                 id: t._id,
-                name: t.title,
+                name: isCancelled ? `${t.title} (Cancelled)` : t.title,
                 revenue: fees,
                 expenses: expenses,
-                netProfit: net
+                netProfit: net,
+                status: t.status,
+                createdAt: t.createdAt
             };
         });
 
@@ -68,6 +77,13 @@ export async function GET(req: Request) {
             return acc;
         }, {});
 
+        const totalAccountsCheckedCount = await User.countDocuments({ status: { $ne: 'banned' } });
+        const mismatchedAccountsCount = await User.countDocuments({ walletStatus: 'Mismatch' });
+        const mismatchedAccountsDetails = await User.find(
+            { walletStatus: 'Mismatch' },
+            { name: 1, email: 1, walletBalance: 1, walletLedgerSum: 1, walletFlagReason: 1, suspiciousFlag: 1 }
+        ).lean();
+
         return NextResponse.json({
             summary: {
                 cashInHand,
@@ -76,9 +92,12 @@ export async function GET(req: Request) {
                 totalWithdrawals,
                 pendingDepositsCount,
                 pendingWithdrawalsCount,
-                methodCounts
+                methodCounts,
+                mismatchedAccountsCount,
+                totalAccountsCheckedCount
             },
-            profitTable
+            profitTable,
+            mismatchedAccountsDetails
         });
 
     } catch (error) {

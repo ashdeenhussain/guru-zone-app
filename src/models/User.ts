@@ -42,7 +42,8 @@ const UserSchema = new Schema(
                 'manage_tournaments', // Can create/edit tournaments, results
                 'manage_store',      // Can add products, view orders, manage lucky spin
                 'manage_support',    // Can reply to tickets, view users
-                'manage_system'      // Super Admin: settings, manage staff
+                'manage_system',     // Super Admin: settings, manage staff
+                'view_finance_visibility' // Can view advanced financial command center logs & profit
             ]
         }],
         walletBalance: {
@@ -192,6 +193,23 @@ const UserSchema = new Schema(
             label: String,
             rewardType: String,
             product: String,
+        },
+        walletStatus: {
+            type: String,
+            enum: ['Synced', 'Mismatch'],
+            default: 'Synced',
+        },
+        suspiciousFlag: {
+            type: Boolean,
+            default: false,
+        },
+        walletFlagReason: {
+            type: String,
+            default: '',
+        },
+        walletLedgerSum: {
+            type: Number,
+            default: 0,
         }
     },
     { timestamps: true }

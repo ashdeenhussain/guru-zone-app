@@ -41,6 +41,14 @@ const OrderSchema = new Schema(
             type: String,
             // Optional
         },
+        purchaseCost: {
+            type: Number,
+            required: false,
+        },
+        calculatedProfit: {
+            type: Number,
+            required: false,
+        },
     },
     { timestamps: true }
 );

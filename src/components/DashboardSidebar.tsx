@@ -79,14 +79,16 @@ export default function DashboardSidebar() {
     // Check for admin role
     const isAdmin = (session?.user as any)?.role === 'admin';
 
-    // Add Admin Dashboard link if user is admin
+    // Add Admin Dashboard links if user is admin
     if (isAdmin) {
-        sidebarItems.unshift({
-            icon: Shield,
-            label: "Admin Command",
-            href: "/admin/dashboard",
-            badge: unreadCounts.admin
-        });
+        sidebarItems.unshift(
+            {
+                icon: Shield,
+                label: "Admin Command",
+                href: "/admin/dashboard",
+                badge: unreadCounts.admin
+            }
+        );
     }
 
     return (

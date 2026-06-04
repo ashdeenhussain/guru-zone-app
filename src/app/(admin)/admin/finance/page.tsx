@@ -35,6 +35,8 @@ interface FinanceStats {
         totalRevenue: number;
         totalDeposits: number;
         totalWithdrawals: number;
+        mismatchedAccountsCount?: number;
+        totalAccountsCheckedCount?: number;
     };
     profitTable: {
         id: string;
@@ -42,6 +44,16 @@ interface FinanceStats {
         revenue: number;
         expenses: number;
         netProfit: number;
+        status?: string;
+    }[];
+    mismatchedAccountsDetails?: {
+        _id: string;
+        name: string;
+        email: string;
+        walletBalance: number;
+        walletLedgerSum?: number;
+        walletFlagReason: string;
+        suspiciousFlag: boolean;
     }[];
 }
 
@@ -75,6 +87,61 @@ export default function AdminFinancePage() {
         userId: '',
         userName: ''
     });
+
+    const [isReconciling, setIsReconciling] = useState(false);
+    const [isSyncing, setIsSyncing] = useState<string | null>(null);
+
+    const [userPerformance, setUserPerformance] = useState<any[]>([]);
+    const [userPerfSearch, setUserPerfSearch] = useState('');
+    const [userPerfPage, setUserPerfPage] = useState(1);
+    const [userPerfFilter, setUserPerfFilter] = useState('all');
+    const [reportsSubTab, setReportsSubTab] = useState<'summary' | 'health' | 'performance'>('summary');
+    const [tournamentPage, setTournamentPage] = useState(1);
+
+    const runReconciliation = async () => {
+        setIsReconciling(true);
+        try {
+            const res = await fetch('/api/finance/reconcile', { method: 'POST' });
+            if (res.ok) {
+                await fetchData();
+                alert('Reconciliation audit completed successfully!');
+            } else {
+                alert('Failed to run reconciliation audit.');
+            }
+        } catch (error) {
+            console.error('Failed to run reconciliation:', error);
+            alert('Something went wrong during reconciliation.');
+        } finally {
+            setIsReconciling(false);
+        }
+    };
+
+    const runSyncWallet = async (userId: string, userName: string) => {
+        if (!confirm(`Are you sure you want to auto-sync the wallet of ${userName} to match their transaction ledger sum? This will adjust their balance in the database.`)) {
+            return;
+        }
+        setIsSyncing(userId);
+        try {
+            const res = await fetch('/api/admin/wallet/reconcile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, reason: 'System Health Dashboard Auto-Sync Fix' })
+            });
+            if (res.ok) {
+                // Clear their mismatch flag by running reconciliation check for this user
+                await fetch(`/api/finance/reconcile?userId=${userId}`);
+                await fetchData();
+                alert(`Wallet of ${userName} was synced successfully!`);
+            } else {
+                alert(`Failed to sync wallet of ${userName}.`);
+            }
+        } catch (error) {
+            console.error('Failed to sync wallet:', error);
+            alert('Something went wrong during sync.');
+        } finally {
+            setIsSyncing(null);
+        }
+    };
 
 
 
@@ -138,9 +205,16 @@ export default function AdminFinancePage() {
                 const data = await res.json();
                 setWithdrawals(Array.isArray(data) ? data : []);
             } else if (activeTab === 'reports') {
-                const res = await fetch('/api/admin/finance/stats');
-                const data = await res.json();
-                setStats(data);
+                const [statsRes, perfRes] = await Promise.all([
+                    fetch('/api/admin/finance/stats'),
+                    fetch('/api/admin/finance/user-performance')
+                ]);
+                const statsData = await statsRes.json();
+                const perfData = await perfRes.json();
+                setStats(statsData);
+                if (perfData.success) {
+                    setUserPerformance(perfData.data);
+                }
             }
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -161,6 +235,25 @@ export default function AdminFinancePage() {
         setShowSafetyCheck(false);
         setShowFinalReview(false);
         setShowRejectReview(false);
+    };
+
+    const handleExportUserPerformanceCSV = () => {
+        const filteredUserPerf = userPerformance.filter(user => 
+            user.name.toLowerCase().includes(userPerfSearch.toLowerCase()) || 
+            user.email.toLowerCase().includes(userPerfSearch.toLowerCase())
+        );
+        const header = 'ID,Name,Email,Total Deposits,Freebies & Adjustments,Contribution Ratio\n';
+        const rows = filteredUserPerf.map(u => 
+            `"${u._id}","${u.name.replace(/"/g, '""')}","${u.email.replace(/"/g, '""')}",${u.totalDeposits},${u.totalFreebies + u.adminAdjustments},${u.ratio}`
+        );
+        const blob = new Blob([header + rows.join("\n")], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `user_performance_export_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     const processTransaction = async (action: 'approved' | 'rejected') => {
@@ -230,6 +323,38 @@ export default function AdminFinancePage() {
     const handleOpenLedger = (userId: string, userName: string) => {
         setLedgerState({ isOpen: true, userId, userName });
     };
+
+    const filteredUserPerf = userPerformance.filter(user => {
+        const matchesSearch = user.name.toLowerCase().includes(userPerfSearch.toLowerCase()) || 
+                              user.email.toLowerCase().includes(userPerfSearch.toLowerCase());
+        if (!matchesSearch) return false;
+
+        if (userPerfFilter === 'flagged') {
+            return user.ratio < 1.0;
+        } else if (userPerfFilter === 'healthy') {
+            return user.ratio >= 1.0;
+        } else if (userPerfFilter === 'no_deposits') {
+            return user.totalDeposits === 0;
+        } else if (userPerfFilter === 'deposits') {
+            return user.totalDeposits > 0;
+        }
+        return true;
+    });
+    const itemsPerPage = 10;
+    const totalPerfPages = Math.ceil(filteredUserPerf.length / itemsPerPage) || 1;
+    const currentPage = Math.min(userPerfPage, totalPerfPages);
+    const paginatedUserPerf = filteredUserPerf.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
+    const itemsPerTournamentPage = 10;
+    const totalTournamentPages = Math.ceil((stats?.profitTable?.length || 0) / itemsPerTournamentPage) || 1;
+    const currentTournamentPage = Math.min(tournamentPage, totalTournamentPages);
+    const paginatedTournaments = (stats?.profitTable || []).slice(
+        (currentTournamentPage - 1) * itemsPerTournamentPage,
+        currentTournamentPage * itemsPerTournamentPage
+    );
 
     return (
         <div className="-m-4 lg:-m-8">
@@ -796,7 +921,199 @@ export default function AdminFinancePage() {
                     {/* REPORTS TAB */}
                     {activeTab === 'reports' && stats && (
                         <div className="space-y-6 animate-in fade-in duration-500">
-                            {/* Cards */}
+                            {/* Sub-Tab Navigation Switcher */}
+                            <div className="flex flex-wrap items-center gap-1.5 p-1 bg-zinc-800/40 border border-zinc-700/30 rounded-2xl w-fit mb-2">
+                                <button
+                                    onClick={() => setReportsSubTab('summary')}
+                                    className={`px-5 py-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
+                                        reportsSubTab === 'summary'
+                                            ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                                            : 'text-muted-foreground hover:text-foreground hover:bg-zinc-800/50'
+                                    }`}
+                                >
+                                    Overview & Profitability
+                                </button>
+                                <button
+                                    onClick={() => setReportsSubTab('health')}
+                                    className={`px-5 py-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
+                                        reportsSubTab === 'health'
+                                            ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                                            : 'text-muted-foreground hover:text-foreground hover:bg-zinc-800/50'
+                                    }`}
+                                >
+                                    System Health Center
+                                </button>
+                                <button
+                                    onClick={() => setReportsSubTab('performance')}
+                                    className={`px-5 py-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
+                                        reportsSubTab === 'performance'
+                                            ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                                            : 'text-muted-foreground hover:text-foreground hover:bg-zinc-800/50'
+                                    }`}
+                                >
+                                    User Performance Ratio
+                                </button>
+                            </div>
+
+                            {/* Section 1: System Health */}
+                            {reportsSubTab === 'health' && (
+                                <div className="space-y-6 animate-in fade-in duration-300">
+                            {/* System Health Widget */}
+                            <div className="bg-card border border-border rounded-xl p-6 shadow-sm overflow-hidden space-y-4 animate-in slide-in-from-top-1 duration-300">
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                    <div className="flex items-center gap-3">
+                                        {(!stats.summary.mismatchedAccountsCount || stats.summary.mismatchedAccountsCount === 0) ? (
+                                            <div className="p-3 bg-green-500/10 rounded-xl text-green-500 relative flex items-center justify-center shrink-0">
+                                                <span className="absolute inline-flex h-2 w-2 rounded-full bg-green-400 opacity-75 animate-ping"></span>
+                                                <CheckCircle size={24} className="relative inline-flex" />
+                                            </div>
+                                        ) : (
+                                            <div className="p-3 bg-red-500/10 rounded-xl text-red-500 relative flex items-center justify-center shrink-0">
+                                                <span className="absolute inline-flex h-2 w-2 rounded-full bg-red-400 opacity-75 animate-ping"></span>
+                                                <ShieldAlert size={24} className="relative inline-flex" />
+                                            </div>
+                                        )}
+                                        <div>
+                                            <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                                                System Health Center
+                                            </h3>
+                                            <p className="text-xs text-muted-foreground">
+                                                {(!stats.summary.mismatchedAccountsCount || stats.summary.mismatchedAccountsCount === 0)
+                                                    ? "All Wallets Synced (Green)"
+                                                    : `${stats.summary.mismatchedAccountsCount} Account(s) Mismatched (Red)`}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={runReconciliation}
+                                        disabled={isReconciling || isLoading}
+                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all disabled:opacity-50"
+                                    >
+                                        <RefreshCcw size={14} className={isReconciling ? "animate-spin" : ""} />
+                                        {isReconciling ? "Auditing..." : "Run Reconciliation Audit"}
+                                    </button>
+                                </div>
+
+                                {/* Health Score Progress Bar */}
+                                {stats.summary.totalAccountsCheckedCount && (
+                                    <div className="space-y-1.5 pt-2">
+                                        <div className="flex justify-between items-center text-xs">
+                                            <span className="text-muted-foreground font-medium">Wallet Synchronization Score</span>
+                                            <span className={`font-bold ${
+                                                ((stats.summary.totalAccountsCheckedCount - (stats.summary.mismatchedAccountsCount || 0)) / stats.summary.totalAccountsCheckedCount * 100) === 100 
+                                                    ? 'text-green-500' 
+                                                    : 'text-yellow-500'
+                                            }`}>
+                                                {Math.max(0, Math.min(100, Math.round(((stats.summary.totalAccountsCheckedCount - (stats.summary.mismatchedAccountsCount || 0)) / stats.summary.totalAccountsCheckedCount) * 100)))}% Synced
+                                            </span>
+                                        </div>
+                                        <div className="w-full bg-zinc-800 rounded-full h-2 overflow-hidden border border-white/5">
+                                            <div 
+                                                className={`h-full rounded-full transition-all duration-500 ${
+                                                    ((stats.summary.totalAccountsCheckedCount - (stats.summary.mismatchedAccountsCount || 0)) / stats.summary.totalAccountsCheckedCount * 100) === 100 
+                                                        ? 'bg-gradient-to-r from-green-500 to-emerald-400' 
+                                                        : 'bg-gradient-to-r from-red-500 to-yellow-500'
+                                                }`} 
+                                                style={{ 
+                                                    width: `${Math.max(0, Math.min(100, Math.round(((stats.summary.totalAccountsCheckedCount - (stats.summary.mismatchedAccountsCount || 0)) / stats.summary.totalAccountsCheckedCount) * 100)))}%` 
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {stats.mismatchedAccountsDetails && stats.mismatchedAccountsDetails.length > 0 && (
+                                    <div className="mt-4 border-t border-border pt-4 animate-in fade-in duration-300">
+                                        <h4 className="text-sm font-semibold text-red-400 mb-3 flex items-center gap-2">
+                                            <AlertCircle size={16} /> Flagged Mismatch Accounts
+                                        </h4>
+                                        <div className="overflow-x-auto rounded-lg border border-border">
+                                            <table className="w-full text-left text-xs">
+                                                <thead className="bg-muted text-muted-foreground uppercase font-bold text-[10px]">
+                                                    <tr>
+                                                        <th className="px-4 py-3">User</th>
+                                                        <th className="px-4 py-3">Wallet Balance</th>
+                                                        <th className="px-4 py-3">Ledger Sum</th>
+                                                        <th className="px-4 py-3">Difference</th>
+                                                        <th className="px-4 py-3">Alert Status</th>
+                                                        <th className="px-4 py-3 text-right">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-border">
+                                                    {stats.mismatchedAccountsDetails.map((user: any) => {
+                                                        const wallet = user.walletBalance || 0;
+                                                        const ledger = user.walletLedgerSum || 0;
+                                                        const diff = ledger - wallet;
+                                                        const diffText = diff > 0 ? `+Rs ${diff.toLocaleString()}` : `-Rs ${Math.abs(diff).toLocaleString()}`;
+                                                        const diffColor = diff === 0 ? 'text-muted-foreground' : (diff > 0 ? 'text-green-400' : 'text-red-400');
+                                                        return (
+                                                            <tr key={user._id} className="hover:bg-muted/30 transition-colors">
+                                                                <td className="px-4 py-3">
+                                                                    <div className="font-semibold text-foreground">{user.name}</div>
+                                                                    <div className="text-[10px] text-muted-foreground">{user.email}</div>
+                                                                </td>
+                                                                <td className="px-4 py-3 font-mono font-bold text-foreground">
+                                                                    Rs {wallet.toLocaleString()}
+                                                                </td>
+                                                                <td className="px-4 py-3 font-mono text-muted-foreground">
+                                                                    Rs {ledger.toLocaleString()}
+                                                                </td>
+                                                                <td className={`px-4 py-3 font-mono font-bold ${diffColor}`}>
+                                                                    {diff === 0 ? 'Rs 0' : diffText}
+                                                                </td>
+                                                                <td className="px-4 py-3">
+                                                                    <div className="flex flex-wrap gap-1">
+                                                                        {user.suspiciousFlag && (
+                                                                            <span className="px-1.5 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded text-[9px] font-bold uppercase tracking-wider">
+                                                                                Suspicious Activity
+                                                                            </span>
+                                                                        )}
+                                                                        {diff !== 0 && (
+                                                                            <span className="px-1.5 py-0.5 bg-red-500/10 border border-red-500/20 text-red-500 rounded text-[9px] font-bold uppercase tracking-wider">
+                                                                                Balance Mismatch
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    <p className="text-[10px] text-muted-foreground mt-1 truncate max-w-[200px]" title={user.walletFlagReason}>
+                                                                        {user.walletFlagReason || 'Mismatch detected'}
+                                                                    </p>
+                                                                </td>
+                                                                <td className="px-4 py-3 text-right text-xs">
+                                                                    <div className="flex justify-end gap-1.5">
+                                                                        <button
+                                                                            onClick={() => handleOpenLedger(user._id, user.name)}
+                                                                            className="px-2.5 py-1 bg-white/5 hover:bg-white/10 text-foreground border border-white/5 rounded font-bold transition-all text-[11px]"
+                                                                            title="Inspect user transaction logs"
+                                                                        >
+                                                                            View Ledger
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => runSyncWallet(user._id, user.name)}
+                                                                            disabled={isSyncing !== null}
+                                                                            className="px-2.5 py-1 bg-green-600 hover:bg-green-700 text-white rounded font-bold transition-all disabled:opacity-50 text-[11px] cursor-pointer"
+                                                                            title="Auto-adjust wallet to match ledger history sum"
+                                                                        >
+                                                                            {isSyncing === user._id ? "Syncing..." : "Auto-Sync"}
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                            {/* Section 2: Overview & Profitability */}
+                            {reportsSubTab === 'summary' && (
+                                <div className="space-y-6 animate-in fade-in duration-300">
+                                    {/* Cards */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                 <div className="bg-gradient-to-br from-green-600/20 to-green-900/10 border border-green-500/20 p-6 rounded-xl">
                                     <div className="flex items-center gap-3 mb-2">
@@ -834,31 +1151,192 @@ export default function AdminFinancePage() {
                                     <thead className="bg-muted/50 text-foreground uppercase font-semibold text-xs text-center border-b border-border">
                                         <tr>
                                             <th className="px-6 py-4 text-left">Tournament</th>
+                                            <th className="px-6 py-4">Status</th>
                                             <th className="px-6 py-4">Total Fees (Revenue)</th>
                                             <th className="px-6 py-4">Prize Pool (Expense)</th>
                                             <th className="px-6 py-4">Net Profit</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-border">
-                                        {stats.profitTable.length === 0 ? (
-                                            <tr><td colSpan={4} className="p-6 text-center">No completed tournaments data.</td></tr>
+                                        {paginatedTournaments.length === 0 ? (
+                                            <tr><td colSpan={5} className="p-6 text-center">No completed tournaments data.</td></tr>
                                         ) : (
-                                            stats.profitTable.map((t) => (
-                                                <tr key={t.id} className="hover:bg-muted/30 transition-colors text-center">
-                                                    <td className="px-6 py-4 text-left font-medium text-foreground">{t.name}</td>
-                                                    <td className="px-6 py-4 text-green-500">+ {t.revenue}</td>
-                                                    <td className="px-6 py-4 text-red-500">- {t.expenses}</td>
-                                                    <td className={`px-6 py-4 font-bold ${t.netProfit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                                        {t.netProfit}
-                                                    </td>
-                                                </tr>
-                                            ))
+                                            paginatedTournaments.map((t) => {
+                                                const isCancelled = ['cancelled', 'Cancelled'].includes(t.status || '');
+                                                return (
+                                                    <tr key={t.id} className="hover:bg-muted/30 transition-colors text-center">
+                                                        <td className="px-6 py-4 text-left font-medium text-foreground">{t.name}</td>
+                                                        <td className="px-6 py-4">
+                                                            {isCancelled ? (
+                                                                <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-bold bg-red-500/10 text-red-500 border border-red-500/20">
+                                                                    Cancelled
+                                                                </span>
+                                                            ) : (
+                                                                <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-bold bg-green-500/10 text-green-500 border border-green-500/20">
+                                                                    Completed
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-green-500">+ {t.revenue}</td>
+                                                        <td className="px-6 py-4 text-red-500">- {t.expenses}</td>
+                                                        <td className={`px-6 py-4 font-bold ${t.netProfit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                                            {t.netProfit}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
                                         )}
                                     </tbody>
                                 </table>
+                                {/* Tournament Table Pagination */}
+                                {stats.profitTable.length > itemsPerTournamentPage && (
+                                    <div className="p-4 border-t border-border bg-muted/10 flex items-center justify-between">
+                                        <div className="text-xs text-muted-foreground">
+                                            Showing <span className="font-bold">{paginatedTournaments.length}</span> of <span className="font-bold">{stats.profitTable.length}</span> tournaments
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => setTournamentPage(p => Math.max(1, p - 1))}
+                                                disabled={currentTournamentPage === 1}
+                                                className="px-2.5 py-1 text-xs font-bold bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 text-foreground rounded disabled:opacity-50 cursor-pointer"
+                                            >
+                                                Prev
+                                            </button>
+                                            <span className="text-xs font-bold text-foreground">Page {currentTournamentPage} of {totalTournamentPages}</span>
+                                            <button
+                                                onClick={() => setTournamentPage(p => Math.min(totalTournamentPages, p + 1))}
+                                                disabled={currentTournamentPage === totalTournamentPages}
+                                                className="px-2.5 py-1 text-xs font-bold bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 text-foreground rounded disabled:opacity-50 cursor-pointer"
+                                            >
+                                                Next
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
+
+                            {/* Section 3: User Performance */}
+                            {reportsSubTab === 'performance' && (
+                                <div className="space-y-6 animate-in fade-in duration-300">
+                                    {/* User Performance Table */}
+                            <div className="rounded-xl border border-border bg-card overflow-hidden">
+                                <div className="px-6 py-4 border-b border-border bg-muted/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                    <div>
+                                        <h3 className="text-lg font-bold text-foreground">User Performance</h3>
+                                        <p className="text-xs text-muted-foreground font-medium mt-0.5">Monitor each user's contribution ratio based on deposits vs freebies/adjustments.</p>
+                                    </div>
+                                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                                        <div className="relative flex-1 sm:w-64">
+                                            <input
+                                                type="text"
+                                                placeholder="Search user..."
+                                                value={userPerfSearch}
+                                                onChange={(e) => { setUserPerfSearch(e.target.value); setUserPerfPage(1); }}
+                                                className="w-full px-3 py-1.5 bg-background border border-border rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
+                                            />
+                                        </div>
+                                        <select
+                                            value={userPerfFilter}
+                                            onChange={(e) => { setUserPerfFilter(e.target.value); setUserPerfPage(1); }}
+                                            className="px-3 py-1.5 bg-background border border-border rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary text-foreground cursor-pointer"
+                                        >
+                                            <option value="all">All Ratios</option>
+                                            <option value="flagged">Flagged Only (&lt; 1.0)</option>
+                                            <option value="healthy">Healthy Only (&ge; 1.0)</option>
+                                            <option value="no_deposits">No Deposits (Rs 0)</option>
+                                            <option value="deposits">Has Deposits (&gt; Rs 0)</option>
+                                        </select>
+                                        <button
+                                            onClick={handleExportUserPerformanceCSV}
+                                            className="flex items-center justify-center gap-2 px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all shrink-0 active:scale-95 cursor-pointer shadow-md"
+                                        >
+                                            Export CSV
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-sm text-muted-foreground">
+                                        <thead className="bg-muted/50 text-foreground uppercase font-semibold text-xs text-center border-b border-border">
+                                            <tr>
+                                                <th className="px-6 py-4 text-left">User</th>
+                                                <th className="px-6 py-4">Total Deposits</th>
+                                                <th className="px-6 py-4">Freebies & Adjustments</th>
+                                                <th className="px-6 py-4">Contribution Ratio</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-border">
+                                            {paginatedUserPerf.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={4} className="p-6 text-center text-xs">
+                                                        No user data found.
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                paginatedUserPerf.map((user) => {
+                                                    const freebiesAndAdjustments = user.totalFreebies + user.adminAdjustments;
+                                                    const isLowRatio = user.ratio < 1.0;
+                                                    return (
+                                                        <tr key={user._id} className="hover:bg-muted/30 transition-colors text-center">
+                                                            <td className="px-6 py-4 text-left">
+                                                                <div className="font-semibold text-foreground text-sm">{user.name}</div>
+                                                                <div className="text-[10px] text-muted-foreground">{user.email}</div>
+                                                            </td>
+                                                            <td className="px-6 py-4 font-mono font-medium text-foreground">
+                                                                Rs {user.totalDeposits.toLocaleString()}
+                                                            </td>
+                                                            <td className="px-6 py-4 font-mono text-muted-foreground">
+                                                                Rs {freebiesAndAdjustments.toLocaleString()}
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                {isLowRatio ? (
+                                                                    <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-bold bg-red-500/10 text-red-500 border border-red-500/20">
+                                                                        {user.ratio === 999.0 ? '999.0 (High)' : user.ratio.toFixed(2)}
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-bold bg-green-500/10 text-green-500 border border-green-500/20">
+                                                                        {user.ratio === 999.0 ? '999.0 (High)' : user.ratio.toFixed(2)}
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {/* Pagination */}
+                                {filteredUserPerf.length > itemsPerPage && (
+                                    <div className="p-4 border-t border-border bg-muted/10 flex items-center justify-between">
+                                        <div className="text-xs text-muted-foreground">
+                                            Showing <span className="font-bold">{paginatedUserPerf.length}</span> of <span className="font-bold">{filteredUserPerf.length}</span> users
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => setUserPerfPage(p => Math.max(1, p - 1))}
+                                                disabled={currentPage === 1}
+                                                className="px-2.5 py-1 text-xs font-bold bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 text-foreground rounded disabled:opacity-50 cursor-pointer"
+                                            >
+                                                Prev
+                                            </button>
+                                            <span className="text-xs font-bold text-foreground">Page {currentPage} of {totalPerfPages}</span>
+                                            <button
+                                                onClick={() => setUserPerfPage(p => Math.min(totalPerfPages, p + 1))}
+                                                disabled={currentPage === totalPerfPages}
+                                                className="px-2.5 py-1 text-xs font-bold bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 text-foreground rounded disabled:opacity-50 cursor-pointer"
+                                            >
+                                                Next
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
                 </div>
 
                 {/* Ledger Modal */}

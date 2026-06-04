@@ -29,16 +29,26 @@ export async function POST(req: Request) {
         transactions.forEach((trx: any) => {
             const status = trx.status?.toLowerCase() || 'pending';
             const type = trx.type;
-            const amount = Math.abs(trx.amount || 0);
+            const origAmt = trx.amount || 0;
+            const amount = Math.abs(origAmt);
 
-            if (['rejected', 'failed', 'cancelled'].includes(status)) return;
+            if (['rejected', 'failed', 'cancelled'].includes(status)) {
+                if (type !== 'shop_purchase') {
+                    return;
+                }
+            }
             if (type === 'deposit' && status === 'pending') return;
 
             switch (type) {
                 case 'deposit':
                 case 'prize_winnings':
                 case 'spin_win':
+                case 'daily_reward_spin':
+                case 'free_spin':
                 case 'refund':
+                case 'daily_free_coins':
+                case 'daily_collect':
+                case 'rank_reward':
                 case 'CREDIT':
                     ledgerSum += amount;
                     break;
@@ -54,8 +64,7 @@ export async function POST(req: Request) {
                     } else if (trx.details?.adjustmentType === 'DEBIT') {
                         ledgerSum -= amount;
                     } else {
-                        // Fallback: If no type, check amount sign or default to debit for security
-                        ledgerSum -= amount; 
+                        ledgerSum += origAmt; 
                     }
                     break;
             }

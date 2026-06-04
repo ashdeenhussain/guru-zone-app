@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectToDB from "@/lib/db";
 import User from "@/models/User";
 import Transaction from "@/models/Transaction";
+import FinancialLog from "@/models/FinancialLog";
 
 // Weekly schedule: Day 1→1 coin, Day 2-3→2 coins, Day 4-5→4 coins, Day 6-7→5 coins
 const WEEKLY_SCHEDULE = [0, 1, 2, 2, 4, 4, 5, 5]; // index 0 unused, 1-7 are days
@@ -120,13 +121,28 @@ export async function POST() {
         await user.save();
 
         // Record transaction
-        await Transaction.create({
+        const tx = await Transaction.create({
             user: userId,
             amount: coinsToAward,
             type: "daily_free_coins",
             status: "approved",
             description: `Daily Free Coins — Day ${nextDay} (${coinsToAward} Coins)`,
         });
+
+        // ── Financial Log Event ──
+        try {
+            await FinancialLog.create({
+                type: 'daily_collect',
+                amount: coinsToAward,
+                currency: 'Coins',
+                userId: userId,
+                referenceId: tx._id,
+                description: `Daily Free Coins — Day ${nextDay} (${coinsToAward} Coins)`,
+                timestamp: new Date()
+            });
+        } catch (logErr) {
+            console.error("Failed to write daily collect to FinancialLog:", logErr);
+        }
 
         return NextResponse.json({
             success: true,

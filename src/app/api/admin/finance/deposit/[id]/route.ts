@@ -7,6 +7,7 @@ import Transaction from '@/models/Transaction';
 import User from '@/models/User';
 import Notification from '@/models/Notification';
 import AdminActivity from '@/models/AdminActivity';
+import FinancialLog from '@/models/FinancialLog';
 import { sendPushNotification } from '@/lib/webpush';
 
 export async function PATCH(
@@ -78,6 +79,21 @@ export async function PATCH(
 
             await user.save();
             await transaction.save();
+
+            // ── Financial Log Event ──
+            try {
+                await FinancialLog.create({
+                    type: transaction.type === 'deposit' ? 'deposit' : 'withdrawal',
+                    amount: finalAmount,
+                    currency: 'PKR',
+                    userId: user._id,
+                    referenceId: transaction._id,
+                    description: `Approved ${transaction.type} of Rs ${finalAmount} for ${user.email}.${amountAdjustedMsg}`,
+                    timestamp: new Date()
+                });
+            } catch (logErr) {
+                console.error("Failed to write to FinancialLog:", logErr);
+            }
 
             // 4. Notification
             const actionVerb = transaction.type === 'deposit' ? 'Deposit' : 'Withdrawal';

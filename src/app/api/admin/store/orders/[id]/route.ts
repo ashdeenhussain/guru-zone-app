@@ -7,6 +7,7 @@ import User from '@/models/User';
 import Transaction from '@/models/Transaction';
 import Notification from '@/models/Notification';
 import AdminActivity from '@/models/AdminActivity';
+import FinancialLog from '@/models/FinancialLog';
 import connectToDB from '@/lib/db';
 
 export async function PATCH(
@@ -23,7 +24,7 @@ export async function PATCH(
 
         const params = await context.params;
         const { id } = params;
-        const { action, reason } = await request.json();
+        const { action, reason, purchaseCost } = await request.json();
 
         if (!id || !action) {
             return NextResponse.json({ success: false, message: 'Missing order ID or action' }, { status: 400 });
@@ -41,10 +42,29 @@ export async function PATCH(
         if (action === 'approve') {
             order.status = 'approved';
 
+            const finalPurchaseCost = purchaseCost !== undefined ? Number(purchaseCost) : 0;
+            const calculatedProfit = order.pricePaid - finalPurchaseCost;
+            order.purchaseCost = finalPurchaseCost;
+            order.calculatedProfit = calculatedProfit;
+
             // Mark the purchase transaction as approved
             await Transaction.findOneAndUpdate(
                 { referenceId: order._id, type: 'shop_purchase' },
                 { status: 'approved' }
+            );
+
+            // Update or Upsert FinancialLog entry
+            await FinancialLog.findOneAndUpdate(
+                { referenceId: order._id, type: 'shop_purchase' },
+                { 
+                    purchaseCost: finalPurchaseCost,
+                    calculatedProfit: calculatedProfit,
+                    amount: order.pricePaid,
+                    currency: 'Coins',
+                    userId: order.userId,
+                    description: `Purchased product (approved)`
+                },
+                { upsert: true }
             );
 
             const user = await User.findById(order.userId);

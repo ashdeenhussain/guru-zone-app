@@ -21,7 +21,7 @@ import {
 interface Order {
     _id: string;
     userId: { _id: string; name: string; email: string };
-    productId: { title: string; priceCoins: number; imageType: string; imageUrl?: string; emoji?: string };
+    productId: { title: string; priceCoins: number; imageType: string; imageUrl?: string; emoji?: string; costPrice?: number };
     pricePaid: number;
     status: 'Pending' | 'Approved' | 'Rejected';
     userDetails: {
@@ -30,6 +30,8 @@ interface Order {
     };
     createdAt: string;
     adminComment?: string;
+    purchaseCost?: number;
+    calculatedProfit?: number;
 }
 
 export default function OrderManagementPage() {
@@ -42,6 +44,10 @@ export default function OrderManagementPage() {
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [rejectId, setRejectId] = useState<string | null>(null);
     const [rejectReason, setRejectReason] = useState('');
+
+    // Approve Modal State
+    const [approveModalOrder, setApproveModalOrder] = useState<Order | null>(null);
+    const [purchaseCostInput, setPurchaseCostInput] = useState<number>(0);
 
     useEffect(() => {
         fetchOrders();
@@ -67,7 +73,7 @@ export default function OrderManagementPage() {
         }
     };
 
-    const handleProcessOrder = async (id: string, action: 'approve' | 'reject', reason?: string) => {
+    const handleProcessOrder = async (id: string, action: 'approve' | 'reject', reason?: string, purchaseCost?: number) => {
         if (processingId) return;
         setProcessingId(id);
 
@@ -75,12 +81,17 @@ export default function OrderManagementPage() {
             const res = await fetch(`/api/admin/store/orders/${id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action, reason }),
+                body: JSON.stringify({ action, reason, purchaseCost }),
             });
             const data = await res.json();
             if (data.success) {
                 // Update local state
-                setOrders(prev => prev.map(o => o._id === id ? { ...o, status: action === 'approve' ? 'Approved' : 'Rejected' } : o));
+                setOrders(prev => prev.map(o => o._id === id ? { 
+                    ...o, 
+                    status: action === 'approve' ? 'Approved' : 'Rejected',
+                    purchaseCost: data.order?.purchaseCost,
+                    calculatedProfit: data.order?.calculatedProfit
+                } : o));
                 if (action === 'reject') {
                     setRejectId(null);
                     setRejectReason('');
@@ -94,6 +105,11 @@ export default function OrderManagementPage() {
         } finally {
             setProcessingId(null);
         }
+    };
+
+    const openApproveModal = (order: Order) => {
+        setApproveModalOrder(order);
+        setPurchaseCostInput(order.productId?.costPrice || 0);
     };
 
     const copyToClipboard = (text: string) => {
@@ -291,6 +307,12 @@ export default function OrderManagementPage() {
                                             <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Total Paid</span>
                                             <span className="font-black text-sm text-yellow-500 tracking-tight">{order.pricePaid} Coins</span>
                                         </div>
+                                        {order.status?.toLowerCase() === 'approved' && order.purchaseCost !== undefined && (
+                                            <div className="flex justify-between items-center mt-1.5 pt-1.5 border-t border-yellow-500/10 text-[10px] text-muted-foreground">
+                                                <span>Cost: <span className="font-mono text-foreground font-bold">{order.purchaseCost}</span></span>
+                                                <span>Profit: <span className="font-mono text-green-400 font-bold">{order.calculatedProfit} Coins</span></span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
@@ -304,7 +326,7 @@ export default function OrderManagementPage() {
                                             Reject
                                         </button>
                                         <button
-                                            onClick={() => handleProcessOrder(order._id, 'approve')}
+                                            onClick={() => openApproveModal(order)}
                                             disabled={!!processingId}
                                             className="flex-1 bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-600/25 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95"
                                         >
@@ -367,6 +389,11 @@ export default function OrderManagementPage() {
                                                         <span className="w-1.5 h-1.5 rounded-full bg-yellow-500"></span>
                                                         <span className="text-xs font-mono font-bold text-yellow-500/90">{order.pricePaid} Coins</span>
                                                     </div>
+                                                    {order.status?.toLowerCase() === 'approved' && order.purchaseCost !== undefined && (
+                                                        <p className="text-[10px] text-muted-foreground mt-1.5">
+                                                            Cost: <span className="font-mono text-foreground font-bold">{order.purchaseCost}</span> | Profit: <span className="font-mono text-green-400 font-bold">{order.calculatedProfit} Coins</span>
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td className="p-5 text-xs font-medium text-muted-foreground">
@@ -387,7 +414,7 @@ export default function OrderManagementPage() {
                                                 {order.status?.toLowerCase() === 'pending' ? (
                                                     <div className="flex justify-end gap-2 opacity-100 transition-opacity">
                                                         <button
-                                                            onClick={() => handleProcessOrder(order._id, 'approve')}
+                                                            onClick={() => openApproveModal(order)}
                                                             disabled={!!processingId}
                                                             className="flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-green-600/20 hover:shadow-green-600/40 active:scale-95"
                                                         >
@@ -467,6 +494,109 @@ export default function OrderManagementPage() {
                                     Confirm Reject
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Approve Modal */}
+            {approveModalOrder && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-card/95 backdrop-blur-xl border border-white/10 rounded-3xl w-full max-w-md p-6 relative animate-in zoom-in-95 duration-200 shadow-2xl">
+                        <div className="w-12 h-12 rounded-full bg-green-500/10 text-green-400 flex items-center justify-center mb-4 border border-green-500/20">
+                            <CheckCircle2 size={24} />
+                        </div>
+
+                        <h3 className="text-xl font-bold text-foreground mb-2">
+                            Approve Order
+                        </h3>
+                        <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
+                            Review details and specify the purchase cost before approving.
+                        </p>
+
+                        <div className="space-y-4 mb-6">
+                            {/* Order Details Panel */}
+                            <div className="bg-background/60 rounded-2xl border border-white/5 p-4 space-y-2.5 text-xs">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-muted-foreground font-medium">User Database ID:</span>
+                                    <div className="flex items-center gap-1.5 font-mono text-foreground font-medium">
+                                        <span className="opacity-75">{approveModalOrder.userId?._id}</span>
+                                        <button onClick={() => copyToClipboard(approveModalOrder.userId?._id)} className="p-1 hover:bg-white/5 rounded text-muted-foreground hover:text-foreground">
+                                            <Copy size={12} />
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-muted-foreground font-medium">Game UID:</span>
+                                    <div className="flex items-center gap-1.5 font-mono text-blue-400 font-bold">
+                                        <span>{approveModalOrder.userDetails?.uid}</span>
+                                        <button onClick={() => copyToClipboard(approveModalOrder.userDetails?.uid)} className="p-1 hover:bg-white/5 rounded text-muted-foreground hover:text-foreground">
+                                            <Copy size={12} />
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-muted-foreground font-medium">In-Game Name:</span>
+                                    <span className="font-bold text-foreground">{approveModalOrder.userDetails?.inGameName}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-muted-foreground font-medium">Package:</span>
+                                    <span className="font-bold text-foreground">{approveModalOrder.productId?.title}</span>
+                                </div>
+                                <div className="flex justify-between items-center pt-2 border-t border-white/5">
+                                    <span className="text-muted-foreground font-medium">User Payment:</span>
+                                    <span className="font-black text-sm text-yellow-500 tracking-tight">{approveModalOrder.pricePaid} Coins</span>
+                                </div>
+                            </div>
+
+                            {/* Editable Purchase Cost */}
+                            <div className="space-y-1.5">
+                                <label className="text-xs text-muted-foreground font-bold uppercase tracking-wider">
+                                    Purchase Cost
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="any"
+                                    className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-foreground focus:ring-2 focus:ring-green-500/55 focus:border-green-500/55 outline-none text-sm transition-all font-medium"
+                                    value={purchaseCostInput}
+                                    onChange={(e) => setPurchaseCostInput(Number(e.target.value))}
+                                    placeholder="Enter purchase cost"
+                                    autoFocus
+                                />
+                                <p className="text-[10px] text-muted-foreground">
+                                    Default cost price: <span className="font-semibold">{approveModalOrder.productId?.costPrice || 0}</span>
+                                </p>
+                            </div>
+
+                            {/* Calculated Profit Display */}
+                            <div className="bg-green-500/5 border border-green-500/10 p-4 rounded-2xl flex justify-between items-center">
+                                <span className="text-xs text-muted-foreground font-medium">Calculated Profit:</span>
+                                <span className={`text-base font-black tracking-tight ${approveModalOrder.pricePaid - purchaseCostInput >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                    {approveModalOrder.pricePaid - purchaseCostInput} Coins
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                onClick={() => { setApproveModalOrder(null); }}
+                                className="px-4 py-3 bg-white/5 hover:bg-white/10 text-foreground rounded-xl text-sm font-bold transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    const id = approveModalOrder._id;
+                                    setApproveModalOrder(null);
+                                    await handleProcessOrder(id, 'approve', undefined, purchaseCostInput);
+                                }}
+                                disabled={processingId !== null}
+                                className="px-4 py-3 bg-green-600 hover:bg-green-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-green-600/20 hover:shadow-green-600/40 transform active:scale-95"
+                            >
+                                Confirm Approve
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -6,6 +6,7 @@ import StoreProduct from "@/models/StoreProduct";
 import Order from "@/models/Order";
 import Transaction from "@/models/Transaction";
 import Notification from "@/models/Notification";
+import FinancialLog from "@/models/FinancialLog";
 import mongoose from "mongoose";
 import AdminNotification from "@/models/AdminNotification";
 import { z } from "zod";
@@ -85,6 +86,9 @@ export async function POST(req: Request) {
                 throw new Error("Insufficient Coins or User not found");
             }
 
+            const purchaseCost = Number(product.costPrice || 0);
+            const calculatedProfit = price - purchaseCost;
+
             // 2. Create Order
             const newOrder = await Order.create([{
                 userId: user._id,
@@ -95,7 +99,9 @@ export async function POST(req: Request) {
                 userDetails: {
                     inGameName: userDetails.inGameName,
                     uid: userDetails.uid
-                }
+                },
+                purchaseCost: purchaseCost,
+                calculatedProfit: calculatedProfit
             }], { session: dbSession });
 
             const order = newOrder[0];
@@ -108,6 +114,19 @@ export async function POST(req: Request) {
                 description: `Purchased ${product.title}`,
                 status: 'pending',
                 referenceId: order._id
+            }], { session: dbSession });
+
+            // 3.5. Record to FinancialLog
+            await FinancialLog.create([{
+                type: 'shop_purchase',
+                amount: price,
+                currency: 'Coins',
+                userId: user._id,
+                referenceId: order._id,
+                description: `Purchased ${product.title} for ${price} coins`,
+                purchaseCost: purchaseCost,
+                calculatedProfit: calculatedProfit,
+                timestamp: new Date()
             }], { session: dbSession });
 
             // 4. Create Notification for User

@@ -5,6 +5,7 @@ import Message from '@/models/Message';
 import User from '@/models/User';
 import Transaction from '@/models/Transaction';
 import Notification from '@/models/Notification';
+import FinancialLog from '@/models/FinancialLog';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { sendPushNotification } from '@/lib/webpush';
@@ -237,6 +238,32 @@ export async function PUT(
                 tournament.verificationStatus = 'Confirmed';
                 await tournament.save();
                 console.log(`[VERIFY] Tournament marked as Completed.`);
+
+                // ── Financial Log Event ──
+                try {
+                    await FinancialLog.create([
+                        {
+                            type: 'tournament_commission',
+                            amount: platformFee,
+                            currency: 'Coins',
+                            userId: winner._id,
+                            referenceId: tournament._id,
+                            description: `Platform fee (10% commission) for tournament: ${tournament.title}`,
+                            timestamp: new Date()
+                        },
+                        {
+                            type: 'prize_winnings',
+                            amount: netPrize,
+                            currency: 'Coins',
+                            userId: winner._id,
+                            referenceId: tournament._id,
+                            description: `Prize winnings for tournament: ${tournament.title}`,
+                            timestamp: new Date()
+                        }
+                    ]);
+                } catch (logErr) {
+                    console.error("Failed to write tournament financials to FinancialLog:", logErr);
+                }
 
             } catch (payoutError: any) {
                 console.error(`[VERIFY CRITICAL ERROR] Payout execution failed:`, payoutError);

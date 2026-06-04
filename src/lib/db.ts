@@ -20,6 +20,7 @@ import '@/models/LandingPageContent';
 import '@/models/Media';
 import '@/models/Message';
 import '@/models/ChatReport';
+import '@/models/FinancialLog';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const MONGODB_URI = process.env.MONGODB_URI;

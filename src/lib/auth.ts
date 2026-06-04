@@ -13,7 +13,8 @@ export type AdminPermission =
     | 'manage_tournaments'
     | 'manage_store'
     | 'manage_support'
-    | 'manage_system';
+    | 'manage_system'
+    | 'view_finance_visibility';
 
 export function hasPermission(
     session: Session | null, 

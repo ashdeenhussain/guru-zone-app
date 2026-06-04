@@ -64,41 +64,56 @@ async function reconcileWallets() {
     let mismatchedCount = 0;
 
     for (const user of users) {
-        const transactions = await Transaction.find({
-            user: user._id,
-            status: { $in: ['approved', 'completed'] }
-        });
+        const transactions = await Transaction.find({ user: user._id });
 
         let calculatedBalance = 0;
 
         for (const trx of transactions) {
-            let amount = trx.amount || 0;
-            const type = (trx.type || '').toLowerCase();
+            const status = trx.status?.toLowerCase() || 'pending';
+            const type = trx.type;
+            const origAmt = trx.amount || 0;
+            const amount = Math.abs(origAmt);
 
-            // Determine if credit or debit
-            let isCredit = false;
-
-            if (['deposit', 'prize_winnings', 'refund'].includes(type)) {
-                isCredit = true;
-            } else if (type === 'admin_adjustment') {
-                if (trx.details?.adjustmentType === 'CREDIT') {
-                    isCredit = true;
-                } else {
-                    isCredit = false;
+            if (['rejected', 'failed', 'cancelled'].includes(status)) {
+                if (type !== 'shop_purchase') {
+                    continue;
                 }
-            } else if (type === 'spin_win') {
-                // Assuming spin_win is a prize/credit
-                isCredit = true;
-            } else {
-                // withdrawal, entry_fee, shop_purchase, etc.
-                isCredit = false;
+            }
+            if (type === 'deposit' && status === 'pending') {
+                continue;
             }
 
-            if (isCredit) {
-                calculatedBalance += amount;
-            } else {
-                calculatedBalance -= amount;
+            let diff = 0;
+            switch (type) {
+                case 'deposit':
+                case 'prize_winnings':
+                case 'spin_win':
+                case 'daily_reward_spin':
+                case 'free_spin':
+                case 'refund':
+                case 'daily_free_coins':
+                case 'daily_collect':
+                case 'rank_reward':
+                case 'CREDIT':
+                    diff = amount;
+                    break;
+                case 'withdrawal':
+                case 'entry_fee':
+                case 'shop_purchase':
+                case 'DEBIT':
+                    diff = -amount;
+                    break;
+                case 'ADMIN_ADJUSTMENT':
+                    if (trx.details?.adjustmentType === 'CREDIT') {
+                        diff = amount;
+                    } else if (trx.details?.adjustmentType === 'DEBIT') {
+                        diff = -amount;
+                    } else {
+                        diff = origAmt; 
+                    }
+                    break;
             }
+            calculatedBalance += diff;
         }
 
         const actualBalance = user.walletBalance || 0;

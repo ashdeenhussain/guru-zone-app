@@ -3,6 +3,7 @@ import connectToDB from '@/lib/db';
 import Tournament from '@/models/Tournament';
 import User from '@/models/User';
 import Transaction from '@/models/Transaction';
+import FinancialLog from '@/models/FinancialLog';
 import { getServerSession } from 'next-auth';
 import { authOptions, hasPermission } from '@/lib/auth';
 import AdminActivity from '@/models/AdminActivity';
@@ -112,6 +113,17 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
                         description: `Prize for ${rank} Place in ${tournament.title}`,
                         referenceId: id,
                         status: 'approved'
+                    }], { session: dbSession });
+
+                    // 2.5. Record to FinancialLog
+                    await FinancialLog.create([{
+                        type: 'prize_winnings',
+                        amount: amount,
+                        currency: 'Coins',
+                        userId: userId,
+                        referenceId: id,
+                        description: `Prize for ${rank} Place in ${tournament.title}`,
+                        timestamp: new Date()
                     }], { session: dbSession });
                 };
 

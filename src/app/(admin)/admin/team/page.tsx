@@ -40,6 +40,7 @@ const PERMISSION_OPTIONS = [
     { id: 'manage_store', label: 'Store Manager', description: 'Can manage products, orders, and lucky spin.' },
     { id: 'manage_support', label: 'Support Agent', description: 'Can reply to support tickets and view user details.' },
     { id: 'manage_system', label: 'System Admin', description: 'Can manage settings and team members.' },
+    { id: 'view_finance_visibility', label: 'Finance Visibility Agent', description: 'Can view advanced financial logs, aggregates, and profit metrics.' },
 ];
 
 export default function TeamManagementPage() {

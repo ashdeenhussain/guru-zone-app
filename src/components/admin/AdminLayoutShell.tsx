@@ -18,6 +18,7 @@ const PERMISSION_MAP: Record<string, AdminPermission | null> = {
     '/admin/settings': 'manage_system',
     '/admin/tournaments': 'manage_tournaments',
     '/admin/battle-zone': 'manage_tournaments',
+    '/admin/finance-visibility': 'view_finance_visibility',
     '/admin/finance': 'manage_finance',
     '/admin/transactions': 'manage_finance',
     '/admin/users': 'manage_support',

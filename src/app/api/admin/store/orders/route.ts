@@ -31,7 +31,7 @@ export async function GET(request: Request) {
 
         const orders = await Order.find(filter)
             .populate('userId', 'name email image')
-            .populate('productId', 'title priceCoins category imageType imageUrl emoji') 
+            .populate('productId', 'title priceCoins category imageType imageUrl emoji costPrice') 
             .sort({ createdAt: -1 });
 
         return NextResponse.json({ success: true, orders, filter });

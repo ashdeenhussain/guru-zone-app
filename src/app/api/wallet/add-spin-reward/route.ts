@@ -4,6 +4,7 @@ import connectToDatabase from "@/lib/db";
 import User from "@/models/User";
 import Transaction from "@/models/Transaction";
 import Order from "@/models/Order";
+import FinancialLog from "@/models/FinancialLog";
 import mongoose from "mongoose";
 import { rateLimit, getIP } from "@/lib/rate-limit";
 
@@ -64,7 +65,7 @@ export async function POST(req: Request) {
 
                 user.walletBalance += amount;
 
-                await Transaction.create({
+                const tx = await Transaction.create({
                     user: user._id,
                     amount: amount,
                     type: 'prize_winnings',
@@ -72,9 +73,24 @@ export async function POST(req: Request) {
                     status: 'approved'
                 });
 
+                // ── Financial Log Event ──
+                try {
+                    await FinancialLog.create({
+                        type: 'free_spin',
+                        amount: amount,
+                        currency: 'Coins',
+                        userId: user._id,
+                        referenceId: tx._id,
+                        description: `Lucky Spin — Won ${amount} Coins`,
+                        timestamp: new Date()
+                    });
+                } catch (logErr) {
+                    console.error("Failed to write free spin to FinancialLog:", logErr);
+                }
+
             } else if (rewardType === 'product') {
                 // Create Order for Product Win
-                await Order.create({
+                const order = await Order.create({
                     userId: user._id,
                     productId: reward.product || reward.value, // Expecting ID here
                     pricePaid: 0,
@@ -86,6 +102,21 @@ export async function POST(req: Request) {
                     },
                     adminComment: `Won via Lucky Spin: ${reward.label}`
                 });
+
+                // ── Financial Log Event ──
+                try {
+                    await FinancialLog.create({
+                        type: 'free_spin',
+                        amount: 0,
+                        currency: 'Coins',
+                        userId: user._id,
+                        referenceId: order._id,
+                        description: `Lucky Spin — Won product: ${reward.label}`,
+                        timestamp: new Date()
+                    });
+                } catch (logErr) {
+                    console.error("Failed to write free spin product win to FinancialLog:", logErr);
+                }
             } else {
                 throw new Error(`Unsupported reward type: ${reward.rewardType}`);
             }
