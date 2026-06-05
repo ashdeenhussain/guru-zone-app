@@ -18,7 +18,8 @@ import {
     DollarSign,
     Copy,
     Bell,
-    Search
+    Search,
+    Coins
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { AVATARS } from '@/lib/avatars';
@@ -36,6 +37,7 @@ interface Participant {
     uid?: string;
     teamName?: string;
     teammates?: { name: string; uid: string }[];
+    kills?: number;
 }
 
 interface Tournament {
@@ -80,6 +82,10 @@ interface Tournament {
         rank10?: string;
     };
     createdBy?: string;
+    isPerKill?: boolean;
+    perKillAmount?: number;
+    rules?: string;
+    prizeDistributed?: boolean;
 }
 
 // Helper: Countdown Timer
@@ -271,8 +277,20 @@ export default function AdminTournamentsPage() {
                             <ManageTournamentView
                                 tournament={selectedTournament}
                                 onBack={handleBack}
-                                onUpdate={() => {
-                                    // Ideally verify updated data
+                                onUpdate={async () => {
+                                    try {
+                                        const res = await fetch('/api/admin/tournaments');
+                                        const data = await res.json();
+                                        if (data.success) {
+                                            setTournaments(data.tournaments);
+                                            const updated = data.tournaments.find((t: any) => t._id === selectedTournament._id);
+                                            if (updated) {
+                                                setSelectedTournament(updated);
+                                            }
+                                        }
+                                    } catch (err) {
+                                        console.error('Failed to update tournament data', err);
+                                    }
                                 }}
                             />
                         </motion.div>
@@ -437,9 +455,22 @@ function TournamentList({ tournaments, loading, onManage }: { tournaments: Tourn
                             </div>
                             <div className="bg-muted/30 p-2.5 rounded-lg border border-border/30">
                                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold flex items-center gap-1 mb-1">
-                                    <DollarSign size={10} /> Pool
+                                    {tournament.isPerKill ? (
+                                        <>
+                                            <Coins size={10} className="text-emerald-400" /> Per Kill
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Trophy size={10} className="text-yellow-500" /> Pool
+                                        </>
+                                    )}
                                 </span>
-                                <span className="text-sm font-bold block text-green-500">${tournament.prizePool}</span>
+                                <span className={`text-sm font-bold block ${tournament.isPerKill ? 'text-emerald-400' : 'text-green-500'}`}>
+                                    {tournament.isPerKill 
+                                        ? `${tournament.perKillAmount || 0} Coins` 
+                                        : `${tournament.prizePool} Coins`
+                                    }
+                                </span>
                             </div>
                         </div>
 
@@ -483,26 +514,30 @@ function CreateTournamentForm({ onBack, onSuccess }: { onBack: () => void, onSuc
         prizeDistribution: {
             first: 0, second: 0, third: 0, fourth: 0, fifth: 0,
             sixth: 0, seventh: 0, eighth: 0, ninth: 0, tenth: 0
-        }
+        },
+        isPerKill: false,
+        perKillAmount: 0,
+        rules: ''
     });
     const [isGiveaway, setIsGiveaway] = useState(false);
     const [loading, setLoading] = useState(false);
 
     // 1. Recalculate total pool when base economy changes (Standard Tournaments Only)
     useEffect(() => {
-        if (isGiveaway) return;
+        if (isGiveaway || formData.isPerKill) return;
         
         const totalCollected = formData.entryFee * (formData.maxSlots || 0);
         const PLATFORM_FEE = 0.30; // 30% platform fee
         const calculatedPool = Math.floor(totalCollected * (1 - PLATFORM_FEE));
         
         handlePrizePoolChange(calculatedPool);
-    }, [formData.entryFee, formData.maxSlots, isGiveaway]);
+    }, [formData.entryFee, formData.maxSlots, isGiveaway, formData.isPerKill]);
 
     // 2. Redistribute when prize type changes
     useEffect(() => {
+        if (formData.isPerKill) return;
         handlePrizePoolChange(formData.prizePool);
-    }, [formData.prizeType]);
+    }, [formData.prizeType, formData.isPerKill]);
 
     // Handle Manual Prize Pool Change (for Giveaways)
     const handlePrizePoolChange = (pool: number) => {
@@ -675,26 +710,58 @@ function CreateTournamentForm({ onBack, onSuccess }: { onBack: () => void, onSuc
                 <div className="bg-card/80 dark:bg-card/30 backdrop-blur-md border border-border/50 dark:border-white/5 rounded-2xl p-5 space-y-5 relative overflow-hidden shadow-sm">
                     <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/10 rounded-bl-full blur-2xl pointer-events-none" />
 
-                    <div className="flex items-center justify-between mb-2 pb-2 border-b border-border/50 dark:border-white/5">
+                    <div className="flex items-center justify-between mb-2 pb-2 border-b border-border/50 dark:border-white/5 flex-wrap gap-2">
                         <div className="flex items-center gap-2">
                             <DollarSign size={14} className="text-green-500 dark:text-green-400" />
                             <span className="text-xs font-bold text-green-600 dark:text-green-100">Economy & Stakes</span>
                         </div>
 
-                        {/* Giveaway Toggle */}
-                        <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold text-muted-foreground uppercase">Giveaway</span>
-                            <div
-                                className={`w-8 h-4 rounded-full p-0.5 transition-colors cursor-pointer ${isGiveaway ? 'bg-green-500' : 'bg-muted-foreground/30'}`}
-                                onClick={() => {
-                                    const nextValue = !isGiveaway;
-                                    setIsGiveaway(nextValue);
-                                    if (nextValue) {
-                                        setFormData(prev => ({ ...prev, entryFee: 0 }));
-                                    }
-                                }}
-                            >
-                                <div className={`w-3 h-3 bg-white rounded-full shadow transition-transform ${isGiveaway ? 'translate-x-4' : 'translate-x-0'}`} />
+                        <div className="flex items-center gap-4">
+                            {/* Per Kill Toggle */}
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase">Per Kill Tournament</span>
+                                <div
+                                    className={`w-8 h-4 rounded-full p-0.5 transition-colors cursor-pointer ${formData.isPerKill ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+                                    onClick={() => {
+                                        const nextValue = !formData.isPerKill;
+                                        const defaultRules = nextValue ? "1. **No Hacking/Scripts**: Cheating, hacking, script usage, or third-party tools of any form are strictly prohibited.\n2. **No Team-ups**: Teaming up or colluding with other players is not allowed and will lead to disqualification.\n3. **Revive Disabled**: Respawn or revive mechanics are disabled/not allowed.\n4. **Verified Payouts**: Coin rewards will be verified by the admin before they are credited directly to your wallet." : "";
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            isPerKill: nextValue,
+                                            perKillAmount: nextValue ? prev.perKillAmount || 5 : 0,
+                                            rules: defaultRules,
+                                            prizePool: nextValue ? 0 : prev.prizePool
+                                        }));
+                                        if (nextValue) {
+                                            setIsGiveaway(false);
+                                        }
+                                    }}
+                                >
+                                    <div className={`w-3 h-3 bg-white rounded-full shadow transition-transform ${formData.isPerKill ? 'translate-x-4' : 'translate-x-0'}`} />
+                                </div>
+                            </div>
+
+                            {/* Giveaway Toggle */}
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase">Giveaway</span>
+                                <div
+                                    className={`w-8 h-4 rounded-full p-0.5 transition-colors cursor-pointer ${isGiveaway ? 'bg-green-500' : 'bg-muted-foreground/30'}`}
+                                    onClick={() => {
+                                        const nextValue = !isGiveaway;
+                                        setIsGiveaway(nextValue);
+                                        if (nextValue) {
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                entryFee: 0,
+                                                isPerKill: false,
+                                                perKillAmount: 0,
+                                                rules: ''
+                                            }));
+                                        }
+                                    }}
+                                >
+                                    <div className={`w-3 h-3 bg-white rounded-full shadow transition-transform ${isGiveaway ? 'translate-x-4' : 'translate-x-0'}`} />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -713,19 +780,50 @@ function CreateTournamentForm({ onBack, onSuccess }: { onBack: () => void, onSuc
                             </div>
                         </InputGroup>
 
-                        <InputGroup label={`Prize Pool (Coins)`}>
-                            <div className="relative">
-                                <span className="absolute left-3 top-3 text-emerald-600 dark:text-emerald-500 font-bold">$</span>
-                                <input
-                                    type="number"
-                                    className={`${inputStyles} pl-8 font-mono bg-background dark:bg-black/40 border-primary/30 ring-1 ring-primary/20`}
-                                    value={formData.prizePool}
-                                    onChange={e => handlePrizePoolChange(parseInt(e.target.value) || 0)}
-                                />
-                                <div className="absolute right-3 top-2.5 text-[10px] text-muted-foreground uppercase font-bold">Total Pool</div>
-                            </div>
-                        </InputGroup>
+                        {formData.isPerKill ? (
+                            <InputGroup label={`Coins per Kill`}>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-3 text-emerald-600 dark:text-emerald-500 font-bold">$</span>
+                                    <input
+                                        type="number"
+                                        className={`${inputStyles} pl-8 font-mono bg-background dark:bg-black/40 border-primary/30 ring-1 ring-primary/20`}
+                                        value={formData.perKillAmount}
+                                        onChange={e => setFormData({ ...formData, perKillAmount: parseInt(e.target.value) || 0 })}
+                                        placeholder="Enter coin reward for each kill"
+                                        required
+                                    />
+                                    <div className="absolute right-3 top-2.5 text-[10px] text-emerald-500 uppercase font-bold">Per Kill</div>
+                                </div>
+                            </InputGroup>
+                        ) : (
+                            <InputGroup label={`Prize Pool (Coins)`}>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-3 text-emerald-600 dark:text-emerald-500 font-bold">$</span>
+                                    <input
+                                        type="number"
+                                        className={`${inputStyles} pl-8 font-mono bg-background dark:bg-black/40 border-primary/30 ring-1 ring-primary/20`}
+                                        value={formData.prizePool}
+                                        onChange={e => handlePrizePoolChange(parseInt(e.target.value) || 0)}
+                                    />
+                                    <div className="absolute right-3 top-2.5 text-[10px] text-muted-foreground uppercase font-bold">Total Pool</div>
+                                </div>
+                            </InputGroup>
+                        )}
                     </div>
+
+                    {formData.isPerKill && (
+                        <div className="pt-2">
+                            <InputGroup label="Per-Kill Rules">
+                                <textarea
+                                    className={`${inputStyles} h-24 font-sans resize-none`}
+                                    value={formData.rules}
+                                    onChange={e => setFormData({ ...formData, rules: e.target.value })}
+                                    placeholder="Enter custom tournament rules"
+                                    required
+                                />
+                            </InputGroup>
+                        </div>
+                    )}
 
                     <div className="pt-2">
                         <InputGroup label="Max Players / Slots">
@@ -738,72 +836,74 @@ function CreateTournamentForm({ onBack, onSuccess }: { onBack: () => void, onSuc
                     </div>
                 </div>
 
-                {/* 3. Winners & Distribution */}
-                <div className="bg-card/80 dark:bg-card/30 backdrop-blur-md border border-border/50 dark:border-white/5 rounded-2xl p-5 space-y-5 relative overflow-hidden shadow-sm">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-yellow-500/10 rounded-bl-full blur-2xl pointer-events-none" />
+                {!formData.isPerKill && (
+                    /* 3. Winners & Distribution */
+                    <div className="bg-card/80 dark:bg-card/30 backdrop-blur-md border border-border/50 dark:border-white/5 rounded-2xl p-5 space-y-5 relative overflow-hidden shadow-sm">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-yellow-500/10 rounded-bl-full blur-2xl pointer-events-none" />
 
-                    <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50 dark:border-white/5">
-                        <Trophy size={14} className="text-yellow-500 dark:text-yellow-400" />
-                        <span className="text-xs font-bold text-yellow-600 dark:text-yellow-100">Winner Allocation</span>
-                    </div>
+                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50 dark:border-white/5">
+                            <Trophy size={14} className="text-yellow-500 dark:text-yellow-400" />
+                            <span className="text-xs font-bold text-yellow-600 dark:text-yellow-100">Winner Allocation</span>
+                        </div>
 
-                    <div className="grid grid-cols-1 gap-4">
-                        <InputGroup label="Selection Type">
-                            <select className={selectStyles} value={formData.prizeType} onChange={e => setFormData({ ...formData, prizeType: e.target.value as any })}>
-                                <option value="TOP 3">Top 3 Winners</option>
-                                <option value="TOP 5">Top 5 Winners</option>
-                                <option value="TOP 10">Top 10 Winners</option>
-                            </select>
-                        </InputGroup>
-                    </div>
+                        <div className="grid grid-cols-1 gap-4">
+                            <InputGroup label="Selection Type">
+                                <select className={selectStyles} value={formData.prizeType} onChange={e => setFormData({ ...formData, prizeType: e.target.value as any })}>
+                                    <option value="TOP 3">Top 3 Winners</option>
+                                    <option value="TOP 5">Top 5 Winners</option>
+                                    <option value="TOP 10">Top 10 Winners</option>
+                                </select>
+                            </InputGroup>
+                        </div>
 
-                    <div className="bg-muted/30 dark:bg-black/20 rounded-xl p-4 border border-border/50 dark:border-white/5">
-                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3 block">Calculated Prize Distribution</label>
-                        <div className="grid grid-cols-2 gap-3">
-                            {[
-                                { label: '1st Place', color: 'text-yellow-600 dark:text-yellow-400', val: 'first' },
-                                { label: '2nd Place', color: 'text-gray-500 dark:text-gray-300', val: 'second' },
-                                { label: '3rd Place', color: 'text-orange-600 dark:text-orange-400', val: 'third' },
-                                { label: '4th Place', color: 'text-blue-500/80', val: 'fourth' },
-                                { label: '5th Place', color: 'text-blue-500/80', val: 'fifth' },
-                                { label: '6th Place', color: 'text-blue-500/80', val: 'sixth' },
-                                { label: '7th Place', color: 'text-blue-500/80', val: 'seventh' },
-                                { label: '8th Place', color: 'text-blue-500/80', val: 'eighth' },
-                                { label: '9th Place', color: 'text-blue-500/80', val: 'ninth' },
-                                { label: '10th Place', color: 'text-blue-500/80', val: 'tenth' }
-                            ].filter((_, i) => {
-                                if (formData.prizeType === 'TOP 3') return i < 3;
-                                if (formData.prizeType === 'TOP 5') return i < 5;
-                                return true;
-                            }).map((rank: any) => (
-                                <div key={rank.val} className="flex items-center gap-3">
-                                    <span className={`w-20 text-[10px] font-bold ${rank.color}`}>{rank.label}</span>
-                                    <div className="relative flex-1">
-                                        <input type="number" placeholder="0" className="w-full bg-background/50 dark:bg-black/40 border-none rounded-lg py-1 px-3 text-sm text-right font-mono text-green-600 dark:text-green-400 focus:ring-1 focus:ring-green-500/50"
-                                            value={(formData.prizeDistribution as any)[rank.val]}
-                                            onChange={e => {
-                                                const val = parseInt(e.target.value) || 0;
-                                                const newDist = { ...formData.prizeDistribution, [rank.val]: val };
-                                                const total = Object.values(newDist).reduce((a, b) => a + b, 0);
-                                                setFormData({
-                                                    ...formData,
-                                                    prizeDistribution: newDist,
-                                                    prizePool: total
-                                                });
-                                            }} />
+                        <div className="bg-muted/30 dark:bg-black/20 rounded-xl p-4 border border-border/50 dark:border-white/5">
+                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3 block">Calculated Prize Distribution</label>
+                            <div className="grid grid-cols-2 gap-3">
+                                {[
+                                    { label: '1st Place', color: 'text-yellow-600 dark:text-yellow-400', val: 'first' },
+                                    { label: '2nd Place', color: 'text-gray-500 dark:text-gray-300', val: 'second' },
+                                    { label: '3rd Place', color: 'text-orange-600 dark:text-orange-400', val: 'third' },
+                                    { label: '4th Place', color: 'text-blue-500/80', val: 'fourth' },
+                                    { label: '5th Place', color: 'text-blue-500/80', val: 'fifth' },
+                                    { label: '6th Place', color: 'text-blue-500/80', val: 'sixth' },
+                                    { label: '7th Place', color: 'text-blue-500/80', val: 'seventh' },
+                                    { label: '8th Place', color: 'text-blue-500/80', val: 'eighth' },
+                                    { label: '9th Place', color: 'text-blue-500/80', val: 'ninth' },
+                                    { label: '10th Place', color: 'text-blue-500/80', val: 'tenth' }
+                                ].filter((_, i) => {
+                                    if (formData.prizeType === 'TOP 3') return i < 3;
+                                    if (formData.prizeType === 'TOP 5') return i < 5;
+                                    return true;
+                                }).map((rank: any) => (
+                                    <div key={rank.val} className="flex items-center gap-3">
+                                        <span className={`w-20 text-[10px] font-bold ${rank.color}`}>{rank.label}</span>
+                                        <div className="relative flex-1">
+                                            <input type="number" placeholder="0" className="w-full bg-background/50 dark:bg-black/40 border-none rounded-lg py-1 px-3 text-sm text-right font-mono text-green-600 dark:text-green-400 focus:ring-1 focus:ring-green-500/50"
+                                                value={(formData.prizeDistribution as any)[rank.val]}
+                                                onChange={e => {
+                                                    const val = parseInt(e.target.value) || 0;
+                                                    const newDist = { ...formData.prizeDistribution, [rank.val]: val };
+                                                    const total = Object.values(newDist).reduce((a, b) => a + b, 0);
+                                                    setFormData({
+                                                        ...formData,
+                                                        prizeDistribution: newDist,
+                                                        prizePool: total
+                                                    });
+                                                }} />
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-                        <div className="mt-4 pt-3 border-t border-border/40 dark:border-white/10 flex justify-between items-center">
-                            <div>
-                                <span className="text-xs text-muted-foreground block">Adjusted Prize Pool</span>
-                                {!isGiveaway && <span className="text-[8px] text-muted-foreground font-bold uppercase tracking-wider italic">(-30% Platform Management Fee)</span>}
+                                ))}
                             </div>
-                            <span className="text-lg font-bold text-green-600 dark:text-green-400 font-mono tracking-tight">${formData.prizePool}</span>
+                            <div className="mt-4 pt-3 border-t border-border/40 dark:border-white/10 flex justify-between items-center">
+                                <div>
+                                    <span className="text-xs text-muted-foreground block">Adjusted Prize Pool</span>
+                                    {!isGiveaway && <span className="text-[8px] text-muted-foreground font-bold uppercase tracking-wider italic">(-30% Platform Management Fee)</span>}
+                                </div>
+                                <span className="text-lg font-bold text-green-600 dark:text-green-400 font-mono tracking-tight">${formData.prizePool}</span>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
 
                 <div className="pt-4 pb-12">
                     <button
@@ -852,6 +952,16 @@ function ManageTournamentView({ tournament, onBack, onUpdate }: { tournament: To
         rank9: (tournament.winners as any)?.rank9 || '',
         rank10: (tournament.winners as any)?.rank10 || ''
     });
+    const [killsState, setKillsState] = useState<Record<string, number>>(() => {
+        const initialKills: Record<string, number> = {};
+        tournament.participants?.forEach(p => {
+            const id = (p.userId as any)?._id?.toString() || p.userId?.toString();
+            if (id) {
+                initialKills[id] = p.kills || 0;
+            }
+        });
+        return initialKills;
+    });
     const [searchTerm, setSearchTerm] = useState('');
 
     const filteredParticipants = tournament.participants?.filter(p =>
@@ -895,19 +1005,25 @@ function ManageTournamentView({ tournament, onBack, onUpdate }: { tournament: To
     };
 
     const handleFinalize = async () => {
-        if (!winners.rank1) return alert('Please input at least the Rank 1 User ID');
-        if (!confirm('End Match & Distribute Prizes? This cannot be undone.')) return;
+        if (!tournament.isPerKill && !winners.rank1) return alert('Please input at least the Rank 1 User ID');
+        const confirmMsg = tournament.isPerKill 
+            ? 'End Match & Distribute Prizes based on Kills? This cannot be undone.'
+            : 'End Match & Distribute Prizes? This cannot be undone.';
+        if (!confirm(confirmMsg)) return;
 
         setActionLoading(true);
         try {
+            const payload = { winners, kills: killsState };
+            console.log("[handleFinalize Debug] Payload to finalize API:", JSON.stringify(payload, null, 2));
+
             const res = await fetch(`/api/admin/tournaments/${tournament._id}/finalize`, {
                 method: 'POST',
-                body: JSON.stringify({ winners }),
+                body: JSON.stringify(payload),
                 headers: { 'Content-Type': 'application/json' }
             });
             const data = await res.json();
             if (data.success) {
-                alert('Match Ended. Prizes Distributed.');
+                alert(data.message || 'Match Ended. Prizes Distributed.');
                 onUpdate();
                 onBack();
             } else {
@@ -1020,8 +1136,25 @@ function ManageTournamentView({ tournament, onBack, onUpdate }: { tournament: To
                         <div className="space-y-3">
                             {/* ... Stats Items ... */}
                             <div className="flex justify-between items-center p-3 bg-muted/30 rounded-xl">
-                                <span className="text-sm font-medium flex items-center gap-2"><DollarSign size={14} className="text-green-500" /> Prize Pool</span>
-                                <span className="font-bold font-mono text-green-500 text-sm">${tournament.prizePool}</span>
+                                {tournament.isPerKill ? (
+                                    <>
+                                        <span className="text-sm font-medium flex items-center gap-2">
+                                            <Swords size={14} className="text-emerald-500" /> Coins per Kill
+                                        </span>
+                                        <span className="font-bold font-mono text-emerald-500 text-sm">
+                                            {tournament.perKillAmount} Coins
+                                        </span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="text-sm font-medium flex items-center gap-2">
+                                            <DollarSign size={14} className="text-green-500" /> Prize Pool
+                                        </span>
+                                        <span className="font-bold font-mono text-green-500 text-sm">
+                                            ${tournament.prizePool}
+                                        </span>
+                                    </>
+                                )}
                             </div>
                             <div className="flex justify-between items-center p-3 bg-muted/30 rounded-xl">
                                 <span className="text-sm font-medium flex items-center gap-2"><Users size={14} className="text-blue-500" /> Slots</span>
@@ -1260,35 +1393,86 @@ function ManageTournamentView({ tournament, onBack, onUpdate }: { tournament: To
                                 <div className="bg-card border border-border rounded-2xl p-6 shadow-sm text-center">
                                     <h3 className="text-lg font-bold mb-4">Official Winners</h3>
                                     {isCompleted ? (
-                                        <div className="space-y-4">
-                                            <div className="p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
-                                                <Trophy className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
-                                                <div className="text-xl font-bold text-foreground">Winner ID: {winners.rank1 || 'N/A'}</div>
-                                                <div className="text-xs text-yellow-600 font-bold uppercase mt-1">1st Place • ${tournament.prizeDistribution.first}</div>
+                                        tournament.isPerKill ? (
+                                            <div className="space-y-4 text-left">
+                                                <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50">
+                                                    <Trophy className="w-5 h-5 text-yellow-500" />
+                                                    <span className="text-sm font-bold text-foreground">Elimination Leaderboard</span>
+                                                </div>
+                                                <div className="divide-y divide-border border border-border rounded-xl overflow-hidden bg-muted/10">
+                                                    {[...(tournament.participants || [])]
+                                                        .map(p => {
+                                                            const pUserId = (p.userId as any)?._id?.toString() || p.userId?.toString();
+                                                            return {
+                                                                ...p,
+                                                                kills: killsState[pUserId] !== undefined ? killsState[pUserId] : (p.kills || 0)
+                                                            };
+                                                        })
+                                                        .sort((a, b) => b.kills - a.kills)
+                                                        .map((p, idx) => {
+                                                            const reward = p.kills * (tournament.perKillAmount || 0);
+                                                            const name = (p.userId as any)?.name || p.ign || 'Unknown';
+                                                            const email = (p.userId as any)?.email;
+                                                            return (
+                                                                <div key={idx} className="flex items-center justify-between p-3.5 hover:bg-muted/20 transition-colors">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <span className={`w-6 text-sm font-mono font-bold text-center ${idx === 0 ? 'text-yellow-500' : idx === 1 ? 'text-gray-400' : idx === 2 ? 'text-orange-500' : 'text-muted-foreground'}`}>
+                                                                            #{idx + 1}
+                                                                        </span>
+                                                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-xs text-white font-bold shrink-0 overflow-hidden border border-white/20">
+                                                                            {(p.userId as any)?.avatarId ? (
+                                                                                <img src={AVATARS.find(a => a.id === (p.userId as any).avatarId)?.src || AVATARS[0].src} alt="Avatar" className="w-full h-full object-cover" />
+                                                                            ) : (
+                                                                                <img src={AVATARS[0].src} alt="Avatar" className="w-full h-full object-cover" />
+                                                                            )}
+                                                                        </div>
+                                                                        <div>
+                                                                            <div className="font-bold text-sm text-foreground">{name}</div>
+                                                                            <div className="text-[10px] text-muted-foreground">{p.ign ? `IGN: ${p.ign}` : email || 'No Email'}</div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-4 text-right">
+                                                                        <div>
+                                                                            <div className="text-xs font-mono font-bold text-foreground">{p.kills} {p.kills === 1 ? 'Kill' : 'Kills'}</div>
+                                                                            <div className="text-[10px] font-bold text-emerald-500">{reward} Coins</div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                </div>
                                             </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                {[
-                                                    { rank: 'rank2', label: '2nd', prize: tournament.prizeDistribution.second, color: 'bg-gray-500/10' },
-                                                    { rank: 'rank3', label: '3rd', prize: tournament.prizeDistribution.third, color: 'bg-orange-500/10' },
-                                                    { rank: 'rank4', label: '4th', prize: tournament.prizeDistribution.fourth, color: 'bg-blue-500/10' },
-                                                    { rank: 'rank5', label: '5th', prize: tournament.prizeDistribution.fifth, color: 'bg-blue-500/10' },
-                                                    { rank: 'rank6', label: '6th', prize: tournament.prizeDistribution.sixth, color: 'bg-blue-500/10' },
-                                                    { rank: 'rank7', label: '7th', prize: tournament.prizeDistribution.seventh, color: 'bg-blue-500/10' },
-                                                    { rank: 'rank8', label: '8th', prize: tournament.prizeDistribution.eighth, color: 'bg-blue-500/10' },
-                                                    { rank: 'rank9', label: '9th', prize: tournament.prizeDistribution.ninth, color: 'bg-blue-500/10' },
-                                                    { rank: 'rank10', label: '10th', prize: tournament.prizeDistribution.tenth, color: 'bg-blue-500/10' }
-                                                ].filter((_, i) => {
-                                                    if (tournament.prizeType === 'TOP 3') return i < 2;
-                                                    if (tournament.prizeType === 'TOP 5') return i < 4;
-                                                    return true;
-                                                }).map((r) => (
-                                                    <div key={r.rank} className={`p-3 ${r.color} rounded-xl`}>
-                                                        <div className="text-sm font-bold">{r.label}: {(winners as any)[r.rank] || 'N/A'}</div>
-                                                        <div className="text-[10px] text-muted-foreground">${r.prize}</div>
-                                                    </div>
-                                                ))}
+                                        ) : (
+                                            <div className="space-y-4">
+                                                <div className="p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
+                                                    <Trophy className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
+                                                    <div className="text-xl font-bold text-foreground">Winner ID: {winners.rank1 || 'N/A'}</div>
+                                                    <div className="text-xs text-yellow-600 font-bold uppercase mt-1">1st Place • ${tournament.prizeDistribution.first}</div>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    {[
+                                                        { rank: 'rank2', label: '2nd', prize: tournament.prizeDistribution.second, color: 'bg-gray-500/10' },
+                                                        { rank: 'rank3', label: '3rd', prize: tournament.prizeDistribution.third, color: 'bg-orange-500/10' },
+                                                        { rank: 'rank4', label: '4th', prize: tournament.prizeDistribution.fourth, color: 'bg-blue-500/10' },
+                                                        { rank: 'rank5', label: '5th', prize: tournament.prizeDistribution.fifth, color: 'bg-blue-500/10' },
+                                                        { rank: 'rank6', label: '6th', prize: tournament.prizeDistribution.sixth, color: 'bg-blue-500/10' },
+                                                        { rank: 'rank7', label: '7th', prize: tournament.prizeDistribution.seventh, color: 'bg-blue-500/10' },
+                                                        { rank: 'rank8', label: '8th', prize: tournament.prizeDistribution.eighth, color: 'bg-blue-500/10' },
+                                                        { rank: 'rank9', label: '9th', prize: tournament.prizeDistribution.ninth, color: 'bg-blue-500/10' },
+                                                        { rank: 'rank10', label: '10th', prize: tournament.prizeDistribution.tenth, color: 'bg-blue-500/10' }
+                                                    ].filter((_, i) => {
+                                                        if (tournament.prizeType === 'TOP 3') return i < 2;
+                                                        if (tournament.prizeType === 'TOP 5') return i < 4;
+                                                        return true;
+                                                    }).map((r) => (
+                                                        <div key={r.rank} className={`p-3 ${r.color} rounded-xl`}>
+                                                            <div className="text-sm font-bold">{r.label}: {(winners as any)[r.rank] || 'N/A'}</div>
+                                                            <div className="text-[10px] text-muted-foreground">${r.prize}</div>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
+                                        )
                                     ) : (
                                         <div className="py-10 text-muted-foreground">
                                             <Trophy className="w-12 h-12 opacity-20 mx-auto mb-2" />
@@ -1307,58 +1491,60 @@ function ManageTournamentView({ tournament, onBack, onUpdate }: { tournament: To
                             >
                                 <div className="space-y-4">
                                     {/* Winners Selection Card */}
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        {['rank1', 'rank2', 'rank3', 'rank4', 'rank5', 'rank6', 'rank7', 'rank8', 'rank9', 'rank10'].filter((_, i) => {
-                                            if (tournament.prizeType === 'TOP 3') return i < 3;
-                                            if (tournament.prizeType === 'TOP 5') return i < 5;
-                                            return true;
-                                        }).map((rank, i) => {
-                                            const winnerId = (winners as any)[rank];
-                                            const winner = tournament.participants?.find(p => (p.userId as any)?._id?.toString() === winnerId?.toString() || p.userId === winnerId);
-                                            const prizeKeys = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'];
-                                            const prize = (tournament.prizeDistribution as any)[prizeKeys[i]];
-                                            const placeColors = i === 0 ? 'text-yellow-500 border-yellow-500/20 bg-yellow-500/5'
-                                                : i === 1 ? 'text-gray-400 border-gray-400/20 bg-gray-400/5'
-                                                    : i === 2 ? 'text-orange-600 border-orange-600/20 bg-orange-600/5'
-                                                        : 'text-blue-500 border-blue-500/20 bg-blue-500/5';
+                                    {!tournament.isPerKill && (
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            {['rank1', 'rank2', 'rank3', 'rank4', 'rank5', 'rank6', 'rank7', 'rank8', 'rank9', 'rank10'].filter((_, i) => {
+                                                if (tournament.prizeType === 'TOP 3') return i < 3;
+                                                if (tournament.prizeType === 'TOP 5') return i < 5;
+                                                return true;
+                                            }).map((rank, i) => {
+                                                const winnerId = (winners as any)[rank];
+                                                const winner = tournament.participants?.find(p => (p.userId as any)?._id?.toString() === winnerId?.toString() || p.userId === winnerId);
+                                                const prizeKeys = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'];
+                                                const prize = (tournament.prizeDistribution as any)[prizeKeys[i]];
+                                                const placeColors = i === 0 ? 'text-yellow-500 border-yellow-500/20 bg-yellow-500/5'
+                                                    : i === 1 ? 'text-gray-400 border-gray-400/20 bg-gray-400/5'
+                                                        : i === 2 ? 'text-orange-600 border-orange-600/20 bg-orange-600/5'
+                                                            : 'text-blue-500 border-blue-500/20 bg-blue-500/5';
 
-                                            return (
-                                                <div key={rank} className={`border rounded-xl p-3 flex flex-col gap-2 relative group ${placeColors}`}>
-                                                    <div className="text-[10px] font-bold uppercase opacity-80 flex justify-between">
-                                                        <span>Rank {i + 1}</span>
-                                                        <span className="font-mono">${prize}</span>
-                                                    </div>
-                                                    {winner ? (
-                                                        <>
-                                                            <div className="flex items-center gap-3 mb-2">
-                                                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-xs text-white font-bold shrink-0 overflow-hidden border border-white/20">
-                                                                    {(winner.userId as any)?.avatarId ? (
-                                                                        <img src={AVATARS.find(a => a.id === (winner.userId as any).avatarId)?.src || AVATARS[0].src} alt="Avatar" className="w-full h-full object-cover" />
-                                                                    ) : (
-                                                                        <img src={AVATARS[0].src} alt="Avatar" className="w-full h-full object-cover" />
-                                                                    )}
-                                                                </div>
-                                                                <div className="flex-1 min-w-0">
-                                                                    <div className="font-bold text-sm truncate">{(winner.userId as any)?.name || 'Unknown'}</div>
-                                                                    <div className="text-[10px] font-mono opacity-50 truncate" title={(winner.userId as any)?.email}>
-                                                                        {(winner.userId as any)?.email || (winner.userId as any)?.uid || winner.userId}
+                                                return (
+                                                    <div key={rank} className={`border rounded-xl p-3 flex flex-col gap-2 relative group ${placeColors}`}>
+                                                        <div className="text-[10px] font-bold uppercase opacity-80 flex justify-between">
+                                                            <span>Rank {i + 1}</span>
+                                                            <span className="font-mono">${prize}</span>
+                                                        </div>
+                                                        {winner ? (
+                                                            <>
+                                                                <div className="flex items-center gap-3 mb-2">
+                                                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-xs text-white font-bold shrink-0 overflow-hidden border border-white/20">
+                                                                        {(winner.userId as any)?.avatarId ? (
+                                                                            <img src={AVATARS.find(a => a.id === (winner.userId as any).avatarId)?.src || AVATARS[0].src} alt="Avatar" className="w-full h-full object-cover" />
+                                                                        ) : (
+                                                                            <img src={AVATARS[0].src} alt="Avatar" className="w-full h-full object-cover" />
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <div className="font-bold text-sm truncate">{(winner.userId as any)?.name || 'Unknown'}</div>
+                                                                        <div className="text-[10px] font-mono opacity-50 truncate" title={(winner.userId as any)?.email}>
+                                                                            {(winner.userId as any)?.email || (winner.userId as any)?.uid || winner.userId}
+                                                                        </div>
                                                                     </div>
                                                                 </div>
-                                                            </div>
-                                                            <button
-                                                                onClick={() => setWinners({ ...winners, [rank]: '' })}
-                                                                className="absolute top-2 right-2 opacity-50 hover:opacity-100 hover:bg-background/20 rounded-full p-1 transition-all"
-                                                            >
-                                                                <XCircle size={14} />
-                                                            </button>
-                                                        </>
-                                                    ) : (
-                                                        <div className="text-sm opacity-40 italic py-1">Select from list</div>
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
+                                                                <button
+                                                                    onClick={() => setWinners({ ...winners, [rank]: '' })}
+                                                                    className="absolute top-2 right-2 opacity-50 hover:opacity-100 hover:bg-background/20 rounded-full p-1 transition-all"
+                                                                >
+                                                                    <XCircle size={14} />
+                                                                </button>
+                                                            </>
+                                                        ) : (
+                                                            <div className="text-sm opacity-40 italic py-1">Select from list</div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
 
                                     {/* Action Header */}
                                     <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-card border border-border p-3 rounded-xl">
@@ -1375,10 +1561,16 @@ function ManageTournamentView({ tournament, onBack, onUpdate }: { tournament: To
 
                                         <button
                                             onClick={handleFinalize}
-                                            disabled={actionLoading || !winners.rank1}
+                                            disabled={actionLoading || isCompleted || tournament.prizeDistributed || (!tournament.isPerKill && !winners.rank1)}
                                             className="w-full sm:w-auto px-6 py-2.5 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold text-sm shadow-lg shadow-green-900/20 disabled:opacity-50 disabled:grayscale transition-all flex items-center justify-center gap-2"
                                         >
-                                            {actionLoading ? <span className="animate-pulse">Processing...</span> : <><DollarSign size={16} /> Distribute Prizes</>}
+                                            {actionLoading ? (
+                                                <span className="animate-pulse">Processing...</span>
+                                            ) : isCompleted || tournament.prizeDistributed ? (
+                                                <>Distributed</>
+                                            ) : (
+                                                <><DollarSign size={16} /> Distribute Prizes</>
+                                            )}
                                         </button>
                                     </div>
 
@@ -1391,89 +1583,119 @@ function ManageTournamentView({ tournament, onBack, onUpdate }: { tournament: To
                                                         <th className="px-4 py-3">User / Team</th>
                                                         <th className="px-4 py-3">Details</th>
                                                         <th className="px-4 py-3">Teammates</th>
-                                                        <th className="px-4 py-3 text-right">Action</th>
+                                                        <th className="px-4 py-3">Kills</th>
+                                                        {tournament.isPerKill ? (
+                                                            <th className="px-4 py-3 text-right">Reward</th>
+                                                        ) : (
+                                                            <th className="px-4 py-3 text-right">Action</th>
+                                                        )}
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-border">
                                                     {filteredParticipants.length > 0 ? (
-                                                        filteredParticipants.map((p, i) => (
-                                                            <tr key={i} className="hover:bg-muted/10 transition-colors group">
-                                                                <td className="px-4 py-3">
-                                                                    <div className="flex items-center gap-3">
-                                                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-xs text-white font-bold shrink-0 overflow-hidden">
-                                                                            {(p.userId as any)?.avatarId ? (
-                                                                                <img src={AVATARS.find(a => a.id === (p.userId as any).avatarId)?.src || AVATARS[0].src} alt="Avatar" className="w-full h-full object-cover" />
-                                                                            ) : (
-                                                                                <img src={AVATARS[0].src} alt="Avatar" className="w-full h-full object-cover" />
-                                                                            )}
-                                                                        </div>
-                                                                        <div>
-                                                                            <div className="font-bold text-foreground line-clamp-1">{(p.userId as any)?.name || 'Unknown'}</div>
-                                                                            <div className="text-[10px] text-muted-foreground truncate max-w-[120px]" title={(p.userId as any)?.email}>
-                                                                                {(p.userId as any)?.email || 'No Email'}
+                                                        filteredParticipants.map((p, i) => {
+                                                            const pUserId = (p.userId as any)?._id?.toString() || p.userId?.toString();
+                                                            return (
+                                                                <tr key={i} className="hover:bg-muted/10 transition-colors group">
+                                                                    <td className="px-4 py-3">
+                                                                        <div className="flex items-center gap-3">
+                                                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-xs text-white font-bold shrink-0 overflow-hidden">
+                                                                                {(p.userId as any)?.avatarId ? (
+                                                                                    <img src={AVATARS.find(a => a.id === (p.userId as any).avatarId)?.src || AVATARS[0].src} alt="Avatar" className="w-full h-full object-cover" />
+                                                                                ) : (
+                                                                                    <img src={AVATARS[0].src} alt="Avatar" className="w-full h-full object-cover" />
+                                                                                )}
                                                                             </div>
-                                                                            {p.teamName && (
-                                                                                <div className="text-[10px] font-bold text-blue-400 mt-0.5">
-                                                                                    Team: {p.teamName}
+                                                                            <div>
+                                                                                <div className="font-bold text-foreground line-clamp-1">{(p.userId as any)?.name || 'Unknown'}</div>
+                                                                                <div className="text-[10px] text-muted-foreground truncate max-w-[120px]" title={(p.userId as any)?.email}>
+                                                                                    {(p.userId as any)?.email || 'No Email'}
                                                                                 </div>
-                                                                            )}
+                                                                                {p.teamName && (
+                                                                                    <div className="text-[10px] font-bold text-blue-400 mt-0.5">
+                                                                                        Team: {p.teamName}
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
                                                                         </div>
-                                                                    </div>
-                                                                </td>
-                                                                <td className="px-4 py-3">
-                                                                    <div className="flex flex-col gap-0.5">
-                                                                        <div className="text-xs font-mono bg-muted/50 px-1.5 py-0.5 rounded w-fit text-foreground/80" title="In-Game Name">
-                                                                            {p.ign || p.inGameName || '-'}
+                                                                    </td>
+                                                                    <td className="px-4 py-3">
+                                                                        <div className="flex flex-col gap-0.5">
+                                                                            <div className="text-xs font-mono bg-muted/50 px-1.5 py-0.5 rounded w-fit text-foreground/80" title="In-Game Name">
+                                                                                {p.ign || p.inGameName || '-'}
+                                                                            </div>
+                                                                            <div className="text-[10px] font-mono text-muted-foreground">ID: {p.uid || (p.userId as any)?.uid || 'N/A'}</div>
                                                                         </div>
-                                                                        <div className="text-[10px] font-mono text-muted-foreground">ID: {p.uid || (p.userId as any)?.uid || 'N/A'}</div>
-                                                                    </div>
-                                                                </td>
-                                                                <td className="px-4 py-3">
-                                                                    {p.teammates && p.teammates.length > 0 ? (
-                                                                        <div className="flex flex-col gap-1">
-                                                                            {p.teammates.map((tm, idx) => (
-                                                                                <div key={idx} className="text-[10px] bg-muted/30 px-2 py-1 rounded border border-border/50 flex justify-between gap-2">
-                                                                                    <span className="font-bold text-foreground">{tm.name}</span>
-                                                                                    <span className="font-mono text-muted-foreground">{tm.uid}</span>
-                                                                                </div>
-                                                                            ))}
-                                                                        </div>
+                                                                    </td>
+                                                                    <td className="px-4 py-3">
+                                                                        {p.teammates && p.teammates.length > 0 ? (
+                                                                            <div className="flex flex-col gap-1">
+                                                                                {p.teammates.map((tm, idx) => (
+                                                                                    <div key={idx} className="text-[10px] bg-muted/30 px-2 py-1 rounded border border-border/50 flex justify-between gap-2">
+                                                                                        <span className="font-bold text-foreground">{tm.name}</span>
+                                                                                        <span className="font-mono text-muted-foreground">{tm.uid}</span>
+                                                                                    </div>
+                                                                                ))}
+                                                                            </div>
+                                                                        ) : (
+                                                                            <span className="text-[10px] text-muted-foreground italic">Solo / No Teammates</span>
+                                                                        )}
+                                                                    </td>
+                                                                    <td className="px-4 py-3">
+                                                                        <input
+                                                                            type="number"
+                                                                            min="0"
+                                                                            className="w-20 bg-muted/50 text-foreground border border-border focus:border-primary/50 outline-none rounded-lg px-2.5 py-1 text-sm font-mono text-center disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                            value={killsState[pUserId] || 0}
+                                                                            onChange={e => {
+                                                                                const val = Math.max(0, parseInt(e.target.value) || 0);
+                                                                                setKillsState(prev => ({
+                                                                                    ...prev,
+                                                                                    [pUserId]: val
+                                                                                }));
+                                                                            }}
+                                                                            disabled={isCompleted || tournament.prizeDistributed}
+                                                                        />
+                                                                    </td>
+                                                                    {tournament.isPerKill ? (
+                                                                        <td className="px-4 py-3 text-right font-mono font-bold text-emerald-400">
+                                                                            {(killsState[pUserId] || 0) * (tournament.perKillAmount || 0)} Coins
+                                                                        </td>
                                                                     ) : (
-                                                                        <span className="text-[10px] text-muted-foreground italic">Solo / No Teammates</span>
+                                                                        <td className="px-4 py-3 text-right">
+                                                                            <div className="flex justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                                                {['rank1', 'rank2', 'rank3', 'rank4', 'rank5', 'rank6', 'rank7', 'rank8', 'rank9', 'rank10'].filter((_, i) => {
+                                                                                    if (tournament.prizeType === 'TOP 3') return i < 3;
+                                                                                    if (tournament.prizeType === 'TOP 5') return i < 5;
+                                                                                    return true;
+                                                                                }).map((r, idx) => {
+                                                                                    const userIdStr = (p.userId as any)?._id || p.userId;
+                                                                                    const isSelected = (winners as any)[r] === userIdStr;
+                                                                                    const isTaken = (winners as any)[r] && !isSelected;
+                                                                                    return (
+                                                                                        <button
+                                                                                            key={r}
+                                                                                            type="button"
+                                                                                            onClick={() => setWinners(prev => ({ ...prev, [r]: (prev as any)[r] === userIdStr ? '' : userIdStr }))}
+                                                                                            disabled={isTaken}
+                                                                                            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all ${isSelected
+                                                                                                ? 'bg-primary text-primary-foreground border-primary shadow-sm scale-105'
+                                                                                                : 'bg-transparent border-border hover:bg-primary/10 hover:border-primary/30 text-muted-foreground'}`}
+                                                                                            title={`Select as Rank ${idx + 1}`}
+                                                                                        >
+                                                                                            #{idx + 1}
+                                                                                        </button>
+                                                                                    )
+                                                                                })}
+                                                                            </div>
+                                                                        </td>
                                                                     )}
-                                                                </td>
-                                                                <td className="px-4 py-3 text-right">
-                                                                    {/* Actions (Winner Selection) */}
-                                                                    <div className="flex justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                                                                        {['rank1', 'rank2', 'rank3', 'rank4', 'rank5', 'rank6', 'rank7', 'rank8', 'rank9', 'rank10'].filter((_, i) => {
-                                                                            if (tournament.prizeType === 'TOP 3') return i < 3;
-                                                                            if (tournament.prizeType === 'TOP 5') return i < 5;
-                                                                            return true;
-                                                                        }).map((r, idx) => {
-                                                                            const userIdStr = (p.userId as any)?._id || p.userId;
-                                                                            const isSelected = (winners as any)[r] === userIdStr;
-                                                                            const isTaken = (winners as any)[r] && !isSelected;
-                                                                            return (
-                                                                                <button
-                                                                                    key={r}
-                                                                                    onClick={() => setWinners(prev => ({ ...prev, [r]: (prev as any)[r] === userIdStr ? '' : userIdStr }))}
-                                                                                    disabled={isTaken}
-                                                                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all ${isSelected
-                                                                                        ? 'bg-primary text-primary-foreground border-primary shadow-sm scale-105'
-                                                                                        : 'bg-transparent border-border hover:bg-primary/10 hover:border-primary/30 text-muted-foreground'}`}
-                                                                                    title={`Select as Rank ${idx + 1}`}
-                                                                                >
-                                                                                    #{idx + 1}
-                                                                                </button>
-                                                                            )
-                                                                        })}
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        ))
+                                                                </tr>
+                                                            );
+                                                        })
                                                     ) : (
                                                         <tr>
-                                                            <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+                                                            <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                                                                 {searchTerm ? 'No matches found.' : 'No participants joined yet.'}
                                                             </td>
                                                         </tr>

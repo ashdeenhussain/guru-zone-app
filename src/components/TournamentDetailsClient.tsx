@@ -53,6 +53,8 @@ interface Tournament {
     };
     cancellationReason?: string;
     isRoomReady?: boolean; // Injected from server
+    isPerKill?: boolean;
+    perKillAmount?: number;
 }
 
 interface User {
@@ -84,7 +86,7 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
     const [copiedId, setCopiedId] = useState(false);
     const [copiedPass, setCopiedPass] = useState(false);
     const [loadingCredentials, setLoadingCredentials] = useState(false);
-    const [activeTab, setActiveTab] = useState<'registration' | 'room' | 'prizes' | 'teams' | 'winners'>('registration');
+    const [activeTab, setActiveTab] = useState<'registration' | 'room' | 'prizes' | 'teams' | 'winners' | 'rules'>('registration');
     const [showRoomDot, setShowRoomDot] = useState(false);
 
     // Default to winners tab if tournament is completed
@@ -188,6 +190,127 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
             setTimeout(() => setCopiedPass(false), 2000);
         }
     };
+    const getWinnerStats = (winnerUser: any) => {
+        if (!winnerUser) return { kills: 0, prize: 0 };
+        const userIdStr = winnerUser._id?.toString() || winnerUser.toString();
+        const participant = tournament.participants?.find((p: any) => 
+            (p.userId?._id?.toString() || p.userId?.toString() || p.userId) === userIdStr
+        );
+        if (!participant) return { kills: 0, prize: 0 };
+        const kills = participant.kills || 0;
+        const prize = tournament.isPerKill 
+            ? kills * (tournament.perKillAmount || 0)
+            : 0;
+        return { kills, prize };
+    };
+
+    const renderFormattedRules = (text: string) => {
+        if (!text) return null;
+        
+        const lines = text.split('\n');
+        const isPerKill = tournament.isPerKill;
+        
+        const badgeBg = isPerKill ? 'bg-emerald-500/10 dark:bg-emerald-500/5' : 'bg-primary/10 dark:bg-primary/5';
+        const badgeBorder = isPerKill ? 'border-emerald-500/20 dark:border-emerald-500/10' : 'border-primary/20 dark:border-primary/10';
+        const badgeText = isPerKill ? 'text-emerald-400' : 'text-primary';
+        const cardHover = isPerKill ? 'hover:border-emerald-500/30' : 'hover:border-primary/30';
+        const bulletBg = isPerKill ? 'bg-emerald-400' : 'bg-primary';
+
+        return (
+            <div className="space-y-4">
+                {lines.map((line, idx) => {
+                    const trimmed = line.trim();
+                    if (!trimmed) return null;
+
+                    const numberMatch = trimmed.match(/^(\d+)[\.\)]\s+(.*)/);
+                    const bulletMatch = trimmed.match(/^[\*\-•]\s+(.*)/);
+                    const headerMatch = trimmed.match(/^(#{1,6})\s+(.*)/);
+
+                    let content = trimmed;
+                    let isNumbered = false;
+                    let num = '';
+                    let isBullet = false;
+                    let headerLevel = 0;
+
+                    if (numberMatch) {
+                        isNumbered = true;
+                        num = numberMatch[1];
+                        content = numberMatch[2];
+                    } else if (bulletMatch) {
+                        isBullet = true;
+                        content = bulletMatch[1];
+                    } else if (headerMatch) {
+                        headerLevel = headerMatch[1].length;
+                        content = headerMatch[2];
+                    }
+
+                    const parseBold = (str: string) => {
+                        const parts = str.split(/\*\*([^\*]+)\*\*/g);
+                        return parts.map((part, i) => {
+                            if (i % 2 === 1) {
+                                return <strong key={i} className="font-extrabold text-foreground dark:text-white">{part}</strong>;
+                            }
+                            return part;
+                        });
+                    };
+
+                    const parsedContent = parseBold(content);
+
+                    if (isNumbered) {
+                        return (
+                            <div key={idx} className={`flex gap-4 p-4 rounded-2xl bg-muted/20 dark:bg-black/20 border border-border/40 dark:border-white/5 shadow-sm group transition-all duration-300 ${cardHover}`}>
+                                <div className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-xl ${badgeBg} border ${badgeBorder} ${badgeText} text-sm font-black font-mono shadow-sm group-hover:scale-105 transition-transform`}>
+                                    {num}
+                                </div>
+                                <div className="flex-1 text-sm text-foreground/80 dark:text-muted-foreground font-medium leading-relaxed self-center">
+                                    {parsedContent}
+                                </div>
+                            </div>
+                        );
+                    }
+
+                    if (isBullet) {
+                        return (
+                            <div key={idx} className="flex gap-3 px-4 py-2 items-start">
+                                <div className={`flex-shrink-0 w-2 h-2 rounded-full ${bulletBg} mt-2`} />
+                                <div className="flex-1 text-sm text-foreground/80 dark:text-muted-foreground font-medium leading-relaxed">
+                                    {parsedContent}
+                                </div>
+                            </div>
+                        );
+                    }
+
+                    if (headerLevel > 0) {
+                        const headerClasses = [
+                            'text-2xl font-black tracking-tight text-foreground uppercase italic',
+                            'text-xl font-bold tracking-tight text-foreground uppercase italic',
+                            'text-lg font-bold text-foreground',
+                            'text-base font-bold text-foreground',
+                            'text-sm font-bold text-foreground',
+                            'text-xs font-bold text-foreground',
+                        ];
+                        const className = headerClasses[headerLevel - 1] || 'font-bold';
+                        const wrappedContent = <div className="pt-2 pb-1">{parsedContent}</div>;
+                        switch (headerLevel) {
+                            case 1: return <h1 key={idx} className={className}>{wrappedContent}</h1>;
+                            case 2: return <h2 key={idx} className={className}>{wrappedContent}</h2>;
+                            case 3: return <h3 key={idx} className={className}>{wrappedContent}</h3>;
+                            case 4: return <h4 key={idx} className={className}>{wrappedContent}</h4>;
+                            case 5: return <h5 key={idx} className={className}>{wrappedContent}</h5>;
+                            case 6: return <h6 key={idx} className={className}>{wrappedContent}</h6>;
+                            default: return <p key={idx} className={className}>{wrappedContent}</p>;
+                        }
+                    }
+
+                    return (
+                        <p key={idx} className="text-sm text-foreground/80 dark:text-muted-foreground font-medium leading-relaxed px-1">
+                            {parsedContent}
+                        </p>
+                    );
+                })}
+            </div>
+        );
+    };
 
     return (
         <div className="min-h-screen bg-background pb-24 relative overflow-hidden">
@@ -274,6 +397,7 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
                             { id: 'winners', label: 'Winners', icon: Trophy, show: tournament.status === 'Completed' || tournament.status === 'completed' },
                             { id: 'room', label: 'Room Details', icon: Lock, show: true },
                             { id: 'prizes', label: 'Prize Pool', icon: Trophy, show: true },
+                            { id: 'rules', label: 'Rules', icon: Shield, show: true },
                             { id: 'teams', label: 'Joined Teams', icon: Users, show: true },
                         ].filter(t => t.show).map((tab) => {
                             const Icon = tab.icon;
@@ -326,11 +450,33 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
 
                 {/* Main Stats Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div className="relative overflow-hidden bg-card/50 backdrop-blur-xl border border-border/50 p-3 rounded-2xl group hover:border-yellow-500/30 transition-all shadow-sm">
-                        <div className="absolute right-0 bottom-0 w-16 h-16 bg-yellow-500/10 blur-[40px] rounded-full pointer-events-none" />
-                        <Coins className="text-yellow-500 mb-1" size={20} />
+                    <div className={`relative overflow-hidden bg-card/50 backdrop-blur-xl border rounded-2xl p-4 group transition-all shadow-sm ${
+                        tournament.isPerKill ? 'border-emerald-500/30 hover:border-emerald-500/50 shadow-emerald-500/5' : 'border-border/50 hover:border-yellow-500/30'
+                    }`}>
+                        <div className={`absolute right-0 bottom-0 w-16 h-16 blur-[40px] rounded-full pointer-events-none ${
+                            tournament.isPerKill ? 'bg-emerald-500/10' : 'bg-yellow-500/10'
+                        }`} />
+                        <Coins className={`${tournament.isPerKill ? 'text-emerald-400' : 'text-yellow-500'} mb-2`} size={24} />
                         <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Prize Pool</div>
-                        <div className="text-xl font-bold text-foreground">{tournament.prizePool} <span className="text-sm font-normal text-muted-foreground">Coins</span></div>
+                        {tournament.isPerKill ? (
+                            <div className="mt-1 space-y-1">
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-2xl font-black text-emerald-400 font-mono drop-shadow-[0_2px_8px_rgba(16,185,129,0.35)]">
+                                        {tournament.perKillAmount}
+                                    </span>
+                                    <span className="text-xs font-bold text-emerald-400/90 font-mono">
+                                        Coins / Kill
+                                    </span>
+                                </div>
+                                <div className="text-[9px] text-emerald-400/60 font-bold uppercase tracking-widest">
+                                    Distributed based on Kills
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-xl font-bold text-foreground font-mono mt-1">
+                                {tournament.prizePool} <span className="text-sm font-normal text-muted-foreground">Coins</span>
+                            </div>
+                        )}
                     </div>
 
                     <div className="relative overflow-hidden bg-card/50 backdrop-blur-xl border border-border/50 p-4 rounded-2xl group hover:border-indigo-500/30 transition-all shadow-sm">
@@ -398,9 +544,18 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
                                              <div className="w-full h-[100px] md:h-[200px] bg-slate-500/10 backdrop-blur-xl border-x border-t border-slate-500/20 rounded-t-[1.5rem] md:rounded-t-[2.5rem] flex flex-col items-center p-2 md:p-4 transition-all group-hover:bg-slate-500/20">
                                                  <span className="text-[10px] md:text-base font-black text-foreground truncate w-full text-center">{(tournament.winners?.rank2 as any)?.inGameName || (tournament.winners?.rank2 as any)?.name || "Challenger"}</span>
                                                  <span className="text-[8px] md:text-[10px] text-muted-foreground font-bold mt-0.5 md:mt-1">ID: {(tournament.winners?.rank2 as any)?.freeFireUid || "—"}</span>
-                                                 <div className="mt-auto px-2 md:px-4 py-1 md:py-2 bg-slate-500/20 rounded-xl md:rounded-2xl flex items-center gap-1 border border-slate-500/30">
-                                                     <Coins size={10} className="text-slate-400 md:w-3.5 md:h-3.5" />
-                                                     <span className="text-[9px] md:text-xs font-black text-slate-300">{tournament.prizeDistribution.second}</span>
+                                                 <div className="flex flex-col items-center gap-1 mt-auto">
+                                                     <span className={`text-[9px] md:text-[10px] font-black ${tournament.isPerKill ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-slate-400 bg-slate-500/10 border-slate-500/20'} px-2 py-0.5 rounded border`}>
+                                                         {getWinnerStats(tournament.winners?.rank2).kills} Kills
+                                                     </span>
+                                                     <div className={`px-2 py-1 ${tournament.isPerKill ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-slate-500/20 text-slate-300 border-slate-500/30'} rounded-xl flex items-center gap-1 border`}>
+                                                         <Coins size={10} className={`${tournament.isPerKill ? 'text-emerald-400' : 'text-slate-400'} md:w-3.5 md:h-3.5`} />
+                                                         <span className="text-[9px] md:text-xs font-black">
+                                                             {tournament.isPerKill 
+                                                                 ? getWinnerStats(tournament.winners?.rank2).prize 
+                                                                 : tournament.prizeDistribution.second}
+                                                         </span>
+                                                     </div>
                                                  </div>
                                              </div>
                                          </div>
@@ -428,9 +583,18 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
                                              <div className="w-full h-[130px] md:h-[260px] bg-primary/10 backdrop-blur-3xl border-x border-t border-primary/30 rounded-t-[2rem] md:rounded-t-[3rem] flex flex-col items-center p-3 md:p-6 transition-all group-hover:bg-primary/15 shadow-[0_-20px_50px_-10px_rgba(var(--primary),0.1)]">
                                                  <span className="text-[12px] md:text-2xl font-black text-foreground truncate w-full text-center">{(tournament.winners?.rank1 as any)?.inGameName || (tournament.winners?.rank1 as any)?.name || "Alpha Player"}</span>
                                                  <span className="text-[8px] md:text-xs text-primary/70 font-black mt-0.5 md:mt-1 tracking-wider uppercase">ID: {(tournament.winners?.rank1 as any)?.freeFireUid || "—"}</span>
-                                                 <div className="mt-auto px-3 md:px-6 py-1.5 md:py-3 bg-primary text-primary-foreground rounded-xl md:rounded-[1.5rem] flex items-center gap-1 md:gap-2 shadow-[0_10px_20px_rgba(var(--primary),0.3)] border border-white/20">
-                                                     <Coins size={12} className="md:w-4.5 md:h-4.5" />
-                                                     <span className="text-[11px] md:text-xl font-black">{tournament.prizeDistribution.first}</span>
+                                                 <div className="flex flex-col items-center gap-1 md:gap-2 mt-auto">
+                                                     <span className={`text-[10px] md:text-sm font-black ${tournament.isPerKill ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-primary bg-primary/10 border-primary/20'} px-3 py-1 rounded border`}>
+                                                         {getWinnerStats(tournament.winners?.rank1).kills} Kills
+                                                     </span>
+                                                     <div className={`px-3 md:px-6 py-1.5 md:py-3 ${tournament.isPerKill ? 'bg-emerald-500 text-emerald-foreground shadow-[0_10px_20px_rgba(16,185,129,0.3)] border-white/20' : 'bg-primary text-primary-foreground shadow-[0_10px_20px_rgba(var(--primary),0.3)] border-white/20'} rounded-xl md:rounded-[1.5rem] flex items-center gap-1 md:gap-2 border`}>
+                                                         <Coins size={12} className="md:w-4.5 md:h-4.5" />
+                                                         <span className="text-[11px] md:text-xl font-black">
+                                                             {tournament.isPerKill 
+                                                                 ? getWinnerStats(tournament.winners?.rank1).prize 
+                                                                 : tournament.prizeDistribution.first}
+                                                         </span>
+                                                     </div>
                                                  </div>
                                              </div>
                                          </div>
@@ -457,9 +621,18 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
                                              <div className="w-full h-[80px] md:h-[160px] bg-orange-500/10 backdrop-blur-xl border-x border-t border-orange-500/20 rounded-t-[1.5rem] md:rounded-t-[2.5rem] flex flex-col items-center p-2 md:p-4 transition-all group-hover:bg-orange-500/20">
                                                  <span className="text-[10px] md:text-base font-black text-foreground truncate w-full text-center">{(tournament.winners?.rank3 as any)?.inGameName || (tournament.winners?.rank3 as any)?.name || "Elite Pro"}</span>
                                                  <span className="text-[8px] md:text-[10px] text-muted-foreground font-bold mt-0.5 md:mt-1">ID: {(tournament.winners?.rank3 as any)?.freeFireUid || "—"}</span>
-                                                 <div className="mt-auto px-2 md:px-4 py-1 md:py-2 bg-orange-500/20 rounded-xl md:rounded-2xl flex items-center gap-1 border border-orange-500/30">
-                                                     <Coins size={10} className="text-orange-400 md:w-3.5 md:h-3.5" />
-                                                     <span className="text-[9px] md:text-xs font-black text-orange-300">{tournament.prizeDistribution.third}</span>
+                                                 <div className="flex flex-col items-center gap-1 mt-auto">
+                                                     <span className={`text-[9px] md:text-[10px] font-black ${tournament.isPerKill ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-orange-400 bg-orange-500/10 border-orange-500/20'} px-2 py-0.5 rounded border`}>
+                                                         {getWinnerStats(tournament.winners?.rank3).kills} Kills
+                                                     </span>
+                                                     <div className={`px-2 py-1 ${tournament.isPerKill ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-orange-500/20 text-orange-300 border-orange-500/30'} rounded-xl flex items-center gap-1 border`}>
+                                                         <Coins size={10} className={`${tournament.isPerKill ? 'text-emerald-400' : 'text-orange-400'} md:w-3.5 md:h-3.5`} />
+                                                         <span className="text-[9px] md:text-xs font-black">
+                                                             {tournament.isPerKill 
+                                                                 ? getWinnerStats(tournament.winners?.rank3).prize 
+                                                                 : tournament.prizeDistribution.third}
+                                                         </span>
+                                                     </div>
                                                  </div>
                                              </div>
                                          </div>
@@ -487,21 +660,27 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
                                          { key: 'rank10', label: '10TH', prize: tournament.prizeDistribution.tenth },
                                      ].map((rank, i) => {
                                          const winner = (tournament.winners as any)?.[rank.key];
-                                         if (!rank.prize && !winner) return null;
+                                         if (!winner) return null;
+                                         const stats = getWinnerStats(winner);
                                          return (
                                              <div key={rank.key} className="relative group bg-muted/30 border border-white/5 rounded-2xl p-3 flex flex-col items-center gap-2 hover:bg-muted/50 transition-all hover:scale-105">
                                                  <div className="w-10 h-10 rounded-full border border-border/50 overflow-hidden bg-background/50">
-                                                     {winner ? (
-                                                         <img src={AVATARS.find(a => a.id === (winner as any).avatarId)?.src || AVATARS[0].src} className="w-full h-full object-cover" alt="Contender" />
-                                                     ) : <Users size={16} className="text-muted-foreground m-auto h-full" />}
+                                                     <img src={AVATARS.find(a => a.id === (winner as any).avatarId)?.src || AVATARS[0].src} className="w-full h-full object-cover" alt="Contender" />
                                                  </div>
                                                  <div className="text-center">
                                                      <div className="text-[9px] font-black text-primary/70">{rank.label}</div>
                                                      <div className="text-[10px] font-bold text-foreground truncate max-w-[80px]">{(winner as any)?.inGameName || (winner as any)?.name || "Elite Player"}</div>
                                                  </div>
-                                                 <div className="mt-auto px-2 py-1 bg-primary/10 rounded-lg flex items-center gap-1 border border-primary/10">
-                                                     <Coins size={10} className="text-primary" />
-                                                     <span className="text-[10px] font-black text-primary">{rank.prize}</span>
+                                                 <div className="flex flex-col items-center gap-1 mt-auto">
+                                                     <span className={`text-[8px] font-black ${tournament.isPerKill ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-primary/70 bg-primary/5 border-primary/10'} px-1 py-0.5 rounded border`}>
+                                                         {stats.kills} Kills
+                                                     </span>
+                                                     <div className={`px-2 py-0.5 ${tournament.isPerKill ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-primary/10 text-primary border-primary/10'} rounded-lg flex items-center gap-1 border`}>
+                                                         <Coins size={8} className={tournament.isPerKill ? 'text-emerald-400' : 'text-primary'} />
+                                                         <span className="text-[9px] font-black">
+                                                             {tournament.isPerKill ? stats.prize : rank.prize}
+                                                         </span>
+                                                     </div>
                                                  </div>
                                              </div>
                                          );
@@ -544,8 +723,16 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
                                     ) : (
                                         <div className="flex flex-col gap-4">
                                             <p className="text-muted-foreground text-base leading-relaxed max-w-lg">
-                                                Participate in this tournament to win <span className="text-yellow-500 font-bold">{tournament.prizePool} Coins</span>.
-                                                Entry fee of <span className="text-foreground font-bold">{tournament.entryFee} Coins</span> will be deducted.
+                                                {tournament.isPerKill ? (
+                                                    <>
+                                                        Participate in this tournament to earn <span className="text-emerald-400 font-bold">{tournament.perKillAmount} Coins per Kill</span>.
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        Participate in this tournament to win <span className="text-yellow-500 font-bold">{tournament.prizePool} Coins</span>.
+                                                    </>
+                                                )}
+                                                {' '}Entry fee of <span className="text-foreground font-bold">{tournament.entryFee} Coins</span> will be deducted.
                                             </p>
                                             <div className="flex flex-wrap gap-4">
                                                 <button
@@ -650,76 +837,104 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
 
                     {activeTab === 'prizes' && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-                             {/* Prize Breakdown Section */}
-                            <div className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-[2rem] p-6 md:p-8 shadow-2xl relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] -mr-32 -mt-32 pointer-events-none group-hover:bg-primary/10 transition-colors duration-700" />
-
-                                <div className="flex items-center justify-between mb-8 relative z-10">
-                                    <h2 className="text-2xl font-black text-foreground tracking-tight flex items-center gap-3">
-                                        <div className="p-2 bg-yellow-500/10 text-yellow-500 rounded-xl border border-yellow-500/20 shadow-sm">
-                                            <Trophy size={24} />
+                            {tournament.isPerKill ? (
+                                <div className="space-y-6">
+                                    {/* Per Kill Reward Highlight */}
+                                    <div className="bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-500/20 rounded-[2rem] p-6 md:p-8 shadow-xl relative overflow-hidden text-center">
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[50px] -mr-16 -mt-16 pointer-events-none" />
+                                        <div className="mx-auto w-16 h-16 bg-emerald-500/15 border border-emerald-500/30 rounded-2xl flex items-center justify-center text-emerald-400 mb-4 shadow-[0_0_20px_rgba(16,185,129,0.15)]">
+                                            <Swords size={28} />
                                         </div>
-                                        Prize Allocation
-                                    </h2>
-                                    <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-[10px] font-black uppercase tracking-widest">
-                                        {tournament.prizeType || 'TOP 3'}
+                                        <h3 className="text-sm font-black text-emerald-400 uppercase tracking-[0.2em] mb-1">Per Kill Reward</h3>
+                                        <div className="text-4xl md:text-5xl font-black text-emerald-400 font-mono tracking-tight drop-shadow-[0_2px_10px_rgba(16,185,129,0.3)]">
+                                            {tournament.perKillAmount} Coins
+                                        </div>
+                                        <p className="text-muted-foreground text-xs font-bold mt-2 uppercase tracking-widest">For every elimination you score</p>
+                                    </div>
+
+                                    {/* Per Kill Rules Area */}
+                                    <div className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-[2rem] p-6 md:p-8 shadow-sm">
+                                        <h3 className="text-lg font-black text-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
+                                            <Shield className="text-primary" size={18} />
+                                            Tournament Match Rules
+                                        </h3>
+                                        <div className="text-foreground/80 text-sm leading-relaxed whitespace-pre-line bg-muted/20 border border-border/30 rounded-2xl p-5 font-medium">
+                                            {tournament.rules || "No custom rules specified for this tournament."}
+                                        </div>
                                     </div>
                                 </div>
+                            ) : (
+                                 /* Prize Breakdown Section */
+                                <div className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-[2rem] p-6 md:p-8 shadow-2xl relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] -mr-32 -mt-32 pointer-events-none group-hover:bg-primary/10 transition-colors duration-700" />
 
-                                <div className={`grid gap-2 relative z-10 ${(tournament.prizeType || 'TOP 3').toString().toUpperCase().trim() === 'TOP 3' ? 'grid-cols-3' :
-                                        'grid-cols-3 sm:grid-cols-5'
-                                    }`}>
-                                    {[
-                                        { label: 'Top 1', val: tournament.prizeDistribution.first, theme: 'gold' },
-                                        { label: 'Top 2', val: tournament.prizeDistribution.second, theme: 'silver' },
-                                        { label: 'Top 3', val: tournament.prizeDistribution.third, theme: 'bronze' },
-                                        { label: 'Top 4', val: tournament.prizeDistribution.fourth, theme: 'default' },
-                                        { label: 'Top 5', val: tournament.prizeDistribution.fifth, theme: 'default' },
-                                        { label: 'Top 6', val: tournament.prizeDistribution.sixth, theme: 'default' },
-                                        { label: 'Top 7', val: tournament.prizeDistribution.seventh, theme: 'default' },
-                                        { label: 'Top 8', val: tournament.prizeDistribution.eighth, theme: 'default' },
-                                        { label: 'Top 9', val: tournament.prizeDistribution.ninth, theme: 'default' },
-                                        { label: 'Top 10', val: tournament.prizeDistribution.tenth, theme: 'default' },
-                                    ].filter((item, i) => {
-                                        const pType = (tournament.prizeType || 'TOP 3').toString().toUpperCase().trim();
-                                        if (pType === 'TOP 3') return i < 3;
-                                        if (pType === 'TOP 5') return i < 5;
-                                        return true;
-                                    }).map((item, idx) => {
-                                        const isTop3 = idx < 3;
-                                        const themes: Record<string, string> = {
-                                            gold: 'border-amber-500/40 bg-gradient-to-br from-amber-500/30 via-yellow-500/10 to-transparent text-amber-700 dark:text-amber-300 shadow-[0_8px_30px_rgb(245,158,11,0.15)] ring-1 ring-amber-500/20',
-                                            silver: 'border-indigo-400/40 bg-gradient-to-br from-indigo-500/20 via-slate-400/10 to-transparent text-indigo-700 dark:text-indigo-300 shadow-[0_8px_30px_rgb(99,102,241,0.1)] ring-1 ring-indigo-400/20',
-                                            bronze: 'border-rose-400/40 bg-gradient-to-br from-rose-500/20 via-orange-500/10 to-transparent text-rose-700 dark:text-rose-300 shadow-[0_8px_30px_rgb(244,63,94,0.1)] ring-1 ring-rose-400/20',
-                                            default: 'bg-emerald-500/5 border-emerald-500/20 text-emerald-700 dark:text-emerald-400/80 backdrop-blur-sm'
-                                        };
-                                        const themeStyles = themes[item.theme] || themes.default;
-
-                                        return (
-                                            <div
-                                                key={idx}
-                                                className={`relative flex flex-col items-center justify-center gap-1.5 rounded-xl border transition-all duration-300 hover:scale-[1.05] hover:z-10 ${themeStyles} ${isTop3 ? 'py-5 px-3 min-h-[90px] shadow-md border-[1.5px]' : 'py-2 px-1 min-h-[60px] opacity-80'}`}
-                                            >
-                                                {isTop3 && (
-                                                    <div className={`absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-tighter shadow-lg z-20 ${idx === 0 ? 'bg-yellow-500 text-white shadow-yellow-500/30' :
-                                                            idx === 1 ? 'bg-slate-400 text-white' :
-                                                                'bg-orange-500 text-white'
-                                                        }`}>
-                                                        {idx === 0 ? 'WINNER' : idx === 1 ? 'ELITE' : 'PRO'}
-                                                    </div>
-                                                )}
-                                                <span className={`text-[9px] md:text-[10px] font-bold uppercase tracking-wider ${!isTop3 ? 'opacity-60' : 'opacity-80'}`}>{item.label}</span>
-                                                <span className={`font-black ${isTop3 ? 'text-xl md:text-2xl' : 'text-base md:text-lg'} leading-tight`}>
-                                                    {item.val}
-                                                </span>
-                                                <span className={`text-[8px] md:text-[9px] font-bold opacity-40`}>
-                                                    ({Math.round(((item.val || 0) / tournament.prizePool) * 100)}%)
-                                                </span>
+                                    <div className="flex items-center justify-between mb-8 relative z-10">
+                                        <h2 className="text-2xl font-black text-foreground tracking-tight flex items-center gap-3">
+                                            <div className="p-2 bg-yellow-500/10 text-yellow-500 rounded-xl border border-yellow-500/20 shadow-sm">
+                                                <Trophy size={24} />
                                             </div>
-                                        );
-                                    })}
+                                            Prize Allocation
+                                        </h2>
+                                        <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-[10px] font-black uppercase tracking-widest">
+                                            {tournament.prizeType || 'TOP 3'}
+                                        </div>
+                                    </div>
+
+                                    <div className={`grid gap-2 relative z-10 ${(tournament.prizeType || 'TOP 3').toString().toUpperCase().trim() === 'TOP 3' ? 'grid-cols-3' :
+                                            'grid-cols-3 sm:grid-cols-5'
+                                        }`}>
+                                        {[
+                                            { label: 'Top 1', val: tournament.prizeDistribution.first, theme: 'gold' },
+                                            { label: 'Top 2', val: tournament.prizeDistribution.second, theme: 'silver' },
+                                            { label: 'Top 3', val: tournament.prizeDistribution.third, theme: 'bronze' },
+                                            { label: 'Top 4', val: tournament.prizeDistribution.fourth, theme: 'default' },
+                                            { label: 'Top 5', val: tournament.prizeDistribution.fifth, theme: 'default' },
+                                            { label: 'Top 6', val: tournament.prizeDistribution.sixth, theme: 'default' },
+                                            { label: 'Top 7', val: tournament.prizeDistribution.seventh, theme: 'default' },
+                                            { label: 'Top 8', val: tournament.prizeDistribution.eighth, theme: 'default' },
+                                            { label: 'Top 9', val: tournament.prizeDistribution.ninth, theme: 'default' },
+                                            { label: 'Top 10', val: tournament.prizeDistribution.tenth, theme: 'default' },
+                                        ].filter((item, i) => {
+                                            const pType = (tournament.prizeType || 'TOP 3').toString().toUpperCase().trim();
+                                            if (pType === 'TOP 3') return i < 3;
+                                            if (pType === 'TOP 5') return i < 5;
+                                            return true;
+                                        }).map((item, idx) => {
+                                            const isTop3 = idx < 3;
+                                            const themes: Record<string, string> = {
+                                                gold: 'border-amber-500/40 bg-gradient-to-br from-amber-500/30 via-yellow-500/10 to-transparent text-amber-700 dark:text-amber-300 shadow-[0_8px_30px_rgb(245,158,11,0.15)] ring-1 ring-amber-500/20',
+                                                silver: 'border-indigo-400/40 bg-gradient-to-br from-indigo-500/20 via-slate-400/10 to-transparent text-indigo-700 dark:text-indigo-300 shadow-[0_8px_30px_rgb(99,102,241,0.1)] ring-1 ring-indigo-400/20',
+                                                bronze: 'border-rose-400/40 bg-gradient-to-br from-rose-500/20 via-orange-500/10 to-transparent text-rose-700 dark:text-rose-300 shadow-[0_8px_30px_rgb(244,63,94,0.1)] ring-1 ring-rose-400/20',
+                                                default: 'bg-emerald-500/5 border-emerald-500/20 text-emerald-700 dark:text-emerald-400/80 backdrop-blur-sm'
+                                            };
+                                            const themeStyles = themes[item.theme] || themes.default;
+
+                                            return (
+                                                <div
+                                                    key={idx}
+                                                    className={`relative flex flex-col items-center justify-center gap-1.5 rounded-xl border transition-all duration-300 hover:scale-[1.05] hover:z-10 ${themeStyles} ${isTop3 ? 'py-5 px-3 min-h-[90px] shadow-md border-[1.5px]' : 'py-2 px-1 min-h-[60px] opacity-80'}`}
+                                                >
+                                                    {isTop3 && (
+                                                        <div className={`absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-tighter shadow-lg z-20 ${idx === 0 ? 'bg-yellow-500 text-white shadow-yellow-500/30' :
+                                                                idx === 1 ? 'bg-slate-400 text-white' :
+                                                                    'bg-orange-500 text-white'
+                                                            }`}>
+                                                            {idx === 0 ? 'WINNER' : idx === 1 ? 'ELITE' : 'PRO'}
+                                                        </div>
+                                                    )}
+                                                    <span className={`text-[9px] md:text-[10px] font-bold uppercase tracking-wider ${!isTop3 ? 'opacity-60' : 'opacity-80'}`}>{item.label}</span>
+                                                    <span className={`font-black ${isTop3 ? 'text-xl md:text-2xl' : 'text-base md:text-lg'} leading-tight`}>
+                                                        {item.val}
+                                                    </span>
+                                                    <span className={`text-[8px] md:text-[9px] font-bold opacity-40`}>
+                                                        ({Math.round(((item.val || 0) / tournament.prizePool) * 100)}%)
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     )}
 
@@ -789,6 +1004,31 @@ export default function TournamentDetailsClient({ tournament, user }: Tournament
                                             <p className="font-bold text-lg">No one here yet</p>
                                             <p className="text-sm opacity-60">Be the first to join this epic battle!</p>
                                         </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'rules' && (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+                            <div className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-[2rem] p-6 md:p-8 shadow-sm">
+                                <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-3">
+                                    <span className={`p-2 ${tournament.isPerKill ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-primary/10 text-primary border border-primary/20'} rounded-xl`}>
+                                        <Shield size={24} />
+                                    </span>
+                                    Match Rules & Guidelines
+                                </h2>
+
+                                <div className="p-2">
+                                    {renderFormattedRules(
+                                        tournament.rules || (
+                                            tournament.isPerKill ? (
+                                                "1. **No Hacking/Scripts**: Cheating, hacking, script usage, or third-party tools of any form are strictly prohibited.\n2. **No Team-ups**: Teaming up or colluding with other players is not allowed and will lead to disqualification.\n3. **Revive Disabled**: Respawn or revive mechanics are disabled/not allowed.\n4. **Verified Payouts**: Coin rewards will be verified by the admin before they are credited directly to your wallet."
+                                            ) : (
+                                                "1. **Play Fair**: Play fair and respect other players.\n2. **No Cheating**: No hacking, scripting, or third-party tools allowed.\n3. **No Teaming**: Teaming up in solo mode is strictly prohibited.\n4. **Proof Required**: Screen recording or screenshot of result is required for dispute resolution."
+                                            )
+                                        )
                                     )}
                                 </div>
                             </div>

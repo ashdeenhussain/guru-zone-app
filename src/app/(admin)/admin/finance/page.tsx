@@ -45,6 +45,7 @@ interface FinanceStats {
         expenses: number;
         netProfit: number;
         status?: string;
+        type?: string;
     }[];
     mismatchedAccountsDetails?: {
         _id: string;
@@ -1151,6 +1152,7 @@ export default function AdminFinancePage() {
                                     <thead className="bg-muted/50 text-foreground uppercase font-semibold text-xs text-center border-b border-border">
                                         <tr>
                                             <th className="px-6 py-4 text-left">Tournament</th>
+                                            <th className="px-6 py-4">Type</th>
                                             <th className="px-6 py-4">Status</th>
                                             <th className="px-6 py-4">Total Fees (Revenue)</th>
                                             <th className="px-6 py-4">Prize Pool (Expense)</th>
@@ -1159,13 +1161,22 @@ export default function AdminFinancePage() {
                                     </thead>
                                     <tbody className="divide-y divide-border">
                                         {paginatedTournaments.length === 0 ? (
-                                            <tr><td colSpan={5} className="p-6 text-center">No completed tournaments data.</td></tr>
+                                            <tr><td colSpan={6} className="p-6 text-center">No completed tournaments data.</td></tr>
                                         ) : (
                                             paginatedTournaments.map((t) => {
                                                 const isCancelled = ['cancelled', 'Cancelled'].includes(t.status || '');
                                                 return (
                                                     <tr key={t.id} className="hover:bg-muted/30 transition-colors text-center">
                                                         <td className="px-6 py-4 text-left font-medium text-foreground">{t.name}</td>
+                                                        <td className="px-6 py-4">
+                                                            <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                                                                t.type === 'Per Kill' 
+                                                                    ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' 
+                                                                    : 'bg-blue-500/10 text-blue-500 border border-blue-500/20'
+                                                            }`}>
+                                                                {t.type || 'Classic'}
+                                                            </span>
+                                                        </td>
                                                         <td className="px-6 py-4">
                                                             {isCancelled ? (
                                                                 <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-bold bg-red-500/10 text-red-500 border border-red-500/20">

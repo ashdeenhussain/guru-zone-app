@@ -33,6 +33,9 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
         // Start MongoDB Session for Transaction
         const dbSession = await mongoose.startSession();
         let result: any = null;
+        let finalWinners: Record<string, any> = winners;
+        let totalAmountDistributed = 0;
+        let paidPlayersCount = 0;
 
         try {
             await dbSession.withTransaction(async () => {
@@ -51,7 +54,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
 
 
 
-                if (tournament.status === 'Completed') {
+                if (tournament.status === 'Completed' || tournament.prizeDistributed) {
                     throw new Error('Tournament is ALREADY COMPLETED. Prizes have been distributed.');
                 }
 
@@ -60,6 +63,9 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
                 }
 
                 const prizes = tournament.prizeDistribution;
+
+                totalAmountDistributed = 0;
+                paidPlayersCount = 0;
 
                 // Function to distribute prize (Wrapped in session)
                 const distributePrize = async (userId: string, amount: number, rank: string) => {
@@ -125,35 +131,134 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
                         description: `Prize for ${rank} Place in ${tournament.title}`,
                         timestamp: new Date()
                     }], { session: dbSession });
+
+                    totalAmountDistributed += amount;
+                    paidPlayersCount++;
                 };
 
-                // Execute distributions dynamically based on prizeType
-                const distributionMapping = [
-                    { key: 'rank1', prize: prizes.first, label: '1st' },
-                    { key: 'rank2', prize: prizes.second, label: '2nd' },
-                    { key: 'rank3', prize: prizes.third, label: '3rd' },
-                    { key: 'rank4', prize: prizes.fourth, label: '4th' },
-                    { key: 'rank5', prize: prizes.fifth, label: '5th' },
-                    { key: 'rank6', prize: prizes.sixth, label: '6th' },
-                    { key: 'rank7', prize: prizes.seventh, label: '7th' },
-                    { key: 'rank8', prize: prizes.eighth, label: '8th' },
-                    { key: 'rank9', prize: prizes.ninth, label: '9th' },
-                    { key: 'rank10', prize: prizes.tenth, label: '10th' },
-                ];
+                // Update kills for all participants if provided in request
+                const kills = body.kills || {};
+                console.log("[Finalize Route Debug] Incoming kills payload:", JSON.stringify(kills));
+                for (const participant of tournament.participants) {
+                    const pUserId = (participant.userId as any)?._id?.toString() || participant.userId?.toString();
+                    const hasKey = pUserId && kills[pUserId] !== undefined;
+                    console.log(`[Finalize Route Debug] Participant userId: ${participant.userId} (pUserId: ${pUserId}), hasKey in payload: ${hasKey}, payload value: ${kills[pUserId]}`);
+                    if (hasKey) {
+                        participant.kills = Number(kills[pUserId]) || 0;
+                        console.log(`[Finalize Route Debug] Set participant.kills to: ${participant.kills}`);
+                    }
+                }
+                tournament.markModified('participants');
 
-                const distributionPromises = distributionMapping
-                    .filter((_, i) => {
-                        if (tournament.prizeType === 'TOP 3') return i < 3;
-                        if (tournament.prizeType === 'TOP 5') return i < 5;
-                        return true;
-                    })
-                    .map(item => distributePrize(winners[item.key], item.prize, item.label));
+                if (tournament.isPerKill) {
+                    const perKillAmount = tournament.perKillAmount || 0;
 
-                await Promise.all(distributionPromises);
+                    for (const participant of tournament.participants) {
+                        const pUserId = (participant.userId as any)?._id?.toString() || participant.userId?.toString();
+                        if (!pUserId) continue;
+
+                        const pKills = participant.kills || 0;
+                        const rewardAmount = pKills * perKillAmount;
+
+                        if (rewardAmount > 0) {
+                            const existingTx = await Transaction.findOne({
+                                user: pUserId,
+                                referenceId: id,
+                                type: 'prize_winnings'
+                            }).session(dbSession);
+
+                            if (existingTx) {
+                                console.warn(`[Finalize] IDEMPOTENCY CHECK: Prize already awarded to ${pUserId} for tournament ${id}. Skipping.`);
+                                continue;
+                            }
+
+                            const updateFields: any = {
+                                walletBalance: rewardAmount,
+                                netEarnings: rewardAmount,
+                            };
+                            
+                            if (tournament.isOfficial) {
+                                updateFields.officialEarnings = rewardAmount;
+                            } else {
+                                updateFields.battleZoneEarnings = rewardAmount;
+                            }
+
+                            await User.findByIdAndUpdate(pUserId, {
+                                $inc: updateFields
+                            }).session(dbSession);
+
+                            await Transaction.create([{
+                                user: pUserId,
+                                amount: rewardAmount,
+                                type: 'prize_winnings',
+                                description: `Elimination Winnings (${pKills} kills) in ${tournament.title}`,
+                                referenceId: id,
+                                status: 'approved'
+                            }], { session: dbSession });
+
+                            await FinancialLog.create([{
+                                type: 'prize_winnings',
+                                amount: rewardAmount,
+                                currency: 'Coins',
+                                userId: pUserId,
+                                referenceId: id,
+                                description: `Elimination Winnings (${pKills} kills) in ${tournament.title}`,
+                                timestamp: new Date()
+                            }], { session: dbSession });
+
+                            totalAmountDistributed += rewardAmount;
+                            paidPlayersCount++;
+                        }
+                    }
+
+                    const sortedParticipants = [...tournament.participants]
+                        .map((p: any) => ({
+                            userId: p.userId?._id?.toString() || p.userId?.toString(),
+                            kills: p.kills || 0
+                        }))
+                        .sort((a, b) => b.kills - a.kills);
+
+                    finalWinners = {
+                        rank1: sortedParticipants[0]?.kills > 0 ? sortedParticipants[0].userId : undefined,
+                        rank2: sortedParticipants[1]?.kills > 0 ? sortedParticipants[1].userId : undefined,
+                        rank3: sortedParticipants[2]?.kills > 0 ? sortedParticipants[2].userId : undefined,
+                        rank4: sortedParticipants[3]?.kills > 0 ? sortedParticipants[3].userId : undefined,
+                        rank5: sortedParticipants[4]?.kills > 0 ? sortedParticipants[4].userId : undefined,
+                        rank6: sortedParticipants[5]?.kills > 0 ? sortedParticipants[5].userId : undefined,
+                        rank7: sortedParticipants[6]?.kills > 0 ? sortedParticipants[6].userId : undefined,
+                        rank8: sortedParticipants[7]?.kills > 0 ? sortedParticipants[7].userId : undefined,
+                        rank9: sortedParticipants[8]?.kills > 0 ? sortedParticipants[8].userId : undefined,
+                        rank10: sortedParticipants[9]?.kills > 0 ? sortedParticipants[9].userId : undefined,
+                    };
+                } else {
+                    const distributionMapping = [
+                        { key: 'rank1', prize: prizes.first, label: '1st' },
+                        { key: 'rank2', prize: prizes.second, label: '2nd' },
+                        { key: 'rank3', prize: prizes.third, label: '3rd' },
+                        { key: 'rank4', prize: prizes.fourth, label: '4th' },
+                        { key: 'rank5', prize: prizes.fifth, label: '5th' },
+                        { key: 'rank6', prize: prizes.sixth, label: '6th' },
+                        { key: 'rank7', prize: prizes.seventh, label: '7th' },
+                        { key: 'rank8', prize: prizes.eighth, label: '8th' },
+                        { key: 'rank9', prize: prizes.ninth, label: '9th' },
+                        { key: 'rank10', prize: prizes.tenth, label: '10th' },
+                    ];
+
+                    const distributionPromises = distributionMapping
+                        .filter((_, i) => {
+                            if (tournament.prizeType === 'TOP 3') return i < 3;
+                            if (tournament.prizeType === 'TOP 5') return i < 5;
+                            return true;
+                        })
+                        .map(item => distributePrize(winners[item.key], item.prize, item.label));
+
+                    await Promise.all(distributionPromises);
+                }
 
                 // Update Tournament Status
                 tournament.status = 'Completed';
-                tournament.winners = winners;
+                tournament.prizeDistributed = true;
+                tournament.winners = finalWinners;
                 await tournament.save({ session: dbSession });
 
                 // Log Activity
@@ -162,13 +267,18 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
                     adminName: adminName,
                     actionType: 'UPDATE_TOURNAMENT',
                     targetId: tournament._id,
-                    details: `Finalized tournament ${tournament.title}. Winners: ${JSON.stringify(winners)}`
+                    details: `Finalized tournament ${tournament.title}. Winners: ${JSON.stringify(finalWinners)}`
                 }], { session: dbSession });
 
             });
 
             // If we are here, transaction committed.
-            result = { success: true, message: 'Tournament finalized and prizes distributed' };
+            result = { 
+                success: true, 
+                message: `Distributed ${totalAmountDistributed} coins to ${paidPlayersCount} players.`,
+                distributedAmount: totalAmountDistributed,
+                playersCount: paidPlayersCount
+            };
 
         } catch (error: any) {
             console.error('Finalize Transaction Aborted:', error);
@@ -187,7 +297,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
             } catch (e) { console.error('Rank reward error', e); }
         };
 
-        const activeWinners = Object.values(winners).filter(Boolean) as string[];
+        const activeWinners = Object.values(finalWinners).filter(Boolean) as string[];
         await Promise.all(activeWinners.map(winnerId => triggerRankRewardParams(winnerId as string)));
 
         return NextResponse.json(result);

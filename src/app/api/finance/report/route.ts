@@ -127,27 +127,29 @@ export async function GET(req: Request) {
             const officialTournaments = await Tournament.find({
                 status: { $in: ['completed', 'Completed'] },
                 isTestData: { $ne: true },
-                $and: [
-                    {
-                        $or: [
-                            { isOfficial: true },
-                            { createdBy: null }
-                        ]
-                    },
-                    {
-                        $or: [
-                            { prizeDistributed: true },
-                            { prizePayoutAmount: { $gt: 0 } },
-                            { prizeDistributed: { $exists: false }, prizePayoutAmount: { $exists: false } }
-                        ]
-                    }
+                $or: [
+                    { isOfficial: true },
+                    { createdBy: null }
                 ],
                 updatedAt: { $gte: start, $lte: end }
             });
 
-            officialTournaments.forEach(t => {
+            for (const t of officialTournaments) {
                 const revenue = (t.entryFee || 0) * (t.joinedCount || 0);
-                const expenses = t.prizePayoutAmount > 0 ? t.prizePayoutAmount : (t.prizePool || 0);
+                let expenses = 0;
+
+                if (t.prizeDistributed) {
+                    if (t.isPerKill) {
+                        const logs = await FinancialLog.find({
+                            type: 'prize_winnings',
+                            referenceId: t._id
+                        });
+                        expenses = logs.reduce((sum, log) => sum + (log.amount || 0), 0);
+                    } else {
+                        expenses = t.prizePayoutAmount > 0 ? t.prizePayoutAmount : (t.prizePool || 0);
+                    }
+                }
+
                 const net = revenue - expenses;
                 platformTournamentsNetProfit += net;
 
@@ -155,7 +157,7 @@ export async function GET(req: Request) {
                 const updatedDate = t.updatedAt || t.createdAt || new Date();
                 const dateStr = new Date(updatedDate.getTime() + 5 * 60 * 60 * 1000).toISOString().split('T')[0];
                 dailyPlatformProfit[dateStr] = (dailyPlatformProfit[dateStr] || 0) + net;
-            });
+            }
         }
 
         // Summary Stats Aggregation

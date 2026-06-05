@@ -84,6 +84,7 @@ const TournamentSchema = new Schema(
                         uid: String,
                     },
                 ],
+                kills: { type: Number, default: 0 },
             },
         ],
         roomID: {
@@ -173,9 +174,37 @@ const TournamentSchema = new Schema(
             type: Boolean,
             default: false,
         },
+        isPerKill: {
+            type: Boolean,
+            default: false,
+        },
+        perKillAmount: {
+            type: Number,
+            default: 0,
+        },
+        rules: {
+            type: String,
+            default: '',
+        },
+        prizeDistributed: {
+            type: Boolean,
+            default: false,
+        },
     },
     { timestamps: true }
 );
+
+if (models.Tournament) {
+    const hasKills = models.Tournament.schema.path('participants.kills');
+    if (!hasKills) {
+        console.log("Mongoose model 'Tournament' is stale (missing participants.kills). Recompiling...");
+        delete models.Tournament;
+        const mongoose = require('mongoose');
+        if (mongoose.connection && mongoose.connection.models.Tournament) {
+            delete mongoose.connection.models.Tournament;
+        }
+    }
+}
 
 const Tournament = models.Tournament || model('Tournament', TournamentSchema);
 

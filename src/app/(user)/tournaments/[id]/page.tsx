@@ -1,6 +1,8 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import connectToDatabase from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
 import Tournament from '@/models/Tournament';
 import User from '@/models/User';
 import TournamentDetailsClient from '@/components/TournamentDetailsClient';

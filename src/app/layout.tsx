@@ -112,6 +112,35 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://firebasestorage.googleapis.com" />
+        {process.env.NODE_ENV === 'development' && (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                (function() {
+                  if (typeof window !== 'undefined' && window.performance && typeof window.performance.measure === 'function') {
+                    const originalMeasure = window.performance.measure;
+                    window.performance.measure = function(name, startOrOptions, end) {
+                      try {
+                        if (startOrOptions && typeof startOrOptions === 'object') {
+                          const start = startOrOptions.start;
+                          const endVal = startOrOptions.end;
+                          if (typeof start === 'number' && typeof endVal === 'number' && endVal < start) {
+                            startOrOptions = Object.assign({}, startOrOptions, { end: start });
+                          }
+                        } else if (typeof startOrOptions === 'number' && typeof end === 'number' && end < startOrOptions) {
+                          end = startOrOptions;
+                        }
+                        return originalMeasure.call(window.performance, name, startOrOptions, end);
+                      } catch (e) {
+                        console.warn('Swallowed performance.measure error:', e);
+                      }
+                    };
+                  }
+                })();
+              `
+            }}
+          />
+        )}
       </head>
       <body
         className={`${inter.className} antialiased pb-20 bg-background text-foreground`}

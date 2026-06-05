@@ -6,6 +6,7 @@ import connectDB from '@/lib/db';
 import Transaction from '@/models/Transaction';
 import Tournament from '@/models/Tournament';
 import User from '@/models/User';
+import FinancialLog from '@/models/FinancialLog';
 
 export async function GET(req: Request) {
     try {
@@ -37,30 +38,42 @@ export async function GET(req: Request) {
         // Prompt says "completed tournaments".
 
         const tournaments = await Tournament.find({ 
-            status: { $in: ['completed', 'Completed', 'cancelled', 'Cancelled'] } 
+            status: { $in: ['completed', 'Completed'] } 
         }).sort({ createdAt: -1 });
 
         let totalRevenue = 0;
-        const profitTable = tournaments.map(t => {
-            const isCancelled = ['cancelled', 'Cancelled'].includes(t.status);
-            const fees = isCancelled ? 0 : (t.entryFee * t.joinedCount);
-            const expenses = isCancelled ? 0 : t.prizePool;
-            const net = fees - expenses;
-            
-            if (!isCancelled) {
-                totalRevenue += net;
+        const profitTable = [];
+
+        for (const t of tournaments) {
+            const fees = t.entryFee * t.joinedCount;
+            let expenses = 0;
+
+            if (t.prizeDistributed) {
+                if (t.isPerKill) {
+                    const logs = await FinancialLog.find({
+                        type: 'prize_winnings',
+                        referenceId: t._id
+                    });
+                    expenses = logs.reduce((sum, log) => sum + (log.amount || 0), 0);
+                } else {
+                    expenses = t.prizePool;
+                }
             }
-            
-            return {
+
+            const net = fees - expenses;
+            totalRevenue += net;
+
+            profitTable.push({
                 id: t._id,
-                name: isCancelled ? `${t.title} (Cancelled)` : t.title,
+                name: t.title,
+                type: t.isPerKill ? 'Per Kill' : 'Classic',
                 revenue: fees,
                 expenses: expenses,
                 netProfit: net,
                 status: t.status,
                 createdAt: t.createdAt
-            };
-        });
+            });
+        }
 
         const pendingDepositsCount = await Transaction.countDocuments({ type: 'deposit', status: { $in: ['pending', 'Pending'] } });
         const pendingWithdrawalsCount = await Transaction.countDocuments({ type: 'withdrawal', status: { $in: ['pending', 'Pending'] } });
