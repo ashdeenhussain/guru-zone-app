@@ -112,6 +112,9 @@ export async function PATCH(
                 { status: 'rejected' }
             );
 
+            // Delete corresponding FinancialLog entry so it doesn't inflate metrics
+            await FinancialLog.deleteOne({ referenceId: order._id, type: 'shop_purchase' });
+
             // 1. Refund Coins
             const user = await User.findById(order.userId);
             if (user) {

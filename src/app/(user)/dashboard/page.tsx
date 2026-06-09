@@ -119,7 +119,7 @@ export default async function DashboardPage() {
                 <NotificationBanner />
 
                 {/* Player Rank Progress */}
-                <RankDisplay points={user.rankPoints || 0} />
+                <RankDisplay points={user.rankPoints || 0} initialClaimedRewards={user.claimedRankRewards || []} initialWalletBalance={walletBalance} />
 
                 {/* Stats Grid (2x2) */}
                 <div className="grid grid-cols-2 gap-4">

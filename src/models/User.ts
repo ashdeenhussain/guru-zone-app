@@ -136,6 +136,12 @@ const UserSchema = new Schema(
         claimedRankRewards: [{
             type: String, // will store strings like 'Silver-1', 'Gold-1' etc. basically rank tier+division keys
         }],
+        rankHistory: [{
+            seasonName: { type: String, required: true },
+            points: { type: Number, required: true },
+            rankName: { type: String, required: true },
+            achievedAt: { type: Date, default: Date.now }
+        }],
         trustScore: {
             type: Number,
             default: 100,

@@ -200,7 +200,7 @@ export async function GET(req: Request) {
                     : (amount - (Number(purchaseCost) || 0));
             } else if (category === 'tournament_commission' || category === 'tournament_commission_platform' || category === 'tournament_commission_user') {
                 actualProfit = amount;
-            } else if (['free_spin', 'free_spin_1k', 'daily_collect', 'lucky_spin'].includes(category)) {
+            } else if (['free_spin', 'free_spin_1k', 'daily_collect', 'lucky_spin', 'rank_reward'].includes(category)) {
                 actualProfit = -amount;
             } else if (category === 'admin_adjustment') {
                 actualProfit = -amount;

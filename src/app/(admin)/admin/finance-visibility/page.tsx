@@ -32,6 +32,7 @@ interface SummaryData {
     totalFreebies1k?: number;
     totalFreebiesDaily?: number;
     totalFreebiesLucky?: number;
+    totalFreebiesRank?: number;
     totalCommissionsPlatform?: number;
     totalCommissionsUser?: number;
     totalAdminAdjustments: number;
@@ -48,6 +49,7 @@ interface ChartItem {
     Freebies1k: number;
     FreebiesDaily: number;
     FreebiesLucky: number;
+    FreebiesRank: number;
     PrizePayouts: number;
     AdminAdjustments: number;
 }
@@ -75,6 +77,7 @@ const CATEGORY_OPTIONS = [
     { value: 'free_spin_1k', label: '1k Coin Spin (Freebie)', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
     { value: 'daily_collect', label: 'Daily Collect (Freebie)', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
     { value: 'lucky_spin', label: '2500+ Lucky Spin (Freebie)', color: 'bg-pink-500/10 text-pink-400 border-pink-500/20' },
+    { value: 'rank_reward', label: 'Rank Rewards (Freebie)', color: 'bg-blue-400/10 text-blue-400 border-blue-400/20' },
     { value: 'prize_winnings', label: 'Prize Winnings', color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
     { value: 'admin_adjustment', label: 'Admin Adjustments', color: 'bg-orange-500/10 text-orange-400 border-orange-500/20' }
 ];
@@ -103,7 +106,8 @@ export default function FinanceVisibilityPage() {
         totalShopSales: 0,
         totalShopProfit: 0,
         totalShopExpenses: 0,
-        totalAdminAdjustments: 0
+        totalAdminAdjustments: 0,
+        totalFreebiesRank: 0
     });
     const [chartData, setChartData] = useState<ChartItem[]>([]);
     const [logs, setLogs] = useState<LogItem[]>([]);
@@ -121,6 +125,7 @@ export default function FinanceVisibilityPage() {
         Freebies1k: false,
         FreebiesDaily: false,
         FreebiesLucky: false,
+        FreebiesRank: false,
         PrizePayouts: false,
         AdminAdjustments: false
     });
@@ -170,7 +175,7 @@ export default function FinanceVisibilityPage() {
             setSelectedCategories([]);
         } else {
             setSelectedCategories([cat]);
-            if (['tournament_commission_platform', 'tournament_commission_user', 'free_spin_1k', 'daily_collect', 'lucky_spin'].includes(cat)) {
+            if (['tournament_commission_platform', 'tournament_commission_user', 'free_spin_1k', 'daily_collect', 'lucky_spin', 'rank_reward'].includes(cat)) {
                 setShowGlobalMoreFilters(true);
             }
         }
@@ -306,6 +311,7 @@ export default function FinanceVisibilityPage() {
             Freebies1k: false,
             FreebiesDaily: false,
             FreebiesLucky: false,
+            FreebiesRank: false,
             PrizePayouts: false,
             AdminAdjustments: false
         });
@@ -784,6 +790,13 @@ export default function FinanceVisibilityPage() {
                                     <span>[2500+ Top-up Lucky Spin]</span>
                                     <span className="font-mono font-bold text-pink-400">{summary.totalFreebiesLucky?.toLocaleString() || 0} Coins</span>
                                 </div>
+                                <div 
+                                    onClick={(e) => { e.stopPropagation(); toggleSubCategoryFilter('rank_reward'); }}
+                                    className={`flex justify-between items-center hover:text-foreground transition-colors p-1 rounded hover:bg-purple-500/5 ${selectedCategories.includes('rank_reward') ? 'text-foreground font-semibold bg-purple-500/10' : ''}`}
+                                >
+                                    <span>[Rank Up Rewards]</span>
+                                    <span className="font-mono font-bold text-blue-400">{summary.totalFreebiesRank?.toLocaleString() || 0} Coins</span>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -791,7 +804,7 @@ export default function FinanceVisibilityPage() {
             )}
 
             {/* Sub-aggregation Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
                 <div 
                     onClick={() => toggleSubCategoryFilter('tournament_commission_user')}
                     className={`bg-card border p-4 rounded-xl flex items-center justify-between cursor-pointer hover:border-fuchsia-500/30 transition-all select-none ${selectedCategories.includes('tournament_commission_user') ? 'border-fuchsia-500 shadow-sm' : 'border-border'}`}
@@ -886,6 +899,26 @@ export default function FinanceVisibilityPage() {
                             <Info size={14} className="text-muted-foreground hover:text-foreground cursor-help transition-colors" onClick={(e) => e.stopPropagation()} />
                             <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2.5 bg-zinc-950/95 backdrop-blur border border-zinc-800 text-zinc-300 text-[10px] rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 text-center font-normal whitespace-normal pointer-events-none">
                                 Shop Sales Volume - Shop Product Expenses (cost prices of purchased items).
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div 
+                    onClick={() => toggleSubCategoryFilter('rank_reward')}
+                    className={`bg-card border p-4 rounded-xl flex items-center justify-between cursor-pointer hover:border-blue-500/30 transition-all select-none ${selectedCategories.includes('rank_reward') ? 'border-blue-500 shadow-sm' : 'border-border'}`}
+                >
+                    <div>
+                        <span className="text-xs text-muted-foreground font-bold uppercase block">Rank Rewards Paid</span>
+                        <span className="text-lg font-black text-blue-400 font-mono">
+                            -{(summary.totalFreebiesRank ?? 0).toLocaleString()} Coins
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 rounded text-blue-400 font-bold font-mono">Ranks</span>
+                        <div className="group relative inline-block">
+                            <Info size={14} className="text-muted-foreground hover:text-foreground cursor-help transition-colors" onClick={(e) => e.stopPropagation()} />
+                            <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2.5 bg-zinc-950/95 backdrop-blur border border-zinc-800 text-zinc-300 text-[10px] rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 text-center font-normal whitespace-normal pointer-events-none">
+                                Total free coins distributed to users as rank-up rewards.
                             </div>
                         </div>
                     </div>
@@ -1029,6 +1062,17 @@ export default function FinanceVisibilityPage() {
                                     Lucky Spin Freebie
                                 </button>
                                 <button
+                                    onClick={() => setVisibleLines({...visibleLines, FreebiesRank: !visibleLines.FreebiesRank})}
+                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                        visibleLines.FreebiesRank 
+                                        ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' 
+                                        : 'text-muted-foreground opacity-50 border border-transparent'
+                                    }`}
+                                >
+                                    <span className="w-2 h-2 bg-blue-400 rounded-full inline-block" />
+                                    Rank Up Rewards
+                                </button>
+                                <button
                                     onClick={() => setVisibleLines({...visibleLines, PrizePayouts: !visibleLines.PrizePayouts})}
                                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                                         visibleLines.PrizePayouts 
@@ -1132,6 +1176,12 @@ export default function FinanceVisibilityPage() {
                                         <div className="flex justify-between items-center text-pink-400">
                                             <span>Lucky Spin Freebie:</span>
                                             <span className="font-mono font-bold">{chartData[hoverIndex].FreebiesLucky.toLocaleString()} Coins</span>
+                                        </div>
+                                    )}
+                                    {visibleLines.FreebiesRank && (
+                                        <div className="flex justify-between items-center text-blue-400">
+                                            <span>Rank Up Rewards:</span>
+                                            <span className="font-mono font-bold">{chartData[hoverIndex].FreebiesRank.toLocaleString()} Coins</span>
                                         </div>
                                     )}
                                     {visibleLines.PrizePayouts && (
@@ -1291,6 +1341,17 @@ export default function FinanceVisibilityPage() {
                                     d={points.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${(p as any).FreebiesLucky}`).join(' ')}
                                     fill="none" 
                                     stroke="#ec4899" 
+                                    strokeWidth={2.5}
+                                    strokeLinecap="round"
+                                />
+                            )}
+
+                            {/* Freebies Rank Path Line */}
+                            {visibleLines.FreebiesRank && points.length > 1 && (
+                                <path 
+                                    d={points.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${(p as any).FreebiesRank}`).join(' ')}
+                                    fill="none" 
+                                    stroke="#60a5fa" 
                                     strokeWidth={2.5}
                                     strokeLinecap="round"
                                 />

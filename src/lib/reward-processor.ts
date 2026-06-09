@@ -1,7 +1,8 @@
 import User from "@/models/User";
 import Transaction from "@/models/Transaction";
 import { getRankFromPoints, RANK_THRESHOLDS, RankInfo } from "./ranks";
-import Notification from "@/models/Notification"; // Assuming Notification model exists, if not we will skip or create basic implementation
+import Notification from "@/models/Notification";
+import FinancialLog from "@/models/FinancialLog"; // Assuming Notification model exists, if not we will skip or create basic implementation
 
 export async function processRankRewards(userId: string, currentPoints: number) {
     try {
@@ -62,13 +63,28 @@ export async function processRankRewards(userId: string, currentPoints: number) 
 
         // Create Transactions
         if (totalCoins > 0) {
-            await Transaction.create({
+            const tx = await Transaction.create({
                 user: userId,
                 amount: totalCoins,
                 type: 'rank_reward',
                 description: `Rank Up Rewards (Found ${rewardsToAward.length} new rewards)`,
                 status: 'approved'
             });
+
+            // Record to FinancialLog
+            try {
+                await FinancialLog.create({
+                    type: 'rank_reward',
+                    amount: totalCoins,
+                    currency: 'Coins',
+                    userId: userId,
+                    referenceId: tx._id,
+                    description: `Rank Up Rewards (Found ${rewardsToAward.length} new rewards)`,
+                    timestamp: new Date()
+                });
+            } catch (logErr) {
+                console.error("Failed to write rank reward to FinancialLog:", logErr);
+            }
         }
 
         // Create Notification

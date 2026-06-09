@@ -7,7 +7,8 @@ import FinancialLog from '@/models/FinancialLog';
 import { getServerSession } from 'next-auth';
 import { authOptions, hasPermission } from '@/lib/auth';
 import AdminActivity from '@/models/AdminActivity';
-import { processRankRewards } from '@/lib/reward-processor';
+import Notification from '@/models/Notification';
+import SystemSetting from '@/models/SystemSetting';
 import mongoose from 'mongoose';
 
 export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
@@ -85,18 +86,11 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
                         return; // Skip payment
                     }
 
-                    // Calculate Rank Points (Top 10 Support)
-                    let pointsToAdd = 0;
-                    if (rank === '1st') pointsToAdd = 50;
-                    else if (rank === '2nd' || rank === '3rd') pointsToAdd = 20;
-                    else pointsToAdd = 10; // For ranks 4-10
-
                     // 1. Update User Wallet & Stats
                     const updateFields: any = {
                         walletBalance: amount,
                         totalWins: 1,
-                        netEarnings: amount,
-                        rankPoints: pointsToAdd
+                        netEarnings: amount
                     };
                     
                     if (tournament.isOfficial) {
@@ -255,6 +249,49 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
                     await Promise.all(distributionPromises);
                 }
 
+                const settings = await SystemSetting.findOne().session(dbSession);
+                const rules = settings?.rankRules || {
+                    tournamentParticipationPoints: 10,
+                    tournamentFirstPlacePoints: 15,
+                    tournamentPerKillBasePoints: 5,
+                    tournamentPerKillMultiplier: 2
+                };
+
+                // Update Rank Points and send notifications for ALL participants
+                for (const participant of tournament.participants) {
+                    const pUserId = (participant.userId as any)?._id?.toString() || participant.userId?.toString();
+                    if (!pUserId) continue;
+
+                    let pointsToAdd = 0;
+                    if (tournament.isGiveaway || tournament.prizeType === 'GIVEAWAY') {
+                        pointsToAdd = 0;
+                    } else if (tournament.isPerKill) {
+                        const userKills = participant.kills || 0;
+                        pointsToAdd = (rules.tournamentPerKillBasePoints ?? 5) + 
+                                      ((rules.tournamentPerKillMultiplier ?? 2) * userKills);
+                    } else {
+                        // Normal tournament
+                        const isWinner = finalWinners.rank1 && finalWinners.rank1.toString() === pUserId;
+                        pointsToAdd = isWinner 
+                            ? (rules.tournamentFirstPlacePoints ?? 15) 
+                            : (rules.tournamentParticipationPoints ?? 10);
+                    }
+
+                    if (pointsToAdd > 0) {
+                        await User.findByIdAndUpdate(pUserId, {
+                            $inc: { rankPoints: pointsToAdd }
+                        }).session(dbSession);
+
+                        await Notification.create([{
+                            userId: pUserId,
+                            title: 'Tournament Completed! 🏆',
+                            message: `Tournament "${tournament.title}" has been finalized. You earned ${pointsToAdd} Rank Points.`,
+                            type: 'success',
+                            link: `/dashboard/history`
+                        }], { session: dbSession });
+                    }
+                }
+
                 // Update Tournament Status
                 tournament.status = 'Completed';
                 tournament.prizeDistributed = true;
@@ -288,17 +325,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
             await dbSession.endSession();
         }
 
-        // Trigger Rank Rewards Post-Transaction (Best Effort)
-        const triggerRankRewardParams = async (userId: string) => {
-            if (!userId) return;
-            try {
-                const u = await User.findById(userId).select('rankPoints');
-                if (u) await processRankRewards(userId, u.rankPoints);
-            } catch (e) { console.error('Rank reward error', e); }
-        };
-
-        const activeWinners = Object.values(finalWinners).filter(Boolean) as string[];
-        await Promise.all(activeWinners.map(winnerId => triggerRankRewardParams(winnerId as string)));
+        // Rank points and notifications processed within transaction. Nothing to trigger post-transaction.
 
         return NextResponse.json(result);
 

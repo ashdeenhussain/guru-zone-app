@@ -63,6 +63,7 @@ export default function Sidebar({ onClose }: AdminSidebarProps) {
         { name: 'Landing Page', href: '/admin/landing-page', icon: Globe, permission: 'manage_system' },
         { name: 'App Promo', href: '/admin/promo-banner', icon: Layout, permission: 'manage_system' },
         { name: 'Audit Logs', href: '/admin/audit-logs', icon: Shield, permission: 'manage_system' },
+        { name: 'Ranks & Seasons', href: '/admin/ranks', icon: Trophy, permission: 'manage_system' },
     ];
 
     return (

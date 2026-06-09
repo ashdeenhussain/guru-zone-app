@@ -8,6 +8,61 @@ import Escrow from '@/models/Escrow';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { sendPushNotification } from '@/lib/webpush';
+import SystemSetting from '@/models/SystemSetting';
+
+async function getBattleZonePointsEarnedToday(userId: string, rules?: any) {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const matches = await BattleMatch.find({
+        status: 'completed',
+        entryFee: { $gt: 0 },
+        updatedAt: { $gte: startOfToday },
+        $or: [
+            { createdBy: userId },
+            { 'participants.userId': userId }
+        ]
+    }).sort({ updatedAt: 1 }).lean();
+
+    let totalPoints = 0;
+    const opponentMatchCounts: Record<string, number> = {};
+
+    const oppLimit = rules?.bzOpponentLimitPerDay ?? 2;
+
+    for (const m of matches) {
+        const hId = m.createdBy.toString();
+        const wId = m.winners?.rank1?.toString();
+        const isHost = hId === userId;
+        const isWinner = wId === userId;
+
+        let oppId = "";
+        if (isHost) {
+            oppId = m.participants[0]?.userId?.toString() || "";
+        } else {
+            oppId = hId;
+        }
+
+        if (oppId) {
+            opponentMatchCounts[oppId] = (opponentMatchCounts[oppId] || 0) + 1;
+            if (opponentMatchCounts[oppId] > oppLimit) {
+                continue;
+            }
+        }
+
+        let pts = 0;
+        if (isHost && isWinner) {
+            pts = rules?.bzHostWinnerPoints ?? 10;
+        } else if (isHost) {
+            pts = rules?.bzHostPoints ?? 5;
+        } else if (isWinner) {
+            pts = rules?.bzWinnerPoints ?? 5;
+        }
+
+        totalPoints += pts;
+    }
+
+    return totalPoints;
+}
 
 // POST: Host Declares Winner
 export async function POST(
@@ -187,6 +242,63 @@ export async function PUT(
             const netPrize = match.prizePool;
 
             try {
+                // ── AWARD RANK POINTS FOR BATTLE ZONE ──
+                let hostPointsEarned = 0;
+                let winnerPointsEarned = 0;
+
+                if (match.entryFee > 0) {
+                    const hostId = match.createdBy.toString();
+                    const winnerId = declaredWinnerId.toString();
+
+                    const startOfToday = new Date();
+                    startOfToday.setHours(0, 0, 0, 0);
+
+                    // Fetch settings for dynamic limits
+                    const settings = await SystemSetting.findOne().lean();
+                    const rules = settings?.rankRules || {
+                        bzDailyPointsCap: 50,
+                        bzOpponentLimitPerDay: 2,
+                        bzHostPoints: 5,
+                        bzWinnerPoints: 5,
+                        bzHostWinnerPoints: 10
+                    };
+
+                    const matchCountToday = await BattleMatch.countDocuments({
+                        status: 'completed',
+                        entryFee: { $gt: 0 },
+                        updatedAt: { $gte: startOfToday },
+                        $or: [
+                            { createdBy: hostId, 'participants.userId': winnerId },
+                            { createdBy: winnerId, 'participants.userId': hostId }
+                        ]
+                    });
+
+                    if (matchCountToday < (rules.bzOpponentLimitPerDay ?? 2)) {
+                        const hostPtsToday = await getBattleZonePointsEarnedToday(hostId, rules);
+                        const bzCap = rules.bzDailyPointsCap ?? 50;
+                        
+                        if (hostId === winnerId) {
+                            if (hostPtsToday < bzCap) {
+                                hostPointsEarned = Math.min(rules.bzHostWinnerPoints ?? 10, bzCap - hostPtsToday);
+                                winner.rankPoints = (winner.rankPoints || 0) + hostPointsEarned;
+                            }
+                        } else {
+                            if (hostPtsToday < bzCap) {
+                                hostPointsEarned = Math.min(rules.bzHostPoints ?? 5, bzCap - hostPtsToday);
+                                await User.findByIdAndUpdate(hostId, {
+                                    $inc: { rankPoints: hostPointsEarned }
+                                });
+                            }
+
+                            const winnerPtsToday = await getBattleZonePointsEarnedToday(winnerId, rules);
+                            if (winnerPtsToday < bzCap) {
+                                winnerPointsEarned = Math.min(rules.bzWinnerPoints ?? 5, bzCap - winnerPtsToday);
+                                winner.rankPoints = (winner.rankPoints || 0) + winnerPointsEarned;
+                            }
+                        }
+                    }
+                }
+
                 await Transaction.create({
                     user: declaredWinnerId,
                     amount: netPrize,
@@ -206,6 +318,39 @@ export async function PUT(
                 match.status = 'completed';
                 match.verificationStatus = 'Confirmed';
                 await match.save();
+
+                // Send notifications for rank points
+                const hostIdStr = match.createdBy.toString();
+                const winnerIdStr = declaredWinnerId.toString();
+
+                if (hostIdStr === winnerIdStr && hostPointsEarned > 0) {
+                    await Notification.create({
+                        userId: hostIdStr,
+                        title: 'Battle Zone Rank Points! 🏆',
+                        message: `You earned +${hostPointsEarned} Rank Points for hosting & winning match "${match.title}".`,
+                        type: 'success',
+                        link: `/battle-zone/${match._id}`
+                    });
+                } else {
+                    if (hostPointsEarned > 0) {
+                        await Notification.create({
+                            userId: hostIdStr,
+                            title: 'Battle Zone Rank Points! 🏆',
+                            message: `You earned +${hostPointsEarned} Rank Points for hosting match "${match.title}".`,
+                            type: 'success',
+                            link: `/battle-zone/${match._id}`
+                        });
+                    }
+                    if (winnerPointsEarned > 0) {
+                        await Notification.create({
+                            userId: winnerIdStr,
+                            title: 'Battle Zone Rank Points! 🏆',
+                            message: `You earned +${winnerPointsEarned} Rank Points for winning match "${match.title}".`,
+                            type: 'success',
+                            link: `/battle-zone/${match._id}`
+                        });
+                    }
+                }
 
                 // Update Escrow status
                 if (match.escrowId) {

@@ -5,7 +5,6 @@ import connectToDatabase from '@/lib/db';
 import Tournament from '@/models/Tournament';
 import User from '@/models/User';
 import Transaction from '@/models/Transaction';
-import { processRankRewards } from '@/lib/reward-processor';
 import Notification from '@/models/Notification';
 import mongoose from 'mongoose';
 
@@ -88,11 +87,7 @@ export async function POST(req: Request) {
         // 3. Deduct balance
         user.walletBalance -= tournament.entryFee;
 
-        // 4. Award Rank Points (Optimistic update, logic preserved)
-        // Note: processRankRewards is likely external and might not support sessions directly unless updated.
-        // We will keep the rank point update on the user document here as it is transactional.
-        const newPoints = (user.rankPoints || 0) + 10;
-        user.rankPoints = newPoints;
+
 
         // 5. Add to participants
         const participantData = {
@@ -138,13 +133,7 @@ export async function POST(req: Request) {
         // Commit Transaction
         await session.commitTransaction();
 
-        // Post-transaction async operations (Non-critical for data integrity)
-        // We fire and forget this or await it safely. If it fails, the user still joined successfully.
-        try {
-            await processRankRewards(user._id, newPoints);
-        } catch (e) {
-            console.error("Reward processing failed", e);
-        }
+
 
         // 10. Create Notification
         const notification = new Notification({

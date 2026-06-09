@@ -1,3 +1,44 @@
 {
-  "css.lint.unknownAtRules": "ignore"
+  "css.lint.unknownAtRules": "ignore",
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/.next/**": true,
+    "**/android/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/.gemini/**": true,
+    "**/.vscode/**": true,
+    "**/*.tsbuildinfo": true,
+    "**/test-results-e2e/**": true,
+    "**/test-results/**": true,
+    "**/tmp/**": true,
+    "**/scratch/**": true,
+    "**/artifacts/**": true
+  },
+  "files.exclude": {
+    "**/.git": true,
+    "**/.next": true,
+    "**/node_modules": true,
+    "**/.gemini": true,
+    "**/*.tsbuildinfo": true,
+    "**/test-results-e2e": true,
+    "**/test-results": true,
+    "**/tmp": true,
+    "**/scratch": true,
+    "**/artifacts": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/android": true,
+    "**/test-results-e2e": true,
+    "**/test-results": true,
+    "**/tmp": true,
+    "**/scratch": true,
+    "**/artifacts": true
+  }
 }

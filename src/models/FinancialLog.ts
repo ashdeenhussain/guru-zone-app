@@ -12,7 +12,8 @@ const FinancialLogSchema = new Schema(
                 'free_spin',
                 'daily_collect',
                 'prize_winnings',
-                'admin_adjustment'
+                'admin_adjustment',
+                'rank_reward'
             ],
             required: true,
         },

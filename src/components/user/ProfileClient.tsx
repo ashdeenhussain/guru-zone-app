@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Edit2, Save, X, Shield, Crosshair, User as UserIcon, FileText, Plus, ImageIcon, Users, Copy, Share2, UserPlus, Crown, CheckCircle2 } from "lucide-react";
+import { Edit2, Save, X, Shield, Crosshair, User as UserIcon, FileText, Plus, ImageIcon, Users, Copy, Share2, UserPlus, Crown, CheckCircle2, Trophy } from "lucide-react";
 import ImageUpload from "@/components/admin/ImageUpload";
 
 interface ProfileUser {
@@ -19,6 +19,12 @@ interface ProfileUser {
         squadName: string;
         members: { name: string; uid: string }[];
     };
+    rankHistory?: {
+        seasonName: string;
+        points: number;
+        rankName: string;
+        achievedAt: string;
+    }[];
 }
 
 import { AVATARS } from "@/lib/avatars";
@@ -250,6 +256,55 @@ export default function ProfileClient({ initialUser }: { initialUser: ProfileUse
                             {user.bio || "No bio set yet. Click 'Edit Profile' to add a one-liner about yourself!"}
                         </p>
                     </div>
+
+                    {/* Rank History Section */}
+                    {user.rankHistory && user.rankHistory.length > 0 && (
+                        <div className="bg-card backdrop-blur-md border border-border rounded-3xl p-6 md:p-8 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/5 rounded-full blur-[80px] -mr-32 -mt-32 pointer-events-none" />
+                            
+                            <div className="flex items-center gap-3 mb-6 relative z-10 border-b border-border/50 pb-4">
+                                <div className="p-3 bg-purple-500/10 text-purple-500 rounded-2xl border border-purple-500/20">
+                                    <Trophy size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-foreground">Season Standings</h3>
+                                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Historical Rank Achievements</p>
+                                </div>
+                            </div>
+
+                            <div className="relative z-10 space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                                {user.rankHistory.map((history, idx) => (
+                                    <div 
+                                        key={idx} 
+                                        className="flex items-center justify-between p-4 bg-muted/10 border border-border/50 rounded-2xl hover:bg-muted/20 hover:border-purple-500/20 transition-all"
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 font-black italic text-sm">
+                                                S{idx + 1}
+                                            </div>
+                                            <div>
+                                                <span className="font-bold text-foreground block text-sm sm:text-base">
+                                                    {history.seasonName}
+                                                </span>
+                                                <span className="text-[10px] text-muted-foreground">
+                                                    Achieved on {new Date(history.achievedAt).toLocaleDateString()}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="text-right">
+                                            <span className="font-black text-primary text-sm sm:text-base block tracking-tight">
+                                                {history.rankName}
+                                            </span>
+                                            <span className="text-[10px] text-muted-foreground font-medium">
+                                                {history.points} Rank Points
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* My Squad Section */}
                     <div className="bg-card backdrop-blur-md border border-border rounded-3xl p-6 md:p-8 relative overflow-hidden">

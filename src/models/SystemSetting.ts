@@ -37,6 +37,43 @@ const SystemSettingSchema = new Schema(
             isActive: { type: Boolean, default: false },
             updatedAt: { type: Date, default: Date.now },
         },
+        rankSeason: {
+            currentSeasonName: { type: String, default: "Season 1" },
+            startDate: { type: Date, default: Date.now },
+            endDate: { type: Date, default: () => new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) }, // Default 1 year
+            durationDays: { type: Number, default: 365 }
+        },
+        rankRewards: {
+            type: Map,
+            of: Number,
+            default: {}
+        },
+        rankRules: {
+            tournamentParticipationPoints: { type: Number, default: 10 },
+            tournamentFirstPlacePoints: { type: Number, default: 15 },
+            tournamentPerKillBasePoints: { type: Number, default: 5 },
+            tournamentPerKillMultiplier: { type: Number, default: 2 },
+            bzDailyPointsCap: { type: Number, default: 50 },
+            bzOpponentLimitPerDay: { type: Number, default: 2 },
+            bzHostPoints: { type: Number, default: 5 },
+            bzWinnerPoints: { type: Number, default: 5 },
+            bzHostWinnerPoints: { type: Number, default: 10 }
+        },
+        seasonHistory: {
+            type: [{
+                seasonName: { type: String, required: true },
+                startDate: { type: Date, required: true },
+                endDate: { type: Date, required: true },
+                totalUsers: { type: Number, default: 0 },
+                totalClaimsPaid: { type: Number, default: 0 },
+                topPlayer: {
+                    name: String,
+                    points: Number,
+                    rank: String
+                }
+            }],
+            default: []
+        }
     },
     { timestamps: true }
 );

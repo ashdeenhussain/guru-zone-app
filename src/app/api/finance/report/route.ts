@@ -186,7 +186,8 @@ export async function GET(req: Request) {
             daily_collect: 0,
             lucky_spin: 0,
             prize_winnings: 0,
-            admin_adjustment: 0
+            admin_adjustment: 0,
+            rank_reward: 0
         };
         const profits: Record<string, number> = {
             shop_purchase: 0
@@ -218,12 +219,13 @@ export async function GET(req: Request) {
         // Use the actual platform tournaments net profit calculated directly from completed official tournaments
         const totalCommissionsPlatform = platformTournamentsNetProfit;
         const totalCommissionsUser = totals.tournament_commission_user;
-        const totalCommissions = totalCommissionsUser;
+        const totalCommissions = totalCommissionsPlatform + totalCommissionsUser;
 
         const totalFreebies1k = totals.free_spin_1k;
         const totalFreebiesDaily = totals.daily_collect;
         const totalFreebiesLucky = totals.lucky_spin;
-        const totalFreebies = totalFreebies1k + totalFreebiesDaily + totalFreebiesLucky;
+        const totalFreebiesRank = totals.rank_reward;
+        const totalFreebies = totalFreebies1k + totalFreebiesDaily + totalFreebiesLucky + totalFreebiesRank;
         const totalAdminAdjustments = totals.admin_adjustment;
 
         // Strict Net Profit formula:
@@ -296,6 +298,11 @@ export async function GET(req: Request) {
                             $cond: [{ $eq: ['$_id.subCategory', 'lucky_spin'] }, '$totalAmount', 0]
                         }
                     },
+                    freebiesRank: {
+                        $sum: {
+                            $cond: [{ $eq: ['$_id.subCategory', 'rank_reward'] }, '$totalAmount', 0]
+                        }
+                    },
                     prizePayouts: {
                         $sum: {
                             $cond: [{ $eq: ['$_id.subCategory', 'prize_winnings'] }, '$totalAmount', 0]
@@ -332,6 +339,7 @@ export async function GET(req: Request) {
                 freebies1k: 0,
                 freebiesDaily: 0,
                 freebiesLucky: 0,
+                freebiesRank: 0,
                 prizePayouts: 0,
                 adminAdjustments: 0
             };
@@ -347,6 +355,7 @@ export async function GET(req: Request) {
                 Freebies1k: item.freebies1k,
                 FreebiesDaily: item.freebiesDaily,
                 FreebiesLucky: item.freebiesLucky,
+                FreebiesRank: item.freebiesRank,
                 PrizePayouts: item.prizePayouts,
                 AdminAdjustments: item.adminAdjustments
             };
@@ -447,6 +456,7 @@ export async function GET(req: Request) {
                 totalFreebies1k,
                 totalFreebiesDaily,
                 totalFreebiesLucky,
+                totalFreebiesRank,
                 totalAdminAdjustments,
                 totalCommissions,
                 totalCommissionsPlatform,

@@ -211,6 +211,23 @@ export default function AdminMobileNavigation() {
                                         </Link>
                                     </>
                                 )}
+                                
+                                {hasPermission('manage_system') && (
+                                    <Link
+                                        href="/admin/ranks"
+                                        onClick={() => setIsMenuOpen(false)}
+                                        className="flex items-center gap-4 p-4 rounded-2xl bg-card border border-border hover:bg-muted/50 active:scale-[0.98] transition-all shadow-sm"
+                                    >
+                                        <div className="p-3 bg-primary/10 text-primary rounded-xl">
+                                            <Trophy size={24} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h4 className="font-bold text-foreground">Ranks & Seasons</h4>
+                                            <p className="text-xs text-muted-foreground">Manage rank rewards & reset seasons</p>
+                                        </div>
+                                        <ArrowUpRight size={18} className="text-muted-foreground" />
+                                    </Link>
+                                )}
                             </div>
 
                             {/* System Section */}

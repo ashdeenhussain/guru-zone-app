@@ -52,7 +52,6 @@ export default async function ProfilePage() {
         redirect("/auth/signin");
     }
 
-    // Transform to safe object compliant with ProfileClient interface
     const profileUser = {
         name: dbUser.name || "Unknown User",
         email: dbUser.email || "",
@@ -62,6 +61,11 @@ export default async function ProfilePage() {
         bio: dbUser.bio || "",
         image: dbUser.image || "",
         squad: dbUser.squad || { squadName: "", members: [] },
+        rankHistory: (dbUser.rankHistory || []).map((h: any) => ({
+            ...h,
+            _id: h._id?.toString(),
+            achievedAt: h.achievedAt ? new Date(h.achievedAt).toISOString() : new Date().toISOString()
+        }))
     };
 
     return (
