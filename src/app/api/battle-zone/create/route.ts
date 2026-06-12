@@ -18,11 +18,15 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { format, entryFee, gameMode, mapName, advancedRules, availabilityDuration } = body;
+        const { format, entryFee, gameMode, mapName, advancedRules, availabilityDuration, privacy } = body;
 
         // Input Validation
         if (!['1v1', '2v2', '4v4'].includes(format)) {
             return NextResponse.json({ success: false, error: 'Invalid format. Must be 1v1, 2v2, or 4v4.' }, { status: 400 });
+        }
+
+        if (privacy && !['Public', 'Private'].includes(privacy)) {
+            return NextResponse.json({ success: false, error: 'Invalid privacy setting. Must be Public or Private.' }, { status: 400 });
         }
 
         const fee = Number(entryFee);
@@ -110,6 +114,7 @@ export async function POST(req: Request) {
                 entryFee: fee,
                 prizePool,
                 status: 'open',
+                privacy: privacy || 'Public',
                 createdBy: user._id,
                 isOfficial: false, 
                 maxSlots: 2, 

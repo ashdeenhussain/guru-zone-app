@@ -7,7 +7,7 @@ import PageHeader from '@/components/PageHeader';
 import { 
     Swords, Trophy, Users, Calendar, Coins, Loader2, MapPin, 
     Shield, Crosshair, ArrowLeft, MessageSquare, Gamepad2, Info,
-    User, Crown, AlertCircle, RotateCw
+    User, Crown, AlertCircle, RotateCw, Copy, Timer
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -80,6 +80,18 @@ export default function BattleMatchDetailsPage({ params }: { params: Promise<{ i
         chat: false
     });
 
+    const [whatsappAdmins, setWhatsappAdmins] = useState<any[]>([]);
+    const [settings, setSettings] = useState<any>(null);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+    const [now, setNow] = useState(Date.now());
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setNow(Date.now());
+        }, 1000);
+        return () => clearInterval(interval);
+    }, []);
+
     const userId = (session?.user as any)?.id;
     const isJoined = !!(session?.user && userId && match?.participants?.some((p: any) =>
         (p.userId?._id || p.userId)?.toString() === userId?.toString()
@@ -87,6 +99,7 @@ export default function BattleMatchDetailsPage({ params }: { params: Promise<{ i
 
     const isHost = !!(session?.user && userId && match?.createdBy && (match?.createdBy?._id || match?.createdBy)?.toString() === userId?.toString());
     const isAdmin = (session?.user as any)?.role === 'admin';
+    const showShareBtn = isHost && match?.status?.toLowerCase() === 'open' && (match?.joinedCount || 1) === 1;
 
     // Extract current user participant data for WhatsApp message
     const currentUserParticipant = match?.participants?.find((p: any) => 
@@ -161,6 +174,95 @@ Here is my video proof:`;
         }
     };
 
+    const fetchSettings = async () => {
+        try {
+            const res = await fetch('/api/admin/settings');
+            if (res.ok) {
+                const data = await res.json();
+                setSettings(data);
+                if (data.whatsappAdmins) {
+                    setWhatsappAdmins(data.whatsappAdmins.filter((admin: any) => admin.isActive));
+                }
+            }
+        } catch (error) {
+            console.error("Failed to fetch settings:", error);
+        }
+    };
+
+    const openWhatsApp = async (number: string, targetMatch: any) => {
+        try {
+            const response = await fetch(`/api/battle-zone/matches/${targetMatch._id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ number })
+            });
+            if (response.ok) {
+                const resData = await response.json();
+                if (resData.success && resData.data) {
+                    setMatch(resData.data);
+                }
+            }
+        } catch (error) {
+            console.error("Failed to log share event", error);
+        }
+
+        let formattedNumber = number.replace(/[^0-9]/g, '');
+        
+        const title = targetMatch.title || 'Untitled Match';
+        const entryFee = targetMatch.entryFee || '0';
+        const prizePool = targetMatch.prizePool || '0';
+        const formatType = targetMatch.format || '1v1';
+        const gameMode = targetMatch.gameMode || 'CS';
+        
+        const matchExpiresAt = targetMatch.expiresAt || new Date(new Date(targetMatch.createdAt).getTime() + 60 * 60 * 1000).toISOString();
+        const expiryTime = new Date(matchExpiresAt).getTime();
+        const diff = expiryTime - Date.now();
+        let durationText = '1 hour';
+        if (diff > 0) {
+            const minutes = Math.floor(diff / (1000 * 60));
+            durationText = `${minutes} minutes`;
+        }
+        
+        const battleZoneUrl = `${window.location.origin}/battle-zone`;
+        
+        const text = `⚔️ *GURU ZONE - 1vs1 CHALLENGE* ⚔️\n━━━━━━━━━━━━━━━━━━━━━━━━━\n🏆 *Title:* ${title}\n🎮 *Format:* ${formatType} (${gameMode})\n🪙 *Entry Fee:* ${entryFee} Coins\n🎁 *Winner Prize:* ${prizePool} Coins\n⏳ *Time Remaining:* ${durationText}\n━━━━━━━━━━━━━━━━━━━━━━━━━\n📢 *Battle Zone mein ja kar abhi join karen:*\n👉 ${battleZoneUrl}`;
+        
+        const encodedText = encodeURIComponent(text);
+        const whatsappUrl = `https://wa.me/${formattedNumber}?text=${encodedText}`;
+        
+        window.open(whatsappUrl, '_blank');
+    };
+
+    const handleShareClick = (targetMatch: any) => {
+        if (whatsappAdmins.length === 0) {
+            const fallbackNumber = settings?.supportLink?.replace(/[^0-9]/g, '');
+            if (fallbackNumber) {
+                openWhatsApp(fallbackNumber, targetMatch);
+            } else {
+                toast.error("No WhatsApp Admins configured at the moment.");
+            }
+            return;
+        }
+
+        if (whatsappAdmins.length === 1) {
+            const admin = whatsappAdmins[0];
+            const sharedLogs = targetMatch.sharedWithAdmins || [];
+            const log = sharedLogs.find((item: any) => item.number === admin.number);
+            const lastSharedTime = log ? new Date(log.sharedAt).getTime() : 0;
+            const cooldownDuration = 30 * 60 * 1000;
+            if (lastSharedTime && Date.now() - lastSharedTime < cooldownDuration) {
+                const remainingMin = Math.ceil((cooldownDuration - (Date.now() - lastSharedTime)) / (60 * 1000));
+                toast.error(`You shared this match recently. Please wait ${remainingMin}m before sharing with this admin again.`);
+                return;
+            }
+
+            openWhatsApp(admin.number, targetMatch);
+            return;
+        }
+
+        setIsShareModalOpen(true);
+    };
+
     const [unreadCounts, setUnreadCounts] = useState<any>(null);
 
     const fetchUnreadCounts = async (force = false) => {
@@ -204,7 +306,8 @@ Here is my video proof:`;
             await Promise.all([
                 fetchMatch(false, true),
                 fetchUnreadCounts(true),
-                fetchUserProfile()
+                fetchUserProfile(),
+                fetchSettings()
             ]);
             toast.success("Match details updated!");
         } catch (e) {
@@ -218,6 +321,7 @@ Here is my video proof:`;
         fetchMatch(true, true);
         fetchUserProfile();
         fetchUnreadCounts(true);
+        fetchSettings();
         const interval = setInterval(() => {
             fetchMatch(false, false);
             fetchUnreadCounts(false);
@@ -272,6 +376,51 @@ Here is my video proof:`;
     const isFull = match?.joinedCount >= match?.maxSlots;
     const canChat = isJoined || isAdmin;
 
+    // Calculate WhatsApp share button cooldown for details page card
+    const sharedLogs = match?.sharedWithAdmins || [];
+    const mostRecentSharedTime = sharedLogs.length > 0
+        ? Math.max(...sharedLogs.map((item: any) => new Date(item.sharedAt).getTime()))
+        : 0;
+
+    const activeAdmins = whatsappAdmins;
+    let mainBtnCooldown = 0;
+
+    if (activeAdmins.length === 1) {
+        const admin = activeAdmins[0];
+        const log = sharedLogs.find((item: any) => item.number === admin.number);
+        const lastSharedTime = log ? new Date(log.sharedAt).getTime() : 0;
+        const cooldown30 = lastSharedTime ? (30 * 60 * 1000 - (now - lastSharedTime)) : 0;
+        if (cooldown30 > 0) {
+            mainBtnCooldown = cooldown30;
+        }
+    } else if (activeAdmins.length > 1) {
+        const cooldowns = activeAdmins.map((admin) => {
+            const log = sharedLogs.find((item: any) => item.number === admin.number);
+            const lastSharedTime = log ? new Date(log.sharedAt).getTime() : 0;
+            const cooldown30 = lastSharedTime ? (30 * 60 * 1000 - (now - lastSharedTime)) : 0;
+            const cooldown5 = mostRecentSharedTime ? (5 * 60 * 1000 - (now - mostRecentSharedTime)) : 0;
+
+            let remaining = 0;
+            if (cooldown30 > 0) {
+                remaining = cooldown30;
+            } else if (cooldown5 > 0 && lastSharedTime !== mostRecentSharedTime) {
+                remaining = cooldown5;
+            }
+            return remaining;
+        });
+
+        const allOnCooldown = cooldowns.every(time => time > 0);
+        if (allOnCooldown && cooldowns.length > 0) {
+            mainBtnCooldown = Math.min(...cooldowns);
+        }
+    }
+
+    const formatRemaining = (ms: number) => {
+        const min = Math.floor(ms / 60000);
+        const sec = Math.floor((ms % 60000) / 1000);
+        return `${min}m ${sec}s`;
+    };
+
     const tabs: { id: TabType, label: string, icon: any, disabled?: boolean, count?: number }[] = [
         { id: 'info', label: 'MATCH INFO', icon: Info },
         { id: 'teams', label: 'TEAMS', icon: Users },
@@ -282,35 +431,29 @@ Here is my video proof:`;
     return (
         <div className="min-h-screen bg-background text-foreground pb-24 lg:pb-8 flex flex-col">
             {/* Navbar Header */}
-            <div className="pt-4 pb-4 px-4 border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-50 flex items-center gap-4 shadow-2xl">
-                <Link href="/battle-zone" className="p-2 hover:bg-muted rounded-xl transition-all group">
+            <div className="pt-4 pb-4 px-4 border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-50 flex items-center gap-3 shadow-2xl">
+                <Link href="/battle-zone" className="p-2 hover:bg-muted rounded-xl transition-all group shrink-0">
                     <ArrowLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
                 </Link>
+                
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                        <h1 className="font-black text-lg leading-tight truncate tracking-tight">{match.title}</h1>
-                        <button
-                            onClick={handleRefresh}
-                            disabled={isRefreshing}
-                            className="p-1.5 bg-muted/40 hover:bg-muted border border-border/50 rounded-lg transition-all active:scale-95 flex items-center justify-center shrink-0"
-                            title="Refresh Match Room"
-                        >
-                            <RotateCw className={`w-3.5 h-3.5 text-muted-foreground hover:text-foreground ${isRefreshing ? 'animate-spin text-primary' : ''}`} />
-                        </button>
-                    </div>
-                    <div className="flex items-center gap-2 mt-0.5">
+                    <h1 className="font-black text-base md:text-lg leading-tight truncate tracking-tight">{match.title}</h1>
+                    <div className="flex items-center gap-2 mt-1">
                         <span className={`w-2 h-2 rounded-full animate-pulse ${match.status === 'open' ? 'bg-green-500' : 'bg-yellow-500'}`} />
                         <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] leading-none">
                             {match.status} • {match.format}
                         </span>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 px-4 py-1.5 rounded-full">
-                    <Crown className="w-4 h-4 text-primary" />
-                    <span className="text-[11px] font-black text-primary uppercase tracking-tighter">
-                        {match.createdBy?.name || 'HOST'}
-                    </span>
-                </div>
+
+                <button
+                    onClick={handleRefresh}
+                    disabled={isRefreshing}
+                    className="p-2 bg-muted/40 hover:bg-muted border border-border/50 rounded-xl transition-all active:scale-95 flex items-center justify-center shrink-0"
+                    title="Refresh Match Room"
+                >
+                    <RotateCw className={`w-3.5 h-3.5 text-muted-foreground hover:text-foreground ${isRefreshing ? 'animate-spin text-primary' : ''}`} />
+                </button>
             </div>
 
             <main className="flex-1 max-w-2xl mx-auto w-full p-4 space-y-6">
@@ -396,18 +539,18 @@ Here is my video proof:`;
                         <Trophy className="w-64 h-64 rotate-12 text-yellow-500" />
                     </div>
                     
-                    <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
-                        <div className="grid grid-cols-2 gap-12 flex-1 w-full">
-                            <div className="space-y-2 text-center md:text-left">
+                    <div className="flex flex-col gap-6 relative z-10">
+                        <div className="grid grid-cols-2 gap-6 w-full">
+                            <div className="space-y-2 text-center">
                                 <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">Prize Pool</span>
-                                <div className="flex items-center justify-center md:justify-start gap-3">
+                                <div className="flex items-center justify-center gap-3">
                                     <Trophy className="w-8 h-8 text-primary drop-shadow-[0_0_10px_rgba(245,197,24,0.4)]" />
                                     <span className="text-4xl font-black text-foreground">{match.prizePool}</span>
                                 </div>
                             </div>
-                            <div className="space-y-2 text-center md:text-left">
+                            <div className="space-y-2 text-center">
                                 <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">Entry Fee</span>
-                                <div className="flex items-center justify-center md:justify-start gap-3">
+                                <div className="flex items-center justify-center gap-3">
                                     <Coins className="w-8 h-8 text-primary" />
                                     <span className="text-4xl font-black text-foreground">{match.entryFee || 'FREE'}</span>
                                 </div>
@@ -417,20 +560,56 @@ Here is my video proof:`;
                         {!isJoined && !isFull && (
                             <button
                                 onClick={handleJoinClick}
-                                className="group bg-primary text-primary-foreground w-full md:w-auto px-10 py-5 rounded-2xl font-black uppercase tracking-[0.1em] text-sm flex items-center justify-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/20"
+                                className="group bg-primary text-primary-foreground w-full px-10 py-5 rounded-2xl font-black uppercase tracking-[0.1em] text-sm flex items-center justify-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/20"
                             >
                                 <Swords className="w-6 h-6" />
                                 Join Match
                             </button>
                         )}
                         {isJoined && (
-                            <div className="bg-green-500/10 border border-green-500/20 px-8 py-4 rounded-2xl flex items-center gap-3">
-                                <Shield className="w-6 h-6 text-green-500" />
-                                <span className="text-sm font-black text-green-500 uppercase tracking-widest">Enrolled</span>
+                            <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+                                <div className="bg-green-500/10 border border-green-500/20 px-8 py-4 rounded-2xl flex items-center justify-center gap-3 w-full sm:flex-1">
+                                    <Shield className="w-6 h-6 text-green-500" />
+                                    <span className="text-sm font-black text-green-500 uppercase tracking-widest">Enrolled</span>
+                                </div>
+                                {showShareBtn && (
+                                    match.privacy === 'Private' ? (
+                                        <button 
+                                            onClick={() => {
+                                                const inviteUrl = `${window.location.origin}/battle-zone/${match._id}`;
+                                                navigator.clipboard.writeText(inviteUrl);
+                                                toast.success("Match invite link copied!");
+                                            }}
+                                            className="bg-blue-600 hover:bg-blue-700 text-white font-black px-8 py-4 rounded-2xl text-xs uppercase tracking-wider hover:scale-105 active:scale-95 transition-all shadow-xl shadow-blue-600/25 flex items-center justify-center gap-2 cursor-pointer w-full sm:flex-1 whitespace-nowrap"
+                                            title="Copy Invite Link"
+                                        >
+                                            <Copy className="w-5 h-5 text-white shrink-0" />
+                                            <span>Copy Link</span>
+                                        </button>
+                                    ) : mainBtnCooldown > 0 ? (
+                                        <button 
+                                            disabled
+                                            className="bg-amber-600/20 border border-amber-500/30 text-amber-500 font-black px-8 py-4 rounded-2xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-not-allowed w-full sm:flex-1 whitespace-nowrap animate-pulse"
+                                        >
+                                            <Timer className="w-5 h-5 text-amber-500 shrink-0" />
+                                            <span>Share Cooldown ({formatRemaining(mainBtnCooldown)})</span>
+                                        </button>
+                                    ) : (
+                                        <button 
+                                            onClick={() => handleShareClick(match)}
+                                            className="bg-green-600 hover:bg-green-700 text-white font-black px-8 py-4 rounded-2xl text-xs uppercase tracking-wider hover:scale-105 active:scale-95 transition-all shadow-xl shadow-green-600/25 flex items-center justify-center gap-2 cursor-pointer w-full sm:flex-1 whitespace-nowrap"
+                                        >
+                                            <svg className="w-5 h-5 fill-current shrink-0 text-white" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.937 3.659 1.432 5.623 1.433h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.415-8.423"/>
+                                            </svg>
+                                            <span>Share on WhatsApp</span>
+                                        </button>
+                                    )
+                                )}
                             </div>
                         )}
                         {isFull && !isJoined && (
-                            <div className="bg-muted/50 px-8 py-4 rounded-2xl flex items-center gap-3 border border-border opacity-50">
+                            <div className="bg-muted/50 px-8 py-4 rounded-2xl flex items-center justify-center gap-3 border border-border opacity-50 w-full">
                                 <AlertCircle className="w-6 h-6 text-muted-foreground" />
                                 <span className="text-sm font-black text-muted-foreground uppercase tracking-widest italic">Full Match</span>
                             </div>
@@ -596,16 +775,37 @@ Here is my video proof:`;
                                                         </div>
                                                     </>
                                                 ) : (
-                                                    <div className="w-24 h-24 rounded-3xl border-2 border-dashed border-border flex items-center justify-center">
-                                                        <Loader2 className="w-8 h-8 text-muted-foreground/30 animate-spin" />
+                                                    <div className="w-24 h-24 rounded-3xl border-2 border-dashed border-border flex items-center justify-center bg-muted/5 relative overflow-hidden">
+                                                        <User className="w-10 h-10 text-muted-foreground/20" />
+                                                        {/* Blinking green breathing dot */}
+                                                        <span className="absolute top-2.5 right-2.5 flex h-2.5 w-2.5">
+                                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                                                        </span>
                                                     </div>
                                                 )}
                                             </div>
-                                            <div className="text-center">
+                                            <div className="text-center flex flex-col items-center">
                                                 <h4 className="font-black text-xl text-foreground tracking-tight">
-                                                    {match.participants?.length > 1 ? match.participants[1].inGameName : 'Searching...'}
+                                                    {match.participants?.length > 1 ? match.participants[1].inGameName : 'Waiting for Challenger'}
                                                 </h4>
                                                 <p className="text-[10px] font-black text-blue-500/50 uppercase tracking-widest mt-1">Challenger</p>
+                                                
+                                                {match.participants?.length === 1 && (
+                                                    <button
+                                                        onClick={() => {
+                                                            const directLink = `${window.location.origin}/battle-zone/${match._id}`;
+                                                            navigator.clipboard.writeText(directLink);
+                                                            // @ts-ignore
+                                                            toast.success('Invite link copied! Share it with your opponent.');
+                                                        }}
+                                                        className="mt-3.5 flex items-center gap-1.5 px-3 py-1.5 bg-muted hover:bg-muted/80 rounded-xl border border-border text-[10px] font-black uppercase tracking-wider text-muted-foreground hover:text-foreground active:scale-95 transition-all"
+                                                        title="Copy direct invite link"
+                                                    >
+                                                        <Copy className="w-3 h-3 text-primary" />
+                                                        <span>Invite Friend</span>
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -700,7 +900,151 @@ Here is my video proof:`;
                     }}
                 />
             )}
+            <WhatsAppShareModal
+                isOpen={isShareModalOpen}
+                onClose={() => setIsShareModalOpen(false)}
+                admins={whatsappAdmins}
+                match={match}
+                onSelectAdmin={(number) => {
+                    openWhatsApp(number, match);
+                    setIsShareModalOpen(false);
+                }}
+            />
         </div>
+    );
+}
+
+interface WhatsAppShareModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    admins: any[];
+    match: any;
+    onSelectAdmin: (number: string) => void;
+}
+
+function WhatsAppShareModal({ isOpen, onClose, admins, match, onSelectAdmin }: WhatsAppShareModalProps) {
+    const [now, setNow] = useState(Date.now());
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setNow(Date.now());
+        }, 1000);
+        return () => clearInterval(interval);
+    }, []);
+
+    if (!isOpen || !match) return null;
+
+    const sharedLogs = match.sharedWithAdmins || [];
+    const mostRecentSharedTime = sharedLogs.length > 0
+        ? Math.max(...sharedLogs.map((item: any) => new Date(item.sharedAt).getTime()))
+        : 0;
+
+    return (
+        <AnimatePresence>
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+            >
+                <motion.div
+                    initial={{ scale: 0.95, y: 15 }}
+                    animate={{ scale: 1, y: 0 }}
+                    exit={{ scale: 0.95, y: 15 }}
+                    className="bg-card border border-border w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh] text-foreground"
+                >
+                    {/* Modal Header */}
+                    <div className="flex items-center justify-between px-6 py-5 border-b border-border bg-muted/10">
+                        <div className="flex items-center gap-2.5">
+                            <div className="p-2 bg-green-500/10 rounded-xl">
+                                <svg className="w-5 h-5 text-green-500 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.937 3.659 1.432 5.623 1.433h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.415-8.423"/>
+                                </svg>
+                            </div>
+                            <h3 className="font-black text-base text-foreground uppercase tracking-tight">Share to WhatsApp Admin</h3>
+                        </div>
+                        <button
+                            onClick={onClose}
+                            className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-all cursor-pointer"
+                        >
+                            <span className="sr-only">Close</span>
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    {/* Modal Content */}
+                    <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                        <p className="text-xs text-muted-foreground font-medium leading-relaxed">
+                            Select an Admin from the list below to share the match details. A WhatsApp chat will open with a pre-filled template.
+                        </p>
+
+                        <div className="space-y-2.5">
+                            {admins.map((admin, idx) => {
+                                const log = sharedLogs.find((item: any) => item.number === admin.number);
+                                const lastSharedTime = log ? new Date(log.sharedAt).getTime() : 0;
+                                
+                                const cooldown30 = lastSharedTime ? (30 * 60 * 1000 - (now - lastSharedTime)) : 0;
+                                const cooldown5 = mostRecentSharedTime ? (5 * 60 * 1000 - (now - mostRecentSharedTime)) : 0;
+
+                                let remainingTime = 0;
+                                if (cooldown30 > 0) {
+                                    remainingTime = cooldown30;
+                                } else if (cooldown5 > 0 && lastSharedTime !== mostRecentSharedTime) {
+                                    remainingTime = cooldown5;
+                                }
+
+                                const onCooldown = remainingTime > 0;
+                                
+                                const formatRemaining = (ms: number) => {
+                                    const min = Math.floor(ms / 60000);
+                                    const sec = Math.floor((ms % 60000) / 1000);
+                                    return `${min}m ${sec}s`;
+                                };
+
+                                return (
+                                    <button
+                                        key={idx}
+                                        onClick={() => !onCooldown && onSelectAdmin(admin.number)}
+                                        disabled={onCooldown}
+                                        className={`w-full flex items-center justify-between p-4 border rounded-2xl transition-all text-left group ${
+                                            onCooldown 
+                                                ? 'bg-muted/10 border-border opacity-50 cursor-not-allowed'
+                                                : 'bg-muted/20 hover:bg-primary/5 border-border hover:border-primary/30 cursor-pointer'
+                                        }`}
+                                    >
+                                        <div className="min-w-0">
+                                            <p className={`font-bold text-sm transition-colors ${onCooldown ? 'text-muted-foreground' : 'text-foreground group-hover:text-primary'}`}>{admin.name}</p>
+                                            <p className="font-mono text-[10px] text-muted-foreground mt-0.5">{admin.number}</p>
+                                        </div>
+                                        {onCooldown ? (
+                                            <span className="text-[10px] font-black uppercase tracking-wider text-amber-500 bg-amber-500/10 px-3 py-1.5 rounded-xl border border-amber-500/10 shrink-0">
+                                                Wait {formatRemaining(remainingTime)}
+                                            </span>
+                                        ) : (
+                                            <span className="text-[10px] font-black uppercase tracking-wider text-green-500 bg-green-500/10 px-3 py-1.5 rounded-xl border border-green-500/10 group-hover:scale-105 transition-transform shrink-0">
+                                                Chat
+                                            </span>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Modal Footer */}
+                    <div className="px-6 py-4 border-t border-border bg-muted/10 flex justify-end shrink-0">
+                        <button
+                            onClick={onClose}
+                            className="px-5 py-2.5 bg-muted border border-border text-foreground font-black uppercase tracking-wider text-xs rounded-xl transition-all hover:bg-muted/80 active:scale-95 cursor-pointer"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </motion.div>
+            </motion.div>
+        </AnimatePresence>
     );
 }
 

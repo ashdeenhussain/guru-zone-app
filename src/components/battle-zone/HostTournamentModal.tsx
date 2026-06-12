@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Swords, Users, Shield, ArrowRight, Coins, Trophy, Loader2 } from 'lucide-react';
+import { Swords, Users, Shield, ArrowRight, Coins, Trophy, Loader2, X, ChevronDown, ChevronLeft } from 'lucide-react';
 import Image from 'next/image';
 
 interface HostTournamentModalProps {
@@ -24,6 +24,7 @@ export default function HostTournamentModal({ isOpen, onClose, onSuccess }: Host
     const [rounds, setRounds] = useState(7);
     const [limitedAmmo, setLimitedAmmo] = useState(true);
     const [headshotOnly, setHeadshotOnly] = useState(false);
+    const [privacy, setPrivacy] = useState<'Public' | 'Private'>('Public');
     const [availabilityDuration, setAvailabilityDuration] = useState(60); // minutes
 
     // Dynamic Logic for Advanced Rules
@@ -79,7 +80,8 @@ export default function HostTournamentModal({ isOpen, onClose, onSuccess }: Host
                         limitedAmmo,
                         headshotOnly
                     },
-                    availabilityDuration
+                    availabilityDuration,
+                    privacy
                 })
             });
 
@@ -90,7 +92,6 @@ export default function HostTournamentModal({ isOpen, onClose, onSuccess }: Host
             }
 
             if (data.success) {
-                // Return the ID to the caller which will handle redirection
                 onSuccess(data.data._id);
             }
         } catch (err: any) {
@@ -103,30 +104,41 @@ export default function HostTournamentModal({ isOpen, onClose, onSuccess }: Host
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-background/85 backdrop-blur-sm">
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-card w-full max-w-md rounded-2xl shadow-2xl border border-border overflow-hidden flex flex-col"
+                className="relative bg-card w-full max-w-md rounded-2xl shadow-2xl border border-border overflow-hidden flex flex-col max-h-[90vh] md:max-h-[85vh]"
             >
                 {/* Header */}
-                <div className="p-4 border-b border-border flex items-center justify-between bg-muted/30">
+                <div className="p-4 border-b border-border flex items-center justify-between bg-muted/30 relative shrink-0">
                     <h2 className="text-lg font-bold flex items-center gap-2">
                         <Swords className="w-5 h-5 text-primary" />
                         Host Tournament
                     </h2>
-                    <div className="flex gap-1">
-                        {[1, 2, 3, 4].map((i) => (
-                            <div
-                                key={i}
-                                className={`h-1.5 w-6 rounded-full transition-colors ${step >= i ? 'bg-primary' : 'bg-muted'}`}
-                            />
-                        ))}
+                    <div className="flex items-center gap-3">
+                        <div className="flex gap-1">
+                            {[1, 2, 3, 4].map((i) => (
+                                <div
+                                    key={i}
+                                    className={`h-1.5 w-4 rounded-full transition-colors ${step >= i ? 'bg-primary' : 'bg-muted'}`}
+                                />
+                            ))}
+                        </div>
+                        {!isLoading && (
+                            <button
+                                onClick={onClose}
+                                className="p-1 hover:bg-muted text-muted-foreground hover:text-foreground rounded-lg transition-colors ml-1"
+                                title="Close"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        )}
                     </div>
                 </div>
 
-                <div className="p-6 relative min-h-[300px]">
+                <div className="p-6 relative flex-1 overflow-y-auto min-h-[300px]">
                     <AnimatePresence mode="wait">
                         {/* STEP 1: SELECT FORMAT */}
                         {step === 1 && (
@@ -246,19 +258,22 @@ export default function HostTournamentModal({ isOpen, onClose, onSuccess }: Host
                                     </AnimatePresence>
                                 </div>
 
-                                <div className="flex gap-3 pt-4">
+                                <div className="flex gap-3 pt-4 w-full">
                                     <button
                                         onClick={() => setStep(1)}
-                                        className="px-6 py-3 rounded-xl border border-border font-medium hover:bg-muted transition-colors"
+                                        className="bg-card border border-border hover:bg-muted/50 text-foreground font-bold px-4 h-12 rounded-xl transition-all flex items-center gap-2 active:scale-95 shrink-0"
                                     >
-                                        Back
+                                        <div className="w-6 h-6 rounded-full bg-muted/80 border border-border flex items-center justify-center">
+                                            <ChevronLeft className="w-3.5 h-3.5 text-foreground" />
+                                        </div>
+                                        <span className="text-sm">Back</span>
                                     </button>
                                     <button
                                         onClick={() => setStep(3)}
                                         disabled={parsedFee < 10 || parsedFee > 100 || isNaN(parsedFee)}
-                                        className="flex-1 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                        className="flex-1 bg-primary text-primary-foreground font-black h-12 rounded-xl transition-all flex items-center justify-center gap-2 hover:bg-primary/90 active:scale-95 shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
                                     >
-                                        Next
+                                        <span className="text-sm">Next</span>
                                         <ArrowRight className="w-4 h-4" />
                                     </button>
                                 </div>
@@ -282,22 +297,22 @@ export default function HostTournamentModal({ isOpen, onClose, onSuccess }: Host
                                 {/* Game Mode Dropdown */}
                                 <div>
                                     <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1.5 block">Game Mode</label>
-                                    <div className="relative group">
+                                    <div className="relative group h-12">
                                         <select 
                                             value={gameMode}
                                             onChange={(e) => setGameMode(e.target.value as any)}
-                                            className="w-full bg-muted/40 border border-border rounded-xl px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-primary/50 font-bold transition-all"
+                                            className="w-full h-full bg-muted/40 border border-border rounded-xl px-4 py-0 appearance-none focus:outline-none focus:ring-2 focus:ring-primary/50 font-bold transition-all text-sm text-foreground"
                                         >
-                                            <option value="Clash Squad">Clash Squad</option>
-                                            <option value="Lone Wolf">Lone Wolf</option>
+                                            <option value="Clash Squad" className="bg-card text-foreground font-semibold">Clash Squad</option>
+                                            <option value="Lone Wolf" className="bg-card text-foreground font-semibold">Lone Wolf</option>
                                         </select>
                                         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-primary">
-                                            <ArrowRight className="w-4 h-4 rotate-90" />
+                                            <ChevronDown className="w-4 h-4" />
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Map Selector */}
+                                {/* Map Selection */}
                                 <div>
                                     <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1.5 block">Map Selection</label>
                                     <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide no-scrollbar">
@@ -313,7 +328,7 @@ export default function HostTournamentModal({ isOpen, onClose, onSuccess }: Host
                                                 key={map.name}
                                                 onClick={() => setMapName(map.name)}
                                                 className={`relative min-w-[120px] aspect-[4/3] rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 group ${
-                                                    mapName === map.name ? 'border-primary shadow-[0_0_15px_rgba(var(--primary),0.4)]' : 'border-transparent opacity-60 hover:opacity-100'
+                                                    mapName === map.name ? 'border-primary shadow-lg shadow-primary/30 opacity-100' : 'border-border bg-muted/20 opacity-60 hover:opacity-100'
                                                 }`}
                                             >
                                                 <Image src={map.img} alt={map.name} fill sizes="120px" className="object-cover group-hover:scale-110 transition-transform duration-500" />
@@ -332,17 +347,22 @@ export default function HostTournamentModal({ isOpen, onClose, onSuccess }: Host
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block">Rounds</label>
                                         {gameMode === 'Clash Squad' ? (
-                                            <select 
-                                                value={rounds}
-                                                onChange={(e) => setRounds(parseInt(e.target.value))}
-                                                className="w-full bg-muted/40 border border-border rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-primary/30"
-                                            >
-                                                <option value={7}>7 Rounds</option>
-                                                <option value={11}>11 Rounds</option>
-                                                <option value={13}>13 Rounds</option>
-                                            </select>
+                                            <div className="relative group h-12">
+                                                <select 
+                                                    value={rounds}
+                                                    onChange={(e) => setRounds(parseInt(e.target.value))}
+                                                    className="w-full h-full bg-muted/40 border border-border rounded-xl px-4 py-0 appearance-none focus:outline-none focus:ring-2 focus:ring-primary/50 font-bold transition-all text-sm text-foreground"
+                                                >
+                                                    <option value={7} className="bg-card text-foreground font-semibold">7 Rounds</option>
+                                                    <option value={11} className="bg-card text-foreground font-semibold">11 Rounds</option>
+                                                    <option value={13} className="bg-card text-foreground font-semibold">13 Rounds</option>
+                                                </select>
+                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-primary">
+                                                    <ChevronDown className="w-4 h-4" />
+                                                </div>
+                                            </div>
                                         ) : (
-                                            <div className="w-full bg-muted/20 border border-border/50 rounded-lg px-3 py-2 text-sm font-black text-primary uppercase">
+                                            <div className="w-full bg-muted/20 border border-border/50 rounded-xl px-4 py-3 text-sm font-black text-primary uppercase h-12 flex items-center">
                                                 9 Rounds
                                             </div>
                                         )}
@@ -350,13 +370,13 @@ export default function HostTournamentModal({ isOpen, onClose, onSuccess }: Host
 
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block">Limited Ammo</label>
-                                        <div className="flex bg-muted/40 rounded-lg p-0.5 border border-border">
+                                        <div className="flex bg-muted/40 rounded-xl p-1 border border-border h-12 items-center">
                                             {[true, false].map((val) => (
                                                 <button
                                                     key={val ? 'yes' : 'no'}
                                                     onClick={() => setLimitedAmmo(val)}
-                                                    className={`flex-1 py-1.5 text-xs font-black uppercase rounded-md transition-all ${
-                                                        limitedAmmo === val ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                                                    className={`flex-1 h-full text-xs font-black uppercase rounded-lg transition-all ${
+                                                        limitedAmmo === val ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/20' : 'text-muted-foreground hover:text-foreground'
                                                     }`}
                                                 >
                                                     {val ? 'Yes' : 'No'}
@@ -367,56 +387,86 @@ export default function HostTournamentModal({ isOpen, onClose, onSuccess }: Host
 
                                     <div className="col-span-2 space-y-1.5">
                                         <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block">Headshot Only</label>
-                                        <div className="flex bg-muted/40 rounded-lg p-0.5 border border-border items-center justify-between px-3 h-10">
-                                            <span className="text-xs font-bold text-muted-foreground uppercase">Body Shot Blocked</span>
-                                            <button 
-                                                onClick={() => setHeadshotOnly(!headshotOnly)}
-                                                className={`w-12 h-6 rounded-full relative transition-colors ${headshotOnly ? 'bg-primary' : 'bg-muted-foreground/30'}`}
-                                            >
-                                                <motion.div 
-                                                    animate={{ x: headshotOnly ? 24 : 2 }}
-                                                    className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-md"
-                                                />
-                                            </button>
+                                        <div className="flex bg-muted/40 rounded-xl p-1 border border-border items-center justify-between pl-4 pr-1 h-12">
+                                            <span className="text-xs font-bold text-muted-foreground uppercase">Headshot</span>
+                                            <div className="flex bg-muted/20 rounded-lg p-0.5 border border-border/30 h-10 w-28 items-center shrink-0">
+                                                {[true, false].map((val) => (
+                                                    <button
+                                                        key={val ? 'yes' : 'no'}
+                                                        type="button"
+                                                        onClick={() => setHeadshotOnly(val)}
+                                                        className={`flex-1 h-full text-[10px] font-black uppercase rounded-md transition-all ${
+                                                            headshotOnly === val 
+                                                                ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/20' 
+                                                                : 'text-muted-foreground hover:text-foreground'
+                                                        }`}
+                                                    >
+                                                        {val ? 'Yes' : 'No'}
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
 
                                     {/* Availability Duration */}
                                     <div className="col-span-2 space-y-1.5 mt-2">
                                         <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block">Availability Duration</label>
-                                        <div className="relative group">
+                                        <div className="relative group h-12">
                                             <select 
                                                 value={availabilityDuration}
                                                 onChange={(e) => setAvailabilityDuration(parseInt(e.target.value))}
-                                                className="w-full bg-muted/40 border border-border rounded-xl px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-primary/50 font-bold transition-all"
+                                                className="w-full h-full bg-muted/40 border border-border rounded-xl px-4 py-0 appearance-none focus:outline-none focus:ring-2 focus:ring-primary/50 font-bold transition-all text-sm text-foreground"
                                             >
-                                                <option value={15}>15 Minutes</option>
-                                                <option value={30}>30 Minutes</option>
-                                                <option value={60}>1 Hour</option>
-                                                <option value={90}>1.5 Hours</option>
-                                                <option value={120}>2 Hours</option>
-                                                <option value={180}>3 Hours</option>
-                                                <option value={300}>5 Hours</option>
+                                                <option value={15} className="bg-card text-foreground font-semibold">15 Minutes</option>
+                                                <option value={30} className="bg-card text-foreground font-semibold">30 Minutes</option>
+                                                <option value={60} className="bg-card text-foreground font-semibold">1 Hour</option>
+                                                <option value={90} className="bg-card text-foreground font-semibold">1.5 Hours</option>
+                                                <option value={120} className="bg-card text-foreground font-semibold">2 Hours</option>
+                                                <option value={180} className="bg-card text-foreground font-semibold">3 Hours</option>
+                                                <option value={300} className="bg-card text-foreground font-semibold">5 Hours</option>
                                             </select>
                                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-primary">
-                                                <ArrowRight className="w-4 h-4 rotate-90" />
+                                                <ChevronDown className="w-4 h-4" />
                                             </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Match Visibility */}
+                                    <div className="col-span-2 space-y-1.5 mt-2">
+                                        <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block">Match Visibility</label>
+                                        <div className="flex bg-muted/40 rounded-xl p-1 border border-border h-12 items-center">
+                                            {(['Public', 'Private'] as const).map((mode) => (
+                                                <button
+                                                    key={mode}
+                                                    type="button"
+                                                    onClick={() => setPrivacy(mode)}
+                                                    className={`flex-1 h-full text-xs font-black uppercase rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                                                        privacy === mode ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/20' : 'text-muted-foreground hover:text-foreground'
+                                                    }`}
+                                                >
+                                                    <span>{mode === 'Public' ? '🌐' : '🔒'}</span>
+                                                    <span>{mode}</span>
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="flex gap-3 pt-2">
+                                <div className="flex gap-3 pt-4 w-full">
                                     <button
                                         onClick={() => setStep(2)}
-                                        className="px-6 py-3 rounded-xl border border-border font-medium hover:bg-muted transition-colors"
+                                        className="bg-card border border-border hover:bg-muted/50 text-foreground font-bold px-4 h-12 rounded-xl transition-all flex items-center gap-2 active:scale-95 shrink-0"
                                     >
-                                        Back
+                                        <div className="w-6 h-6 rounded-full bg-muted/80 border border-border flex items-center justify-center">
+                                            <ChevronLeft className="w-3.5 h-3.5 text-foreground" />
+                                        </div>
+                                        <span className="text-sm">Back</span>
                                     </button>
                                     <button
                                         onClick={() => setStep(4)}
-                                        className="flex-1 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                                        className="flex-1 bg-primary text-primary-foreground font-black h-12 rounded-xl transition-all flex items-center justify-center gap-2 hover:bg-primary/90 active:scale-95 shadow-lg shadow-primary/20"
                                     >
-                                        Next
+                                        <span className="text-sm">Next</span>
                                         <ArrowRight className="w-4 h-4" />
                                     </button>
                                 </div>
@@ -465,6 +515,12 @@ export default function HostTournamentModal({ isOpen, onClose, onSuccess }: Host
                                             <span className="text-xs text-muted-foreground">Ammo</span>
                                             <span className="text-xs font-bold">{limitedAmmo ? 'Limited' : 'Unlimited'}</span>
                                         </div>
+                                        <div className="flex justify-between items-center col-span-2 pt-1 border-t border-border/20">
+                                            <span className="text-xs text-muted-foreground">Visibility</span>
+                                            <span className="text-xs font-bold flex items-center gap-1">
+                                                <span>{privacy === 'Public' ? '🌐 Public' : '🔒 Private'}</span>
+                                            </span>
+                                        </div>
                                     </div>
                                     <div className="flex justify-between items-center">
                                         <span className="text-muted-foreground font-bold">Total Prize Pool</span>
@@ -480,30 +536,30 @@ export default function HostTournamentModal({ isOpen, onClose, onSuccess }: Host
                                     </div>
                                 )}
 
-                                <div className="flex gap-3 pt-2">
+                                <div className="flex gap-3 pt-4 w-full">
                                     <button
                                         onClick={() => setStep(3)}
-                                        className="px-4 py-3 rounded-xl border border-border font-medium hover:bg-muted transition-colors disabled:opacity-50"
+                                        className="bg-card border border-border hover:bg-muted/50 text-foreground font-bold px-4 h-12 rounded-xl transition-all flex items-center gap-2 active:scale-95 shrink-0"
                                         disabled={isLoading}
                                     >
-                                        Back
+                                        <div className="w-6 h-6 rounded-full bg-muted/80 border border-border flex items-center justify-center">
+                                            <ChevronLeft className="w-3.5 h-3.5 text-foreground" />
+                                        </div>
+                                        <span className="text-sm">Back</span>
                                     </button>
                                     <button
                                         onClick={handleCreate}
                                         disabled={isLoading}
-                                        className="flex-1 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-70 disabled:active:scale-100 flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+                                        className="flex-1 bg-primary text-primary-foreground font-black h-12 rounded-xl transition-all flex items-center justify-center gap-2 hover:bg-primary/90 active:scale-95 shadow-lg shadow-primary/20 disabled:opacity-70 disabled:active:scale-100"
                                     >
                                         {isLoading ? (
                                             <>
                                                 <Loader2 className="w-5 h-5 animate-spin" />
-                                                Creating...
+                                                <span className="text-sm">Creating...</span>
                                             </>
                                         ) : (
                                             <>
-                                                Create Tournament
-                                                <div className="text-xs bg-black/20 px-2 py-0.5 rounded-md ml-1 -my-1 border border-white/10">
-                                                    -{parsedFee} Coins
-                                                </div>
+                                                <span className="text-sm">Create Match</span>
                                             </>
                                         )}
                                     </button>
@@ -512,16 +568,6 @@ export default function HostTournamentModal({ isOpen, onClose, onSuccess }: Host
                         )}
                     </AnimatePresence>
                 </div>
-
-                {/* Close button for all steps */}
-                {!isLoading && (
-                    <button
-                        onClick={onClose}
-                        className="absolute top-4 right-4 text-muted-foreground hover:text-foreground p-1 transition-colors"
-                    >
-                        ✕
-                    </button>
-                )}
             </motion.div>
         </div>
     );

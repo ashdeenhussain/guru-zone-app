@@ -73,6 +73,14 @@ const SystemSettingSchema = new Schema(
                 }
             }],
             default: []
+        },
+        whatsappAdmins: {
+            type: [{
+                name: { type: String, required: true },
+                number: { type: String, required: true },
+                isActive: { type: Boolean, default: true }
+            }],
+            default: []
         }
     },
     { timestamps: true }

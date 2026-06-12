@@ -318,7 +318,17 @@ export default function HostControls({ tournament, onUpdate }: HostControlsProps
                         2. Outcome Declaration
                     </h4>
 
-                    {tournament.status === 'completed' || tournament.status === 'Completed' ? (
+                    {tournament.status === 'open' || tournament.joinedCount < tournament.maxSlots ? (
+                        <div className="text-center p-8 bg-muted/20 rounded-3xl border border-dashed border-border/50 flex flex-col items-center">
+                            <div className="p-3 bg-muted rounded-full mb-3 text-muted-foreground/40">
+                                <Users className="w-6 h-6" />
+                            </div>
+                            <p className="font-bold text-sm text-foreground uppercase tracking-tight">Waiting for Challenger</p>
+                            <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto leading-relaxed">
+                                Once an opponent joins the match and it becomes active, you will be able to share room credentials and declare outcomes.
+                            </p>
+                        </div>
+                    ) : tournament.status === 'completed' || tournament.status === 'Completed' ? (
                         <motion.div 
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
@@ -467,7 +477,7 @@ export default function HostControls({ tournament, onUpdate }: HostControlsProps
             )}
 
             {/* Cancel Tournament Button */}
-            {(tournament.status === 'Open' || tournament.status === 'Full' || tournament.status === 'Upcoming') && (
+            {(tournament.status === 'open' || tournament.status === 'full' || tournament.status === 'Open' || tournament.status === 'Full' || tournament.status === 'Upcoming') && (
                 <section className="bg-destructive/5 border border-destructive/20 rounded-[2rem] p-6 lg:grayscale hover:grayscale-0 transition-all duration-500">
                     <div className="space-y-1 mb-4 flex items-center gap-3">
                         <AlertTriangle className="w-5 h-5 text-destructive" />

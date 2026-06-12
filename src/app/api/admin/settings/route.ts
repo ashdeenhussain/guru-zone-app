@@ -32,6 +32,26 @@ export async function PUT(req: Request) {
         await connectDB();
         const body = await req.json();
 
+        // Sanitize WhatsApp Admin numbers
+        if (body.whatsappAdmins && Array.isArray(body.whatsappAdmins)) {
+            body.whatsappAdmins = body.whatsappAdmins.map((admin: any) => {
+                if (admin.number) {
+                    let num = admin.number.replace(/\D/g, '');
+                    if (num.startsWith('00')) {
+                        num = num.substring(2);
+                    }
+                    if (num.startsWith('0') && num.length === 11) {
+                        num = '92' + num.substring(1);
+                    }
+                    return {
+                        ...admin,
+                        number: num
+                    };
+                }
+                return admin;
+            });
+        }
+
         // Use findOneAndUpdate to maintain singleton nature
         const settings = await SystemSetting.findOneAndUpdate(
             {},

@@ -47,6 +47,11 @@ const BattleMatchSchema = new Schema(
             enum: ['open', 'full', 'active', 'pending_verification', 'completed', 'cancelled', 'disputed'],
             default: 'open',
         },
+        privacy: {
+            type: String,
+            enum: ['Public', 'Private'],
+            default: 'Public',
+        },
         participants: [
             {
                 userId: { type: Schema.Types.ObjectId, ref: 'User' },
@@ -112,7 +117,13 @@ const BattleMatchSchema = new Schema(
         escrowId: {
             type: Schema.Types.ObjectId,
             ref: 'Escrow',
-        }
+        },
+        sharedWithAdmins: [
+            {
+                number: { type: String, required: true },
+                sharedAt: { type: Date, required: true, default: Date.now }
+            }
+        ]
     },
     { timestamps: true }
 );

@@ -103,6 +103,14 @@ export async function POST(
             return NextResponse.json({ success: false, error: 'Match already finished' }, { status: 400 });
         }
 
+        if (match.status !== 'active' && match.status !== 'full') {
+            return NextResponse.json({ success: false, error: 'Match must be fully joined and active to declare a winner' }, { status: 400 });
+        }
+
+        if (match.joinedCount < match.maxSlots || match.participants.length < match.maxSlots) {
+            return NextResponse.json({ success: false, error: 'Match must have a challenger joined before declaring a winner' }, { status: 400 });
+        }
+
         // Validate winnerId is a participant or the host
         const allIds = [
             match.createdBy?.toString(),
@@ -234,6 +242,9 @@ export async function PUT(
         }
 
         if (action === 'confirm') {
+            if (userId === declaredWinnerId && userId === match.createdBy?.toString()) {
+                return NextResponse.json({ success: false, error: 'You cannot confirm your own victory claim. The opponent must verify it.' }, { status: 400 });
+            }
             const winner = await User.findById(declaredWinnerId);
             if (!winner) return NextResponse.json({ success: false, error: 'Winner not found' }, { status: 404 });
 

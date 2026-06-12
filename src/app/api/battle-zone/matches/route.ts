@@ -31,17 +31,21 @@ export async function GET(req: Request) {
                     { 'participants.userId': userObjId }
                 ];
             } else {
-                // For 'all', show open/active matches OR matches I'm involved in
+                // For 'all', show open/active matches (excluding private ones) OR matches I'm involved in
                 // We now include 'cancelled' for the user's history
                 query.$or = [
-                    { status: { $in: ['open', 'full', 'active', 'pending_verification', 'disputed', 'cancelled'] } },
+                    { 
+                        status: { $in: ['open', 'full', 'active', 'pending_verification', 'disputed', 'cancelled'] },
+                        privacy: { $ne: 'Private' }
+                    },
                     { createdBy: userObjId },
                     { 'participants.userId': userObjId }
                 ];
             }
         } else {
-            // Public view: only show open/active matches (exclude cancelled)
+            // Public view: only show open/active matches (exclude cancelled) and exclude private matches
             query.status = { $in: ['open', 'full', 'active', 'pending_verification', 'disputed'] };
+            query.privacy = { $ne: 'Private' };
         }
 
         console.log("BattleMatch Query:", JSON.stringify(query));

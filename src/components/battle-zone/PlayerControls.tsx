@@ -292,17 +292,45 @@ export default function PlayerControls({ tournament, userId, onUpdate }: PlayerC
                                     exit={{ opacity: 0, scale: 0.95 }}
                                     className="space-y-3 bg-muted/30 p-4 rounded-2xl border border-border/50"
                                 >
-                                    <div className="flex justify-between items-center py-2 border-b border-border/10">
+                                    <div className="flex justify-between items-center py-2 border-b border-border/10 gap-4">
                                         <span className="text-[10px] font-black text-muted-foreground uppercase">Room ID</span>
-                                        <span className="text-sm font-black font-mono select-all bg-background px-3 py-1 rounded-lg border border-border">
-                                            {creds?.roomID || 'WAITING...'}
-                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-black font-mono select-all bg-background px-3 py-1 rounded-lg border border-border">
+                                                {creds?.roomID || 'WAITING...'}
+                                            </span>
+                                            {creds?.roomID && creds.roomID !== 'WAITING...' && (
+                                                <button
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(creds.roomID || '');
+                                                        toast.success('Room ID copied!');
+                                                    }}
+                                                    className="p-1.5 hover:bg-muted border border-border/50 text-muted-foreground hover:text-foreground active:scale-95 transition-all rounded-lg"
+                                                    title="Copy Room ID"
+                                                >
+                                                    <Copy className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="flex justify-between items-center py-2">
+                                    <div className="flex justify-between items-center py-2 gap-4">
                                         <span className="text-[10px] font-black text-muted-foreground uppercase">Password</span>
-                                        <span className="text-sm font-black font-mono select-all bg-background px-3 py-1 rounded-lg border border-border">
-                                            {creds?.roomPassword || 'WAITING...'}
-                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-black font-mono select-all bg-background px-3 py-1 rounded-lg border border-border">
+                                                {creds?.roomPassword || 'WAITING...'}
+                                            </span>
+                                            {creds?.roomPassword && creds.roomPassword !== 'WAITING...' && (
+                                                <button
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(creds.roomPassword || '');
+                                                        toast.success('Room Password copied!');
+                                                    }}
+                                                    className="p-1.5 hover:bg-muted border border-border/50 text-muted-foreground hover:text-foreground active:scale-95 transition-all rounded-lg"
+                                                    title="Copy Room Password"
+                                                >
+                                                    <Copy className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </motion.div>
                             ) : (
