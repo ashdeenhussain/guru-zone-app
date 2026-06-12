@@ -215,6 +215,7 @@ export async function PUT(
             match.verificationStatus = 'Rejected';
             match.disputeReason = reason || 'Host claimed win — joiner was unresponsive after 30 minutes';
             match.disputeProof = proofUrl;
+            match.disputedBy = userId;
 
             await match.save();
             return NextResponse.json({ success: true, message: 'Match sent to Admin for review.' });
@@ -403,6 +404,7 @@ export async function PUT(
             match.verificationStatus = 'Rejected';
             match.disputeReason = reason;
             match.disputeProof = proofUrl;
+            match.disputedBy = userId;
             await match.save();
 
             // ── TRIGGER NOTIFICATION (Dispute - Host) ──

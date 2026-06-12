@@ -84,6 +84,10 @@ const BattleMatchSchema = new Schema(
         disputeProof: {
             type: String,
         },
+        disputedBy: {
+            type: Schema.Types.ObjectId,
+            ref: 'User',
+        },
         adminNote: {
             type: String,
         },

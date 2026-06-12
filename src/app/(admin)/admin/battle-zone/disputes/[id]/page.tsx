@@ -31,6 +31,7 @@ interface MatchDetail {
     winners: { rank1?: { _id: string; name: string; inGameName: string; freeFireUid: string; image?: string } };
     winnerScreenshot?: string;
     disputeProof?: string;
+    disputedBy?: { _id: string; name: string; username: string; inGameName: string; freeFireUid: string; image?: string };
 }
 
 interface ChatMessage {
@@ -135,6 +136,17 @@ export default function DisputeDetailPage() {
     const joiner = joinerParticipant?.userId;
     const declaredWinner = match.winners?.rank1;
 
+    const hostName = host?.inGameName || host?.name || host?.username || 'Host';
+    const joinerName = joiner?.inGameName || joiner?.name || joiner?.username || 'Joiner';
+
+    const isDisputedByHost = match.disputedBy
+        ? String(match.disputedBy._id || match.disputedBy) === String(hostId)
+        : (!!match.winnerScreenshot && !!match.disputeProof && match.winnerScreenshot === match.disputeProof);
+
+    const disputeInitiatorName = isDisputedByHost
+        ? `Host (${hostName}) — Due to Joiner Inactivity`
+        : `Joiner (${joinerName}) — Defeat Contested`;
+
     const grossPrize = match.prizePool;
     const platformFee = Math.floor(grossPrize * PLATFORM_FEE);
     const netPrize = grossPrize - platformFee;
@@ -232,6 +244,21 @@ export default function DisputeDetailPage() {
                             </div>
                         </div>
 
+                        {/* Dispute Source Info */}
+                        <div className="bg-muted/30 p-4 rounded-2xl border border-border/50 flex flex-wrap items-center justify-between gap-4">
+                            <div>
+                                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Dispute Initiator</span>
+                                <p className="text-sm font-black text-foreground mt-0.5">{disputeInitiatorName}</p>
+                            </div>
+                            <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg border ${
+                                isDisputedByHost
+                                    ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                                    : 'bg-red-500/10 text-red-500 border-red-500/20'
+                            }`}>
+                                {isDisputedByHost ? 'Host Force Dispute' : 'Joiner Dispute'}
+                            </span>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Host Side */}
                             <div className="space-y-4">
@@ -268,7 +295,9 @@ export default function DisputeDetailPage() {
                             <div className="space-y-4">
                                 <div className="flex items-center gap-2 px-1">
                                     <div className="w-2 h-2 rounded-full bg-destructive" />
-                                    <h4 className="text-[10px] font-black uppercase text-muted-foreground">Joiner's Dispute Proof</h4>
+                                    <h4 className="text-[10px] font-black uppercase text-muted-foreground">
+                                        {isDisputedByHost ? "Host's Dispute Evidence" : "Joiner's Dispute Proof"}
+                                    </h4>
                                 </div>
                                 {match.disputeProof ? (
                                     <div className="group relative aspect-video rounded-3xl border-2 border-border overflow-hidden bg-muted shadow-2xl">
@@ -290,7 +319,7 @@ export default function DisputeDetailPage() {
                                     </div>
                                 ) : (
                                     <div className="aspect-video rounded-3xl border-2 border-dashed border-border flex items-center justify-center bg-muted/30 text-xs font-bold text-muted-foreground italic px-6 text-center">
-                                        Joiner provided no counter-evidence
+                                        {isDisputedByHost ? "No additional dispute proof submitted" : "Joiner provided no counter-evidence"}
                                     </div>
                                 )}
                             </div>
@@ -402,7 +431,7 @@ export default function DisputeDetailPage() {
                                 className="w-full bg-green-500/10 hover:bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/20 font-bold py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
                             >
                                 {isResolving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                                🟢 Host Wins — Pay {netPrize} 🪙
+                                🟢 Host: {hostName} Wins — Pay {netPrize} 🪙
                             </button>
 
                             {/* Force Win — Joiner */}
@@ -412,7 +441,7 @@ export default function DisputeDetailPage() {
                                 className="w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/20 font-bold py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
                             >
                                 {isResolving ? <Loader2 className="w-4 h-4 animate-spin" /> : <User className="w-4 h-4" />}
-                                🔵 Joiner Wins — Pay {netPrize} 🪙
+                                🔵 Joiner: {joinerName} Wins — Pay {netPrize} 🪙
                             </button>
 
                             {/* Cancel & Refund Both */}

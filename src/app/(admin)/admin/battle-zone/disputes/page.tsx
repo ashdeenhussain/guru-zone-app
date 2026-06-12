@@ -82,127 +82,144 @@ export default function AdminDisputesPage() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 gap-6">
-                    {disputes.map((dispute) => (
-                        <div key={dispute._id} className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                            {/* Header Section */}
-                            <div className="bg-muted/30 p-4 border-b border-border flex flex-wrap justify-between items-center gap-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="bg-primary/10 p-2 rounded-lg text-primary">
-                                        <Trophy className="w-5 h-5" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-base leading-none">{dispute.title}</h3>
-                                        <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1.5 uppercase font-bold tracking-tighter">
-                                            <Calendar className="w-3 h-3" />
-                                            Started: {format(new Date(dispute.startTime || dispute.createdAt), 'MMM d, h:mm a')}
-                                            <span className="mx-1">•</span>
-                                            <Coins className="w-3 h-3" />
-                                            Prize: {dispute.prizePool} Coins
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-4 bg-background px-4 py-2 rounded-xl border border-border/50">
-                                    <div className="flex flex-col">
-                                        <span className="text-[10px] font-bold text-muted-foreground uppercase opacity-70">Host</span>
-                                        <span className="text-xs font-black">{dispute.createdBy?.username || 'Admin'}</span>
-                                    </div>
-                                    <div className="h-6 w-px bg-border/50" />
-                                    <div className="flex flex-col">
-                                        <span className="text-[10px] font-bold text-muted-foreground uppercase opacity-70 text-right">Format</span>
-                                        <span className="text-xs font-black text-primary text-right">{dispute.format}</span>
-                                    </div>
-                                </div>
-                            </div>
+                    {disputes.map((dispute) => {
+                        const isDisputedByHost = dispute.disputedBy
+                            ? String(dispute.disputedBy._id || dispute.disputedBy) === String(dispute.createdBy?._id || dispute.createdBy)
+                            : (!!dispute.winnerScreenshot && !!dispute.disputeProof && dispute.winnerScreenshot === dispute.disputeProof);
 
-                            {/* Content Body */}
-                            <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                {/* Dispute Information */}
-                                <div className="space-y-6">
-                                    <div className="bg-destructive/5 border border-destructive/10 rounded-xl p-4">
-                                        <h4 className="text-xs font-black text-destructive uppercase tracking-widest flex items-center gap-2 mb-3">
-                                            <AlertTriangle className="w-4 h-4" />
-                                            Dispute Evidence
-                                        </h4>
-                                        <p className="text-sm font-medium leading-relaxed italic text-foreground/90">
-                                            &quot;{dispute.disputeReason || 'No specific reason provided.'}&quot;
-                                        </p>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                                            <Trophy className="w-4 h-4 text-yellow-500" />
-                                            Declared Winner (by Host)
-                                        </h4>
-                                        <div className="bg-muted/30 p-3 rounded-xl border border-border/50 flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center border border-yellow-500/30">
-                                                    <UserIcon className="w-4 h-4 text-yellow-600" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-bold">{dispute.winners?.rank1?.inGameName || dispute.winners?.rank1?.username || 'Player'}</p>
-                                                    <p className="text-[10px] text-muted-foreground font-mono">UID: {dispute.winners?.rank1?.freeFireUid || 'N/A'}</p>
-                                                </div>
+                        return (
+                            <div key={dispute._id} className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                {/* Header Section */}
+                                <div className="bg-muted/30 p-4 border-b border-border flex flex-wrap justify-between items-center gap-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="bg-primary/10 p-2 rounded-lg text-primary">
+                                            <Trophy className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <h3 className="font-bold text-base leading-none">{dispute.title}</h3>
+                                                <span className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-wider rounded-md border ${
+                                                    isDisputedByHost
+                                                        ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                                                        : 'bg-red-500/10 text-red-500 border-red-500/20'
+                                                }`}>
+                                                    {isDisputedByHost ? 'Disputed by Host' : 'Disputed by Joiner'}
+                                                </span>
                                             </div>
-                                            <span className="text-[10px] font-bold bg-yellow-500/10 text-yellow-600 px-2 py-0.5 rounded-full border border-yellow-500/10">
-                                                WINNER
-                                            </span>
+                                            <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1.5 uppercase font-bold tracking-tighter">
+                                                <Calendar className="w-3 h-3" />
+                                                Started: {format(new Date(dispute.startTime || dispute.createdAt), 'MMM d, h:mm a')}
+                                                <span className="mx-1">•</span>
+                                                <Coins className="w-3 h-3" />
+                                                Prize: {dispute.prizePool} Coins
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4 bg-background px-4 py-2 rounded-xl border border-border/50">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-bold text-muted-foreground uppercase opacity-70">Host</span>
+                                            <span className="text-xs font-black">{dispute.createdBy?.username || 'Admin'}</span>
+                                        </div>
+                                        <div className="h-6 w-px bg-border/50" />
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-bold text-muted-foreground uppercase opacity-70 text-right">Format</span>
+                                            <span className="text-xs font-black text-primary text-right">{dispute.format}</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Proof Files */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-muted-foreground uppercase flex items-center gap-1.5">
-                                            <Eye className="w-3 h-3 text-green-500" />
-                                            Host Proof
-                                        </label>
-                                        <div className="aspect-video bg-muted rounded-xl border border-border overflow-hidden relative group">
-                                            {dispute.winnerScreenshot ? (
-                                                <>
-                                                    <img src={dispute.winnerScreenshot} className="w-full h-full object-cover transition-transform group-hover:scale-105" alt="Host proof" />
-                                                    <a href={dispute.winnerScreenshot} target="_blank" className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                        <span className="text-[10px] font-bold text-white bg-black/50 px-3 py-1 rounded-full border border-white/20">Open File</span>
-                                                    </a>
-                                                </>
-                                            ) : (
-                                                <div className="flex items-center justify-center h-full text-[10px] text-muted-foreground font-bold italic">No File Uploaded</div>
-                                            )}
+                                {/* Content Body */}
+                                <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                    {/* Dispute Information */}
+                                    <div className="space-y-6">
+                                        <div className="bg-destructive/5 border border-destructive/10 rounded-xl p-4">
+                                            <h4 className="text-xs font-black text-destructive uppercase tracking-widest flex items-center gap-2 mb-3">
+                                                <AlertTriangle className="w-4 h-4" />
+                                                Dispute Evidence
+                                            </h4>
+                                            <p className="text-sm font-medium leading-relaxed italic text-foreground/90">
+                                                &quot;{dispute.disputeReason || 'No specific reason provided.'}&quot;
+                                            </p>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                                                <Trophy className="w-4 h-4 text-yellow-500" />
+                                                Declared Winner (by Host)
+                                            </h4>
+                                            <div className="bg-muted/30 p-3 rounded-xl border border-border/50 flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center border border-yellow-500/30">
+                                                        <UserIcon className="w-4 h-4 text-yellow-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-bold">{dispute.winners?.rank1?.inGameName || dispute.winners?.rank1?.username || 'Player'}</p>
+                                                        <p className="text-[10px] text-muted-foreground font-mono">UID: {dispute.winners?.rank1?.freeFireUid || 'N/A'}</p>
+                                                    </div>
+                                                </div>
+                                                <span className="text-[10px] font-bold bg-yellow-500/10 text-yellow-600 px-2 py-0.5 rounded-full border border-yellow-500/10">
+                                                    WINNER
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-muted-foreground uppercase flex items-center gap-1.5">
-                                            <Eye className="w-3 h-3 text-destructive" />
-                                            Joiner Proof
-                                        </label>
-                                        <div className="aspect-video bg-muted rounded-xl border border-border overflow-hidden relative group">
-                                            {dispute.disputeProof ? (
-                                                <>
-                                                    <img src={dispute.disputeProof} className="w-full h-full object-cover transition-transform group-hover:scale-105" alt="Joiner proof" />
-                                                    <a href={dispute.disputeProof} target="_blank" className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                        <span className="text-[10px] font-bold text-white bg-black/50 px-3 py-1 rounded-full border border-white/20">Open File</span>
-                                                    </a>
-                                                </>
-                                            ) : (
-                                                <div className="flex items-center justify-center h-full text-[10px] text-muted-foreground font-bold italic">No File Uploaded</div>
-                                            )}
+
+                                    {/* Proof Files */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-muted-foreground uppercase flex items-center gap-1.5">
+                                                <Eye className="w-3 h-3 text-green-500" />
+                                                Host Proof
+                                            </label>
+                                            <div className="aspect-video bg-muted rounded-xl border border-border overflow-hidden relative group">
+                                                {dispute.winnerScreenshot ? (
+                                                    <>
+                                                        <img src={dispute.winnerScreenshot} className="w-full h-full object-cover transition-transform group-hover:scale-105" alt="Host proof" />
+                                                        <a href={dispute.winnerScreenshot} target="_blank" className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                            <span className="text-[10px] font-bold text-white bg-black/50 px-3 py-1 rounded-full border border-white/20">Open File</span>
+                                                        </a>
+                                                    </>
+                                                ) : (
+                                                    <div className="flex items-center justify-center h-full text-[10px] text-muted-foreground font-bold italic">No File Uploaded</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-muted-foreground uppercase flex items-center gap-1.5">
+                                                <Eye className="w-3 h-3 text-destructive" />
+                                                {isDisputedByHost ? "Host's Dispute Evidence" : "Joiner Proof"}
+                                            </label>
+                                            <div className="aspect-video bg-muted rounded-xl border border-border overflow-hidden relative group">
+                                                {dispute.disputeProof ? (
+                                                    <>
+                                                        <img src={dispute.disputeProof} className="w-full h-full object-cover transition-transform group-hover:scale-105" alt="Joiner proof" />
+                                                        <a href={dispute.disputeProof} target="_blank" className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                            <span className="text-[10px] font-bold text-white bg-black/50 px-3 py-1 rounded-full border border-white/20">Open File</span>
+                                                        </a>
+                                                    </>
+                                                ) : (
+                                                    <div className="flex items-center justify-center h-full text-[10px] text-muted-foreground font-bold italic">
+                                                        {isDisputedByHost ? "No additional dispute proof" : "No File Uploaded"}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Actions Footer */}
-                            <div className="bg-muted/20 p-4 border-t border-border flex justify-end">
-                                <Link
-                                    href={`/admin/battle-zone/disputes/${dispute._id}`}
-                                    className="flex items-center gap-2 text-xs font-black bg-primary text-primary-foreground hover:opacity-90 px-8 py-3 rounded-xl shadow-lg shadow-primary/20 transition-all uppercase tracking-widest"
-                                >
-                                    <Eye className="w-4 h-4" />
-                                    Review Case & Resolve
-                                </Link>
+                                {/* Actions Footer */}
+                                <div className="bg-muted/20 p-4 border-t border-border flex justify-end">
+                                    <Link
+                                        href={`/admin/battle-zone/disputes/${dispute._id}`}
+                                        className="flex items-center gap-2 text-xs font-black bg-primary text-primary-foreground hover:opacity-90 px-8 py-3 rounded-xl shadow-lg shadow-primary/20 transition-all uppercase tracking-widest"
+                                    >
+                                        <Eye className="w-4 h-4" />
+                                        Review Case & Resolve
+                                    </Link>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
         </div>

@@ -11,7 +11,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         const match = await BattleMatch.findById(id)
             .populate('createdBy', 'name inGameName freeFireUid image')
             .populate('participants.userId', 'username inGameName freeFireUid image name')
-            .populate('winners.rank1', 'username inGameName freeFireUid image name');
+            .populate('winners.rank1', 'username inGameName freeFireUid image name')
+            .populate('disputedBy', 'username inGameName freeFireUid name image');
 
         if (!match) {
             // Fallback: Check Tournament model in case it's an old match (optional, but good for transition)

@@ -30,6 +30,10 @@ export async function GET() {
                 path: 'participants.userId',
                 select: 'username name inGameName freeFireUid'
             })
+            .populate({
+                path: 'disputedBy',
+                select: 'username name inGameName freeFireUid'
+            })
             .sort({ updatedAt: -1 });
 
         return NextResponse.json({ success: true, data: disputes });
