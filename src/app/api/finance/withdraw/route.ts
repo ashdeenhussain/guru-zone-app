@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -8,39 +7,36 @@ import User from '@/models/User';
 import AdminNotification from '@/models/AdminNotification';
 
 import { startOfDay, endOfDay } from 'date-fns';
+import mongoose from 'mongoose';
 
 const DAILY_LIMIT = 1000;
 
-import mongoose from 'mongoose';
-
-// ... 
-
-async function getDailyUsage(userId: string) {
+async function getDailyUsage(userId: string, session?: mongoose.ClientSession) {
     const todayStart = startOfDay(new Date());
     const todayEnd = endOfDay(new Date());
 
     console.log(`Checking usage for user ${userId} from ${todayStart} to ${todayEnd}`);
 
-    const result = await Transaction.aggregate([
-        {
-            $match: {
-                user: new mongoose.Types.ObjectId(userId), // Explicitly cast to ObjectId
-                type: 'withdrawal',
-                status: { $in: ['pending', 'approved', 'Pending', 'Approved'] },
-                createdAt: { $gte: todayStart, $lte: todayEnd }
-            }
-        },
+    const matchStage = {
+        user: new mongoose.Types.ObjectId(userId),
+        type: 'withdrawal',
+        status: { $in: ['pending', 'approved', 'Pending', 'Approved'] },
+        createdAt: { $gte: todayStart, $lte: todayEnd }
+    };
+
+    const pipeline = [
+        { $match: matchStage },
         {
             $group: {
                 _id: null,
                 total: { $sum: '$amount' }
             }
         }
-    ]);
+    ];
 
-    const total = result[0]?.total || 0;
-
-    return total;
+    const query = session ? Transaction.aggregate(pipeline).session(session) : Transaction.aggregate(pipeline);
+    const result = await query;
+    return result[0]?.total || 0;
 }
 
 export async function GET(req: Request) {
@@ -65,6 +61,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+    let dbSession: mongoose.ClientSession | null = null;
     try {
         const session = await getServerSession(authOptions);
         if (!session || !session.user) {
@@ -87,65 +84,79 @@ export async function POST(req: Request) {
 
         await connectDB();
 
-        // Check Daily Limit
-        const usedToday = await getDailyUsage(session.user.id);
+        dbSession = await mongoose.startSession();
+        dbSession.startTransaction();
+
+        // 1. Fetch user inside transaction to check ban status and balance
+        const user = await User.findById(session.user.id).session(dbSession);
+        if (!user) {
+            await dbSession.abortTransaction();
+            dbSession.endSession();
+            return NextResponse.json({ message: 'User not found' }, { status: 404 });
+        }
+
+        // Real-time ban check
+        if (user.status === 'banned') {
+            await dbSession.abortTransaction();
+            dbSession.endSession();
+            return NextResponse.json({ message: 'Your account has been suspended.' }, { status: 403 });
+        }
+
+        // Verify Daily Limit within session to block concurrent withdrawals
+        const usedToday = await getDailyUsage(session.user.id, dbSession);
         if (usedToday + amountNum > DAILY_LIMIT) {
+            await dbSession.abortTransaction();
+            dbSession.endSession();
             return NextResponse.json({
                 message: `Daily limit exceeded. You have used ${usedToday}/${DAILY_LIMIT} coins today.`
             }, { status: 400 });
         }
 
-        // 1. Atomic Check & Deduct (Lock funds logic)
-        const user = await User.findOneAndUpdate(
-            { _id: session.user.id, walletBalance: { $gte: amountNum } },
-            { $inc: { walletBalance: -amountNum } },
-            { new: true }
-        );
-
-        if (!user) {
+        // Verify balance
+        if (user.walletBalance < amountNum) {
+            await dbSession.abortTransaction();
+            dbSession.endSession();
             return NextResponse.json({ message: 'Insufficient balance' }, { status: 400 });
         }
 
+        // Deduct balance
+        user.walletBalance -= amountNum;
+        await user.save({ session: dbSession });
+
         // 2. Create Transaction
-        try {
-            const transaction = await Transaction.create({
-                user: user._id,
-                amount: amountNum,
-                type: 'withdrawal',
-                status: 'pending', // Pending admin approval
-                method: method, // Also saving method at top level for consistency
-                description: `Withdrawal request to ${method}`,
-                details: { // Saving in 'details' to match Admin Finance Page expectations
-                    bankName: method,
-                    accountTitle: accountTitle,
-                    accountNumber: accountNumber
-                },
-            });
+        const transaction = await Transaction.create([{
+            user: user._id,
+            amount: amountNum,
+            type: 'withdrawal',
+            status: 'pending', // Pending admin approval
+            method: method,
+            description: `Withdrawal request to ${method}`,
+            details: {
+                bankName: method,
+                accountTitle: accountTitle,
+                accountNumber: accountNumber
+            },
+        }], { session: dbSession });
 
-            // Add transaction reference to user provided schema has it
-            // Safe to skip if we query via Transaction.find({ user: id }) but standardizing is good
-            // However, pushing to array in separate update is risky if it fails.
-            // But since money is deducted, transaction record is the most important.
-            // We won't re-update user array to avoid complexity, query by user id is sufficient.
+        // Create Admin Notification
+        await AdminNotification.create([{
+            title: 'New Withdrawal Request',
+            message: `User ${session.user.name || session.user.email} has requested a withdrawal of Rs ${amountNum} via ${method}.`,
+            type: 'withdraw',
+            link: '/admin/finance'
+        }], { session: dbSession });
 
-            // Create Admin Notification
-            await AdminNotification.create({
-                title: 'New Withdrawal Request',
-                message: `User ${session.user.name || session.user.email} has requested a withdrawal of Rs ${amountNum} via ${method}.`,
-                type: 'withdraw',
-                link: '/admin/finance'
-            });
+        await dbSession.commitTransaction();
+        dbSession.endSession();
 
-            return NextResponse.json({ message: 'Withdrawal request submitted successfully', transaction }, { status: 201 });
-        } catch (txError) {
-            // CRITICAL: Refund if transaction creation fails
-            console.error('Transaction creation failed, refunding user:', txError);
-            await User.findByIdAndUpdate(session.user.id, { $inc: { walletBalance: amountNum } });
-            return NextResponse.json({ message: 'Transaction creation failed, balance refunded. Please try again.' }, { status: 500 });
+        return NextResponse.json({ message: 'Withdrawal request submitted successfully', transaction: transaction[0] }, { status: 201 });
+
+    } catch (error: any) {
+        if (dbSession) {
+            await dbSession.abortTransaction();
+            dbSession.endSession();
         }
-
-    } catch (error) {
         console.error('Withdrawal error:', error);
-        return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ message: error.message || 'Internal Server Error' }, { status: 500 });
     }
 }

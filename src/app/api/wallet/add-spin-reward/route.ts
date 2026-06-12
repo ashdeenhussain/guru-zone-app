@@ -26,15 +26,21 @@ export async function POST(req: Request) {
             }, { status: 429 });
         }
 
-        await connectToDatabase();
+        const dbSession = await mongoose.startSession();
+        dbSession.startTransaction();
 
         try {
             // @ts-ignore
             const userId = session.user.id;
-            const user = await User.findById(userId);
+            const user = await User.findById(userId).session(dbSession);
 
             if (!user) {
                 throw new Error("User not found");
+            }
+
+            // Real-time ban check
+            if (user.status === 'banned') {
+                throw new Error("Your account has been suspended.");
             }
 
             // Verify if user had a pending reward
@@ -65,32 +71,32 @@ export async function POST(req: Request) {
 
                 user.walletBalance += amount;
 
-                const tx = await Transaction.create({
+                const tx = await Transaction.create([{
                     user: user._id,
                     amount: amount,
                     type: 'prize_winnings',
                     description: `Won from Lucky Spin: ${reward.label}`,
                     status: 'approved'
-                });
+                }], { session: dbSession });
 
                 // ── Financial Log Event ──
                 try {
-                    await FinancialLog.create({
+                    await FinancialLog.create([{
                         type: 'free_spin',
                         amount: amount,
                         currency: 'Coins',
                         userId: user._id,
-                        referenceId: tx._id,
+                        referenceId: tx[0]._id,
                         description: `Lucky Spin — Won ${amount} Coins`,
                         timestamp: new Date()
-                    });
+                    }], { session: dbSession });
                 } catch (logErr) {
                     console.error("Failed to write free spin to FinancialLog:", logErr);
                 }
 
             } else if (rewardType === 'product') {
                 // Create Order for Product Win
-                const order = await Order.create({
+                const order = await Order.create([{
                     userId: user._id,
                     productId: reward.product || reward.value, // Expecting ID here
                     pricePaid: 0,
@@ -101,19 +107,19 @@ export async function POST(req: Request) {
                         uid: user.freeFireUid || "Unknown"
                     },
                     adminComment: `Won via Lucky Spin: ${reward.label}`
-                });
+                }], { session: dbSession });
 
                 // ── Financial Log Event ──
                 try {
-                    await FinancialLog.create({
+                    await FinancialLog.create([{
                         type: 'free_spin',
                         amount: 0,
                         currency: 'Coins',
                         userId: user._id,
-                        referenceId: order._id,
+                        referenceId: order[0]._id,
                         description: `Lucky Spin — Won product: ${reward.label}`,
                         timestamp: new Date()
-                    });
+                    }], { session: dbSession });
                 } catch (logErr) {
                     console.error("Failed to write free spin product win to FinancialLog:", logErr);
                 }
@@ -127,7 +133,10 @@ export async function POST(req: Request) {
             // Clear the pending reward
             user.pendingSpinReward = undefined;
 
-            await user.save();
+            await user.save({ session: dbSession });
+
+            await dbSession.commitTransaction();
+            dbSession.endSession();
 
             return Response.json({
                 success: true,
@@ -137,6 +146,8 @@ export async function POST(req: Request) {
             });
 
         } catch (error: any) {
+            await dbSession.abortTransaction();
+            dbSession.endSession();
             return Response.json({ error: error.message || "Claim failed" }, { status: 400 });
         }
 

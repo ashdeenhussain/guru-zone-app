@@ -24,6 +24,26 @@ export async function POST(req: Request) {
 
         await connectDB();
 
+        // Check if user is banned
+        const user = await User.findById(session.user.id);
+        if (!user) {
+            return NextResponse.json({ message: 'User not found' }, { status: 404 });
+        }
+        if (user.status === 'banned') {
+            return NextResponse.json({ message: 'Your account has been suspended.' }, { status: 403 });
+        }
+
+        // Verify uniqueness of Transaction ID
+        if (trxId) {
+            const existingTrx = await Transaction.findOne({
+                trxID: trxId,
+                status: { $in: ['pending', 'approved', 'Pending', 'Approved'] }
+            });
+            if (existingTrx) {
+                return NextResponse.json({ message: 'This Transaction ID has already been submitted or processed.' }, { status: 400 });
+            }
+        }
+
         // Create Transaction
         const transaction = await Transaction.create({
             user: session.user.id,

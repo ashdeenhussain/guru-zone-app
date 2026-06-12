@@ -130,11 +130,6 @@ export async function POST(req: Request) {
         await tournament.save({ session });
         await transaction.save({ session });
 
-        // Commit Transaction
-        await session.commitTransaction();
-
-
-
         // 10. Create Notification
         const notification = new Notification({
             userId: user._id,
@@ -144,6 +139,9 @@ export async function POST(req: Request) {
             link: tournament.isOfficial ? `/tournaments/${tournament._id}` : `/battle-zone/${tournament._id}`
         });
         await notification.save({ session });
+
+        // Commit Transaction
+        await session.commitTransaction();
 
         return NextResponse.json({ message: 'Joined tournament successfully', tournament }, { status: 200 });
 

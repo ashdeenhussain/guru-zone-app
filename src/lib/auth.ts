@@ -116,6 +116,10 @@ export const authOptions: AuthOptions = {
                 await connectToDatabase();
                 const dbUser = await User.findOne({ email: user.email });
                 if (dbUser) {
+                    if (dbUser.status === 'banned') {
+                        console.warn(`Sign-in rejected: User ${user.email} is banned.`);
+                        return false; // Rejects NextAuth sign in
+                    }
                     await User.findByIdAndUpdate(dbUser._id, { 
                         lastLogin: new Date() 
                     });

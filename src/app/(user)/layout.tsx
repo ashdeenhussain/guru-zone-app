@@ -29,7 +29,7 @@ async function getUserOnboardingStatus() {
         if (!session?.user?.email) return null;
 
         await connectDB();
-        const user = await User.findOne({ email: session.user.email }).select("hasCompletedOnboarding inGameName freeFireUid avatarId bio").lean();
+        const user = await User.findOne({ email: session.user.email }).select("hasCompletedOnboarding inGameName freeFireUid avatarId bio status banReason").lean();
 
         if (!user) return null;
 
@@ -49,6 +49,32 @@ export default async function UserLayout({
     // Check maintenance mode
     const isMaintenance = await getMaintenanceStatus();
     const user = await getUserOnboardingStatus();
+
+    if (user?.status === 'banned') {
+        return (
+            <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col items-center justify-center p-6 text-center">
+                <div className="bg-red-600/20 p-6 rounded-full mb-6">
+                    <svg className="w-16 h-16 text-red-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-red-400 to-orange-500 bg-clip-text text-transparent mb-4">
+                    Account Suspended
+                </h1>
+                <p className="text-gray-400 text-lg max-w-md mb-2">
+                    Your account has been suspended.
+                </p>
+                {user.banReason && (
+                    <p className="text-red-400 text-sm max-w-md bg-red-950/40 border border-red-900/50 px-4 py-2 rounded-lg mb-4">
+                        <strong>Reason:</strong> {user.banReason}
+                    </p>
+                )}
+                <div className="mt-8 text-sm text-gray-600">
+                    If you believe this was an error, please contact Guru Zone support.
+                </div>
+            </div>
+        );
+    }
 
     if (isMaintenance) {
         return (

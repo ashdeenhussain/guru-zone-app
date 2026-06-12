@@ -67,45 +67,30 @@ export async function GET(
         };
 
         allTransactions.forEach((t: any) => {
-            if (t.status === 'approved' || t.status === 'Completed') {
-                if (t.type === 'deposit') {
-                    financials.totalDeposited += t.amount;
-                } else if (t.type === 'withdrawal') {
-                    // Withdrawals are usually negative in amount or positive?
-                    // Usually they reduce balance, so if stored as negative, take abs.
-                    // If stored as positive but type is withdrawal, add it.
-                    // Looking at models, amount is just Number. 
-                    // Let's assume standard logic: deposits +ve, withdrawals -ve in balance calculation,
-                    // but usually stored as absolute value for "Amount Requested".
-                    // Wait, in `shop_purchase` we saw `amount: -price`.
-                    // So negative amounts reduce balance.
-                    // So for "Total Withdrawn", we want the magnitude of withdrawals.
-                    if (t.type === 'withdrawal') {
-                        financials.totalWithdrawn += Math.abs(t.amount);
-                    }
-                }
+            const status = t.status?.toLowerCase();
+            if (status !== 'approved' && status !== 'completed') {
+                return; // Exclude pending, rejected, failed, or cancelled transactions
             }
 
-            // For others, status 'approved' or created successfully.
-            // Shop purchases are 'shop_purchase', usually auto-approved or pending?
-            // In the previous file `api/shop/purchase`, status was 'approved'.
-            if (t.type === 'shop_purchase') {
-                financials.totalSpentShop += Math.abs(t.amount);
+            const amount = Math.abs(t.amount || 0);
+
+            if (t.type === 'deposit') {
+                financials.totalDeposited += amount;
+            } else if (t.type === 'withdrawal') {
+                financials.totalWithdrawn += amount;
+            } else if (t.type === 'shop_purchase') {
+                financials.totalSpentShop += amount;
+            } else if (t.type === 'entry_fee') {
+                financials.totalSpentTournaments += amount;
+            } else if (
+                t.type === 'prize_winnings' || 
+                t.type === 'spin_win' || 
+                t.type === 'daily_reward_spin' || 
+                t.type === 'daily_free_coins' || 
+                t.type === 'rank_reward'
+            ) {
+                financials.totalWinnings += amount;
             }
-            if (t.type === 'entry_fee') {
-                financials.totalSpentTournaments += Math.abs(t.amount);
-            }
-            if (t.type === 'prize_winnings') {
-                financials.totalWinnings += t.amount;
-            }
-            if (t.type === 'spin_win' && t.amount > 0) {
-                financials.totalWinnings += t.amount;
-            }
-            // Spin cost? usually 'spin_cost' or similar?
-            // Not seen in enum but might exist. 'spin_win' implies winning.
-            // If there is a cost, it would be a negative transaction.
-            // Let's assume 'spin_cost' if it exists, or maybe it's under 'shop_purchase'?
-            // For now, ignore spin cost unless we see it.
         });
 
         return NextResponse.json({

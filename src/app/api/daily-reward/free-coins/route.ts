@@ -5,6 +5,7 @@ import connectToDB from "@/lib/db";
 import User from "@/models/User";
 import Transaction from "@/models/Transaction";
 import FinancialLog from "@/models/FinancialLog";
+import mongoose from "mongoose";
 
 // Weekly schedule: Day 1→1 coin, Day 2-3→2 coins, Day 4-5→4 coins, Day 6-7→5 coins
 const WEEKLY_SCHEDULE = [0, 1, 2, 2, 4, 4, 5, 5]; // index 0 unused, 1-7 are days
@@ -78,15 +79,30 @@ export async function GET() {
 }
 
 export async function POST() {
+    let dbSession: mongoose.ClientSession | null = null;
     try {
         await connectToDB();
         const session = await getServerSession(authOptions);
         if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
         const userId = (session.user as any).id;
-        const user = await User.findById(userId)
-            .select("walletBalance lastFreeCoinsAt freeCoinsStreak freeCoinsStreakStartedAt");
-        if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+
+        dbSession = await mongoose.startSession();
+        dbSession.startTransaction();
+
+        const user = await User.findById(userId).session(dbSession);
+        if (!user) {
+            await dbSession.abortTransaction();
+            dbSession.endSession();
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
+        }
+
+        // Real-time ban check
+        if (user.status === 'banned') {
+            await dbSession.abortTransaction();
+            dbSession.endSession();
+            return NextResponse.json({ error: "Your account has been suspended." }, { status: 403 });
+        }
 
         const now = new Date();
         const lastClaim = user.lastFreeCoinsAt ? new Date(user.lastFreeCoinsAt) : null;
@@ -97,6 +113,8 @@ export async function POST() {
         // Check cooldown
         if (lastClaim && hoursSinceLast! < RESET_HOURS) {
             const nextClaimAt = new Date(lastClaim.getTime() + RESET_HOURS * MS_PER_HOUR);
+            await dbSession.abortTransaction();
+            dbSession.endSession();
             return NextResponse.json({
                 error: "Come back tomorrow to claim!",
                 nextClaimAt: nextClaimAt.toISOString(),
@@ -118,31 +136,34 @@ export async function POST() {
         if (nextDay === 1 || !user.freeCoinsStreakStartedAt) {
             user.freeCoinsStreakStartedAt = now;
         }
-        await user.save();
+        await user.save({ session: dbSession });
 
         // Record transaction
-        const tx = await Transaction.create({
+        const tx = await Transaction.create([{
             user: userId,
             amount: coinsToAward,
             type: "daily_free_coins",
             status: "approved",
             description: `Daily Free Coins — Day ${nextDay} (${coinsToAward} Coins)`,
-        });
+        }], { session: dbSession });
 
         // ── Financial Log Event ──
         try {
-            await FinancialLog.create({
+            await FinancialLog.create([{
                 type: 'daily_collect',
                 amount: coinsToAward,
                 currency: 'Coins',
                 userId: userId,
-                referenceId: tx._id,
+                referenceId: tx[0]._id,
                 description: `Daily Free Coins — Day ${nextDay} (${coinsToAward} Coins)`,
                 timestamp: new Date()
-            });
+            }], { session: dbSession });
         } catch (logErr) {
             console.error("Failed to write daily collect to FinancialLog:", logErr);
         }
+
+        await dbSession.commitTransaction();
+        dbSession.endSession();
 
         return NextResponse.json({
             success: true,
@@ -153,6 +174,10 @@ export async function POST() {
             streakBroken: !!streakBroken,
         });
     } catch (error: any) {
+        if (dbSession) {
+            await dbSession.abortTransaction();
+            dbSession.endSession();
+        }
         console.error("Free coins error:", error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
