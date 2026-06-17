@@ -42,6 +42,9 @@ const AdminActivitySchema = new Schema(
                 'CREATE_SPIN_ITEM',
                 'UPDATE_SPIN_ITEM',
                 'DELETE_SPIN_ITEM',
+                'CREATE_DAILY_SPIN_ITEM',
+                'UPDATE_DAILY_SPIN_ITEM',
+                'DELETE_DAILY_SPIN_ITEM',
                 'GLOBAL_NOTIFICATION',
                 'UPDATE_PROMO_BANNER'
             ]
