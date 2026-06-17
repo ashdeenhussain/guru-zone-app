@@ -76,24 +76,27 @@ export async function GET(req: Request) {
                                                 { $cond: [
                                                     { $eq: ['$type', 'shop_purchase'] }, 'shop_purchase',
                                                     { $cond: [
-                                                        { $eq: ['$type', 'prize_winnings'] }, 'prize_winnings',
+                                                        { $eq: ['$type', 'manual_order'] }, 'manual_order',
                                                         { $cond: [
-                                                            { $eq: ['$type', 'daily_collect'] }, 'daily_collect',
+                                                            { $eq: ['$type', 'prize_winnings'] }, 'prize_winnings',
                                                             { $cond: [
-                                                                { $eq: ['$type', 'free_spin'] }, 'free_spin_1k',
+                                                                { $eq: ['$type', 'daily_collect'] }, 'daily_collect',
                                                                 { $cond: [
-                                                                    { $eq: ['$type', 'tournament_commission'] },
-                                                                    {
-                                                                        $cond: [
-                                                                            { $eq: ['$tournament.isOfficial', true] },
-                                                                            'tournament_commission_platform',
-                                                                            'tournament_commission_user'
-                                                                        ]
-                                                                    },
+                                                                    { $eq: ['$type', 'free_spin'] }, 'free_spin_1k',
                                                                     { $cond: [
-                                                                        { $eq: ['$type', 'admin_adjustment'] },
-                                                                        'admin_adjustment',
-                                                                        '$type'
+                                                                        { $eq: ['$type', 'tournament_commission'] },
+                                                                        {
+                                                                            $cond: [
+                                                                                { $eq: ['$tournament.isOfficial', true] },
+                                                                                'tournament_commission_platform',
+                                                                                'tournament_commission_user'
+                                                                            ]
+                                                                        },
+                                                                        { $cond: [
+                                                                            { $eq: ['$type', 'admin_adjustment'] },
+                                                                            'admin_adjustment',
+                                                                            '$type'
+                                                                        ]}
                                                                     ]}
                                                                 ]}
                                                             ]}
@@ -180,6 +183,7 @@ export async function GET(req: Request) {
             deposit: 0,
             withdrawal: 0,
             shop_purchase: 0,
+            manual_order: 0,
             tournament_commission_platform: 0,
             tournament_commission_user: 0,
             free_spin_1k: 0,
@@ -190,10 +194,12 @@ export async function GET(req: Request) {
             rank_reward: 0
         };
         const profits: Record<string, number> = {
-            shop_purchase: 0
+            shop_purchase: 0,
+            manual_order: 0
         };
         const costs: Record<string, number> = {
-            shop_purchase: 0
+            shop_purchase: 0,
+            manual_order: 0
         };
 
         summaryStats.forEach(stat => {
@@ -204,17 +210,24 @@ export async function GET(req: Request) {
                 profits.shop_purchase = stat.totalProfit || 0;
                 costs.shop_purchase = stat.totalCost || 0;
             }
+            if (stat._id === 'manual_order') {
+                profits.manual_order = stat.totalProfit || 0;
+                costs.manual_order = stat.totalCost || 0;
+            }
         });
 
         // Calculations strictly per requirements:
-        // Actual Profit = (Sum of Shop Net Profit) + (Sum of Tournament Commissions) - (Sum of Freebies) - (Sum of Admin Adjustments)
-        // Cash on Hand = Total Deposits - Total Withdrawals - Shop Expenses
+        // Actual Profit = (Sum of Shop Net Profit) + (Sum of Manual Net Profit) + (Sum of Tournament Commissions) - (Sum of Freebies) - (Sum of Admin Adjustments)
+        // Cash on Hand = Total Deposits - Total Withdrawals - Shop Expenses - Manual Expenses
         const totalDeposits = totals.deposit;
         const totalWithdrawals = totals.withdrawal;
         const totalPrizesPaid = totals.prize_winnings;
         const totalShopSales = totals.shop_purchase;
         const totalShopProfit = profits.shop_purchase;
         const totalShopExpenses = costs.shop_purchase;
+        const totalManualSales = totals.manual_order;
+        const totalManualProfit = profits.manual_order;
+        const totalManualExpenses = costs.manual_order;
 
         // Use the actual platform tournaments net profit calculated directly from completed official tournaments
         const totalCommissionsPlatform = platformTournamentsNetProfit;
@@ -229,10 +242,10 @@ export async function GET(req: Request) {
         const totalAdminAdjustments = totals.admin_adjustment;
 
         // Strict Net Profit formula:
-        const actualProfit = totalShopProfit + totalCommissionsPlatform + totalCommissionsUser - totalFreebies - totalAdminAdjustments;
+        const actualProfit = totalShopProfit + totalManualProfit + totalCommissionsPlatform + totalCommissionsUser - totalFreebies - totalAdminAdjustments;
 
         // Cash Flow Net:
-        const cashOnHand = totalDeposits - totalWithdrawals - totalShopExpenses;
+        const cashOnHand = totalDeposits - totalWithdrawals - totalShopExpenses - totalManualExpenses;
 
         // Chart data daily aggregation
         const chartStats = await FinancialLog.aggregate([
@@ -271,6 +284,16 @@ export async function GET(req: Request) {
                     shopProfit: {
                         $sum: {
                             $cond: [{ $eq: ['$_id.subCategory', 'shop_purchase'] }, '$totalProfit', 0]
+                        }
+                    },
+                    manualSales: {
+                        $sum: {
+                            $cond: [{ $eq: ['$_id.subCategory', 'manual_order'] }, '$totalAmount', 0]
+                        }
+                    },
+                    manualProfit: {
+                        $sum: {
+                            $cond: [{ $eq: ['$_id.subCategory', 'manual_order'] }, '$totalProfit', 0]
                         }
                     },
                     tournamentProfitPlatform: {
@@ -335,6 +358,8 @@ export async function GET(req: Request) {
                 withdrawals: 0,
                 shopSales: 0,
                 shopProfit: 0,
+                manualSales: 0,
+                manualProfit: 0,
                 tournamentProfitUser: 0,
                 freebies1k: 0,
                 freebiesDaily: 0,
@@ -350,6 +375,8 @@ export async function GET(req: Request) {
                 Withdrawals: item.withdrawals,
                 ShopSales: item.shopSales,
                 ShopProfit: item.shopProfit,
+                ManualSales: item.manualSales ?? 0,
+                ManualProfit: item.manualProfit ?? 0,
                 TournamentProfitPlatform: platformProfit,
                 TournamentProfitUser: item.tournamentProfitUser,
                 Freebies1k: item.freebies1k,
@@ -464,7 +491,10 @@ export async function GET(req: Request) {
                 totalPrizesPaid,
                 totalShopSales,
                 totalShopProfit,
-                totalShopExpenses
+                totalShopExpenses,
+                totalManualSales,
+                totalManualProfit,
+                totalManualExpenses
             },
             chartData,
             logs,

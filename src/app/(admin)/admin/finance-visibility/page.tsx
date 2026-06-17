@@ -29,6 +29,9 @@ interface SummaryData {
     totalShopSales: number;
     totalShopProfit?: number;
     totalShopExpenses?: number;
+    totalManualSales?: number;
+    totalManualProfit?: number;
+    totalManualExpenses?: number;
     totalFreebies1k?: number;
     totalFreebiesDaily?: number;
     totalFreebiesLucky?: number;
@@ -44,6 +47,8 @@ interface ChartItem {
     Withdrawals: number;
     ShopSales: number;
     ShopProfit: number;
+    ManualSales?: number;
+    ManualProfit?: number;
     TournamentProfitPlatform: number;
     TournamentProfitUser: number;
     Freebies1k: number;
@@ -71,7 +76,8 @@ interface LogItem {
 const CATEGORY_OPTIONS = [
     { value: 'deposit', label: 'Deposits', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
     { value: 'withdrawal', label: 'Withdrawals', color: 'bg-rose-500/10 text-rose-400 border-rose-500/20' },
-    { value: 'shop_purchase', label: 'Shop Purchases', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+    {value: 'shop_purchase', label: 'Shop Purchases', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+    { value: 'manual_order', label: 'Offline Orders', color: 'bg-teal-500/10 text-teal-400 border-teal-500/20' },
     { value: 'tournament_commission_platform', label: 'Platform Tournaments (Comm.)', color: 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/20' },
     { value: 'tournament_commission_user', label: 'User Tournaments (Comm.)', color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' },
     { value: 'free_spin_1k', label: '1k Coin Spin (Freebie)', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
@@ -120,6 +126,8 @@ export default function FinanceVisibilityPage() {
         Withdrawals: true,
         ShopSales: true,
         ShopProfit: false,
+        ManualSales: true,
+        ManualProfit: false,
         TournamentProfitPlatform: false,
         TournamentProfitUser: false,
         Freebies1k: false,
@@ -306,6 +314,8 @@ export default function FinanceVisibilityPage() {
             Withdrawals: true,
             ShopSales: true,
             ShopProfit: false,
+            ManualSales: true,
+            ManualProfit: false,
             TournamentProfitPlatform: false,
             TournamentProfitUser: false,
             Freebies1k: false,
@@ -904,6 +914,42 @@ export default function FinanceVisibilityPage() {
                     </div>
                 </div>
                 <div 
+                    onClick={() => toggleSubCategoryFilter('manual_order')}
+                    className={`bg-card border p-4 rounded-xl flex items-center justify-between cursor-pointer hover:border-teal-500/30 transition-all select-none ${selectedCategories.includes('manual_order') ? 'border-teal-500 shadow-sm' : 'border-border'}`}
+                >
+                    <div>
+                        <span className="text-xs text-muted-foreground font-bold uppercase block">Offline Sales Volume</span>
+                        <span className="text-lg font-black text-teal-400 font-mono">+{(summary.totalManualSales ?? 0).toLocaleString()} Coins / PKR</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] px-2 py-0.5 bg-teal-500/10 border border-teal-500/20 rounded text-teal-400 font-bold font-mono">Offline Vol</span>
+                        <div className="group relative inline-block">
+                            <Info size={14} className="text-muted-foreground hover:text-foreground cursor-help transition-colors" onClick={(e) => e.stopPropagation()} />
+                            <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2.5 bg-zinc-950/95 backdrop-blur border border-zinc-800 text-zinc-300 text-[10px] rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 text-center font-normal whitespace-normal pointer-events-none">
+                                Total volume of manual offline orders placed by admin.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div 
+                    onClick={() => toggleSubCategoryFilter('manual_order')}
+                    className={`bg-card border p-4 rounded-xl flex items-center justify-between cursor-pointer hover:border-emerald-500/30 transition-all select-none ${selectedCategories.includes('manual_order') ? 'border-emerald-500 shadow-sm' : 'border-border'}`}
+                >
+                    <div>
+                        <span className="text-xs text-muted-foreground font-bold uppercase block">Offline Profit Net</span>
+                        <span className="text-lg font-black text-emerald-400 font-mono">+{(summary.totalManualProfit ?? 0).toLocaleString()} Coins / PKR</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded text-emerald-400 font-bold font-mono">Offline Profit</span>
+                        <div className="group relative inline-block">
+                            <Info size={14} className="text-muted-foreground hover:text-foreground cursor-help transition-colors" onClick={(e) => e.stopPropagation()} />
+                            <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2.5 bg-zinc-950/95 backdrop-blur border border-zinc-800 text-zinc-300 text-[10px] rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 text-center font-normal whitespace-normal pointer-events-none">
+                                Offline Sales Volume - Offline Product Expenses (purchase costs of items).
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div 
                     onClick={() => toggleSubCategoryFilter('rank_reward')}
                     className={`bg-card border p-4 rounded-xl flex items-center justify-between cursor-pointer hover:border-blue-500/30 transition-all select-none ${selectedCategories.includes('rank_reward') ? 'border-blue-500 shadow-sm' : 'border-border'}`}
                 >
@@ -969,6 +1015,17 @@ export default function FinanceVisibilityPage() {
                                 <span className="w-2 h-2 bg-blue-500 rounded-full inline-block" />
                                 Shop Sales
                             </button>
+                            <button
+                                onClick={() => setVisibleLines({...visibleLines, ManualSales: !visibleLines.ManualSales})}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                    visibleLines.ManualSales 
+                                    ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20' 
+                                    : 'text-muted-foreground opacity-50 border border-transparent'
+                                }`}
+                            >
+                                <span className="w-2 h-2 bg-teal-500 rounded-full inline-block" />
+                                Offline Sales
+                            </button>
                             
                             <div className="h-4 w-px bg-border/60 mx-1" />
                             
@@ -1005,6 +1062,17 @@ export default function FinanceVisibilityPage() {
                                 >
                                     <span className="w-2 h-2 bg-indigo-500 rounded-full inline-block" />
                                     Shop Profit
+                                </button>
+                                <button
+                                    onClick={() => setVisibleLines({...visibleLines, ManualProfit: !visibleLines.ManualProfit})}
+                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                        visibleLines.ManualProfit 
+                                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                                        : 'text-muted-foreground opacity-50 border border-transparent'
+                                    }`}
+                                >
+                                    <span className="w-2 h-2 bg-emerald-500 rounded-full inline-block" />
+                                    Offline Profit
                                 </button>
                                 <button
                                     onClick={() => setVisibleLines({...visibleLines, TournamentProfitPlatform: !visibleLines.TournamentProfitPlatform})}
@@ -1142,10 +1210,22 @@ export default function FinanceVisibilityPage() {
                                             <span className="font-mono font-bold">{chartData[hoverIndex].ShopSales.toLocaleString()} Coins</span>
                                         </div>
                                     )}
+                                    {visibleLines.ManualSales && chartData[hoverIndex].ManualSales !== undefined && (
+                                        <div className="flex justify-between items-center text-teal-400">
+                                            <span>Offline Sales:</span>
+                                            <span className="font-mono font-bold">{chartData[hoverIndex].ManualSales.toLocaleString()} Coins/PKR</span>
+                                        </div>
+                                    )}
                                     {visibleLines.ShopProfit && (
                                         <div className="flex justify-between items-center text-indigo-400">
                                             <span>Shop Profit:</span>
                                             <span className="font-mono font-bold">{chartData[hoverIndex].ShopProfit.toLocaleString()} Coins</span>
+                                        </div>
+                                    )}
+                                    {visibleLines.ManualProfit && chartData[hoverIndex].ManualProfit !== undefined && (
+                                        <div className="flex justify-between items-center text-emerald-400">
+                                            <span>Offline Profit:</span>
+                                            <span className="font-mono font-bold">{chartData[hoverIndex].ManualProfit.toLocaleString()} Coins/PKR</span>
                                         </div>
                                     )}
                                     {visibleLines.TournamentProfitPlatform && (
@@ -1280,12 +1360,34 @@ export default function FinanceVisibilityPage() {
                                 />
                             )}
 
+                            {/* Manual Sales Path Line */}
+                            {visibleLines.ManualSales && points.length > 1 && (
+                                <path 
+                                    d={points.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${(p as any).ManualSales}`).join(' ')}
+                                    fill="none" 
+                                    stroke="#2dd4bf" 
+                                    strokeWidth={2.5}
+                                    strokeLinecap="round"
+                                />
+                            )}
+
                             {/* Shop Profit Path Line */}
                             {visibleLines.ShopProfit && points.length > 1 && (
                                 <path 
                                     d={points.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${(p as any).ShopProfit}`).join(' ')}
                                     fill="none" 
                                     stroke="#6366f1" 
+                                    strokeWidth={2.5}
+                                    strokeLinecap="round"
+                                />
+                            )}
+
+                            {/* Manual Profit Path Line */}
+                            {visibleLines.ManualProfit && points.length > 1 && (
+                                <path 
+                                    d={points.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${(p as any).ManualProfit}`).join(' ')}
+                                    fill="none" 
+                                    stroke="#34d399" 
                                     strokeWidth={2.5}
                                     strokeLinecap="round"
                                 />
@@ -1412,12 +1514,32 @@ export default function FinanceVisibilityPage() {
                                             strokeWidth={1.5}
                                         />
                                     )}
+                                    {visibleLines.ManualSales && (points[hoverIndex] as any).ManualSales !== undefined && (
+                                        <circle 
+                                            cx={points[hoverIndex].x} 
+                                            cy={(points[hoverIndex] as any).ManualSales} 
+                                            r={5} 
+                                            fill="#2dd4bf" 
+                                            stroke="var(--card)"
+                                            strokeWidth={1.5}
+                                        />
+                                    )}
                                     {visibleLines.ShopProfit && (points[hoverIndex] as any).ShopProfit !== undefined && (
                                         <circle 
                                             cx={points[hoverIndex].x} 
                                             cy={(points[hoverIndex] as any).ShopProfit} 
                                             r={5} 
                                             fill="#6366f1" 
+                                            stroke="var(--card)"
+                                            strokeWidth={1.5}
+                                        />
+                                    )}
+                                    {visibleLines.ManualProfit && (points[hoverIndex] as any).ManualProfit !== undefined && (
+                                        <circle 
+                                            cx={points[hoverIndex].x} 
+                                            cy={(points[hoverIndex] as any).ManualProfit} 
+                                            r={5} 
+                                            fill="#34d399" 
                                             stroke="var(--card)"
                                             strokeWidth={1.5}
                                         />
@@ -1586,7 +1708,7 @@ export default function FinanceVisibilityPage() {
                                 <span>Export to CSV</span>
                             </button>
 
-                            {(selectedCategories.length > 0 || datePreset !== 'month' || !visibleLines.Deposits || !visibleLines.Withdrawals || !visibleLines.ShopSales || visibleLines.ShopProfit || visibleLines.TournamentProfitPlatform || visibleLines.TournamentProfitUser || visibleLines.Freebies1k || visibleLines.FreebiesDaily || visibleLines.FreebiesLucky || visibleLines.PrizePayouts) && (
+                            {(selectedCategories.length > 0 || datePreset !== 'month' || !visibleLines.Deposits || !visibleLines.Withdrawals || !visibleLines.ShopSales || !visibleLines.ManualSales || visibleLines.ShopProfit || visibleLines.ManualProfit || visibleLines.TournamentProfitPlatform || visibleLines.TournamentProfitUser || visibleLines.Freebies1k || visibleLines.FreebiesDaily || visibleLines.FreebiesLucky || visibleLines.PrizePayouts) && (
                                 <button
                                     onClick={resetAllFilters}
                                     className="flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 px-3.5 py-1.5 rounded-xl text-xs text-red-400 font-bold transition-colors"

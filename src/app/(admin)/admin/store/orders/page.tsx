@@ -24,6 +24,7 @@ interface Order {
     productId: { title: string; priceCoins: number; imageType: string; imageUrl?: string; emoji?: string; costPrice?: number };
     pricePaid: number;
     status: 'Pending' | 'Approved' | 'Rejected';
+    source?: 'shop' | 'spin' | 'manual';
     userDetails: {
         inGameName: string;
         uid: string;
@@ -32,6 +33,22 @@ interface Order {
     adminComment?: string;
     purchaseCost?: number;
     calculatedProfit?: number;
+}
+
+interface UserOption {
+    _id: string;
+    name: string;
+    email: string;
+    inGameName?: string;
+    freeFireUid?: string;
+}
+
+interface ProductOption {
+    _id: string;
+    title: string;
+    priceCoins: number;
+    costPrice?: number;
+    isActive: boolean;
 }
 
 export default function OrderManagementPage() {
@@ -49,9 +66,120 @@ export default function OrderManagementPage() {
     const [approveModalOrder, setApproveModalOrder] = useState<Order | null>(null);
     const [purchaseCostInput, setPurchaseCostInput] = useState<number>(0);
 
+    // Add Manual Order Modal State
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [productsList, setProductsList] = useState<ProductOption[]>([]);
+    const [userSearchQuery, setUserSearchQuery] = useState('');
+    const [userSearchResults, setUserSearchResults] = useState<UserOption[]>([]);
+    const [selectedUser, setSelectedUser] = useState<UserOption | null>(null);
+    const [selectedProductId, setSelectedProductId] = useState('');
+    const [inGameName, setInGameName] = useState('');
+    const [uid, setUid] = useState('');
+    const [salePrice, setSalePrice] = useState<number>(0);
+    const [purchaseCost, setPurchaseCost] = useState<number>(0);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     useEffect(() => {
         fetchOrders();
+        fetchProducts();
     }, []);
+
+    useEffect(() => {
+        const delayDebounce = setTimeout(() => {
+            if (userSearchQuery.trim()) {
+                fetch(`/api/admin/users?search=${encodeURIComponent(userSearchQuery)}&limit=10`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.users) {
+                            setUserSearchResults(data.users);
+                        }
+                    })
+                    .catch(err => console.error(err));
+            } else {
+                setUserSearchResults([]);
+            }
+        }, 300);
+
+        return () => clearTimeout(delayDebounce);
+    }, [userSearchQuery]);
+
+    const fetchProducts = async () => {
+        try {
+            const res = await fetch('/api/admin/store/products');
+            const data = await res.json();
+            if (data.success) {
+                setProductsList(data.products || []);
+            }
+        } catch (error) {
+            console.error('Failed to fetch products', error);
+        }
+    };
+
+    const handleSelectProduct = (productId: string) => {
+        setSelectedProductId(productId);
+        const product = productsList.find(p => p._id === productId);
+        if (product) {
+            setSalePrice(product.priceCoins);
+            setPurchaseCost(product.costPrice || 0);
+        } else {
+            setSalePrice(0);
+            setPurchaseCost(0);
+        }
+    };
+
+    const handleSelectUser = (user: UserOption) => {
+        setSelectedUser(user);
+        setInGameName(user.inGameName || user.name || '');
+        setUid(user.freeFireUid || '');
+        setUserSearchResults([]);
+        setUserSearchQuery('');
+    };
+
+    const handleCloseAddModal = () => {
+        setIsAddModalOpen(false);
+        setSelectedUser(null);
+        setUserSearchQuery('');
+        setUserSearchResults([]);
+        setSelectedProductId('');
+        setInGameName('');
+        setUid('');
+        setSalePrice(0);
+        setPurchaseCost(0);
+    };
+
+    const handleCreateOrder = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedProductId || !inGameName.trim() || !uid.trim() || isSubmitting) return;
+
+        setIsSubmitting(true);
+        try {
+            const res = await fetch('/api/admin/store/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: selectedUser ? selectedUser._id : null,
+                    productId: selectedProductId,
+                    inGameName,
+                    uid,
+                    pricePaid: salePrice,
+                    purchaseCost
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                // Prepend to orders list
+                setOrders(prev => [data.order, ...prev]);
+                handleCloseAddModal();
+            } else {
+                alert(data.message || 'Failed to create manual order');
+            }
+        } catch (error) {
+            console.error('Failed to create manual order:', error);
+            alert('Failed to connect to the server');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     const fetchOrders = async () => {
         try {
@@ -122,11 +250,14 @@ export default function OrderManagementPage() {
         { id: 'Pending', label: 'Pending' },
         { id: 'Approved', label: 'Completed' }, // Mapped to 'Approved'
         { id: 'Rejected', label: 'Rejected' },
+        { id: 'Offline', label: 'Offline Orders' },
     ];
 
     const filteredOrders = orders.filter(order => {
         // 1. Tab Filter
-        if (activeTab !== 'All') {
+        if (activeTab === 'Offline') {
+            if (order.source !== 'manual') return false;
+        } else if (activeTab !== 'All') {
             const currentStatus = order.status?.toLowerCase() || '';
             const targetStatus = activeTab.toLowerCase();
             if (targetStatus === 'approved' && currentStatus !== 'approved') return false;
@@ -163,6 +294,13 @@ export default function OrderManagementPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setIsAddModalOpen(true)}
+                        className="flex items-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-green-600/10 hover:shadow-green-600/25 active:scale-95 border border-green-500/20"
+                    >
+                        <ShoppingBag size={16} />
+                        <span>Add Order</span>
+                    </button>
                     <Link
                         href="/admin/store/products"
                         className="flex items-center gap-2 px-3 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-xs font-bold transition-all border border-primary/20 hover:border-primary/40 active:scale-95"
@@ -177,12 +315,13 @@ export default function OrderManagementPage() {
             <div className="h-px w-full bg-border/50" />
 
             {/* Quick Stats Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 {[
                     { label: 'Total Orders', value: orders.length, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
                     { label: 'Pending', value: orders.filter(o => o.status?.toLowerCase() === 'pending').length, color: 'text-yellow-500', bg: 'bg-yellow-500/5', border: 'border-yellow-500/20' },
                     { label: 'Completed', value: orders.filter(o => o.status?.toLowerCase() === 'approved').length, color: 'text-green-500', bg: 'bg-green-500/5', border: 'border-green-500/20' },
-                    { label: 'Rejected', value: orders.filter(o => o.status?.toLowerCase() === 'rejected').length, color: 'text-red-500', bg: 'bg-red-500/5', border: 'border-red-500/20' }
+                    { label: 'Rejected', value: orders.filter(o => o.status?.toLowerCase() === 'rejected').length, color: 'text-red-500', bg: 'bg-red-500/5', border: 'border-red-500/20' },
+                    { label: 'Offline Orders', value: orders.filter(o => o.source === 'manual').length, color: 'text-blue-500', bg: 'bg-blue-500/5', border: 'border-blue-500/20' }
                 ].map((stat, i) => (
                     <div key={i} className={`${stat.bg} ${stat.border} border p-5 rounded-2xl flex flex-col justify-center gap-2 shadow-sm transition-transform hover:scale-[1.02]`}>
                         <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">{stat.label}</span>
@@ -210,6 +349,7 @@ export default function OrderManagementPage() {
                             {tab.id === 'Pending' && <Clock size={14} />}
                             {tab.id === 'Approved' && <CheckCircle2 size={14} />}
                             {tab.id === 'Rejected' && <XCircle size={14} />}
+                            {tab.id === 'Offline' && <ShoppingBag size={14} />}
                             {tab.id === 'All' && <ListFilter size={14} />}
                             {tab.label}
                         </button>
@@ -598,6 +738,184 @@ export default function OrderManagementPage() {
                                 Confirm Approve
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Create Manual Order Modal */}
+            {isAddModalOpen && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
+                    <div className="bg-card/95 backdrop-blur-xl border border-white/10 rounded-3xl w-full max-w-lg p-6 relative animate-in zoom-in-95 duration-200 shadow-2xl my-8">
+                        <h3 className="text-xl font-bold text-foreground mb-4">
+                            Create Manual Order
+                        </h3>
+
+                        <form onSubmit={handleCreateOrder} className="space-y-4">
+                            {/* User Selection */}
+                            <div className="space-y-1.5 relative">
+                                <label className="text-xs text-muted-foreground font-bold uppercase tracking-wider">
+                                    Search User (Account)
+                                </label>
+                                <div className="relative">
+                                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                    <input
+                                        type="text"
+                                        placeholder="Type name, email, or UID..."
+                                        className="w-full pl-10 pr-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-primary/50 focus:border-primary/50 outline-none transition-all placeholder:text-muted-foreground/40 font-medium"
+                                        value={userSearchQuery}
+                                        onChange={(e) => setUserSearchQuery(e.target.value)}
+                                    />
+                                </div>
+                                
+                                {userSearchResults.length > 0 && (
+                                    <div className="absolute left-0 right-0 top-full mt-1 bg-card border border-white/10 rounded-xl max-h-40 overflow-y-auto z-50 shadow-xl divide-y divide-white/5">
+                                        {userSearchResults.map(user => (
+                                            <button
+                                                key={user._id}
+                                                type="button"
+                                                onClick={() => handleSelectUser(user)}
+                                                className="w-full px-4 py-2.5 text-left text-xs text-foreground hover:bg-white/5 flex justify-between items-center transition-colors"
+                                            >
+                                                <div>
+                                                    <p className="font-bold">{user.name}</p>
+                                                    <p className="text-[10px] text-muted-foreground">{user.email}</p>
+                                                </div>
+                                                {user.freeFireUid && (
+                                                    <span className="font-mono bg-blue-500/10 text-blue-400 px-1.5 py-0.5 rounded text-[10px]">
+                                                        UID: {user.freeFireUid}
+                                                    </span>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                                
+                                {selectedUser && (
+                                    <div className="mt-2 bg-green-500/5 border border-green-500/10 p-2.5 rounded-xl flex items-center justify-between">
+                                        <div className="text-xs">
+                                            <span className="text-muted-foreground font-medium">Selected:</span>{' '}
+                                            <span className="font-bold text-foreground">{selectedUser.name}</span>{' '}
+                                            <span className="text-[10px] text-muted-foreground">({selectedUser.email})</span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => { setSelectedUser(null); setUserSearchResults([]); }}
+                                            className="text-[10px] text-red-400 hover:text-red-300 font-bold"
+                                        >
+                                            Clear
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Select Product */}
+                            <div className="space-y-1.5">
+                                <label className="text-xs text-muted-foreground font-bold uppercase tracking-wider">
+                                    Select Product
+                                </label>
+                                <select
+                                    required
+                                    className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/50 focus:border-primary/50 outline-none text-sm transition-all font-medium"
+                                    value={selectedProductId}
+                                    onChange={(e) => handleSelectProduct(e.target.value)}
+                                >
+                                    <option value="">-- Choose Product --</option>
+                                    {productsList.map(prod => (
+                                        <option key={prod._id} value={prod._id}>
+                                            {prod.title} ({prod.priceCoins} Coins)
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Game Info */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1.5">
+                                    <label className="text-xs text-muted-foreground font-bold uppercase tracking-wider">
+                                        In-Game Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        required
+                                        placeholder="Player IGN"
+                                        className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/50 focus:border-primary/50 outline-none text-sm transition-all font-medium"
+                                        value={inGameName}
+                                        onChange={(e) => setInGameName(e.target.value)}
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-xs text-muted-foreground font-bold uppercase tracking-wider">
+                                        Free Fire UID
+                                    </label>
+                                    <input
+                                        type="text"
+                                        required
+                                        placeholder="Player UID"
+                                        className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/50 focus:border-primary/50 outline-none text-sm transition-all font-medium"
+                                        value={uid}
+                                        onChange={(e) => setUid(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Sale & Purchase Price */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1.5">
+                                    <label className="text-xs text-muted-foreground font-bold uppercase tracking-wider">
+                                        Sale Price (Coins)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        required
+                                        min="0"
+                                        placeholder="0"
+                                        className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/50 focus:border-primary/50 outline-none text-sm transition-all font-medium"
+                                        value={salePrice}
+                                        onChange={(e) => setSalePrice(Number(e.target.value))}
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-xs text-muted-foreground font-bold uppercase tracking-wider">
+                                        Purchase Cost (PKR)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        required
+                                        min="0"
+                                        placeholder="0"
+                                        className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/50 focus:border-primary/50 outline-none text-sm transition-all font-medium"
+                                        value={purchaseCost}
+                                        onChange={(e) => setPurchaseCost(Number(e.target.value))}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Expected Profit */}
+                            <div className="bg-green-500/5 border border-green-500/10 p-3.5 rounded-2xl flex justify-between items-center text-xs">
+                                <span className="text-muted-foreground font-medium">Expected Profit:</span>
+                                <span className={`text-base font-black tracking-tight ${salePrice - purchaseCost >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                    {salePrice - purchaseCost} Coins / PKR
+                                </span>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="grid grid-cols-2 gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => handleCloseAddModal()}
+                                    className="px-4 py-3 bg-white/5 hover:bg-white/10 text-foreground rounded-xl text-sm font-bold transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting || !selectedProductId || !inGameName.trim() || !uid.trim()}
+                                    className="px-4 py-3 bg-green-600 hover:bg-green-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-green-600/20 hover:shadow-green-600/40 transform active:scale-95 disabled:opacity-50 disabled:scale-100"
+                                >
+                                    {isSubmitting ? 'Saving...' : 'Save Order'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

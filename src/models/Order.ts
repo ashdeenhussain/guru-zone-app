@@ -24,7 +24,7 @@ const OrderSchema = new Schema(
         },
         source: {
             type: String,
-            enum: ['shop', 'spin'],
+            enum: ['shop', 'spin', 'manual'],
             default: 'shop',
         },
         userDetails: {
@@ -53,6 +53,10 @@ const OrderSchema = new Schema(
     { timestamps: true }
 );
 
-const Order = models.Order || model('Order', OrderSchema);
+if (models.Order) {
+    delete models.Order;
+}
+
+const Order = model('Order', OrderSchema);
 
 export default Order;

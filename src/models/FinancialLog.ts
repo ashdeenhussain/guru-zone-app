@@ -13,7 +13,8 @@ const FinancialLogSchema = new Schema(
                 'daily_collect',
                 'prize_winnings',
                 'admin_adjustment',
-                'rank_reward'
+                'rank_reward',
+                'manual_order'
             ],
             required: true,
         },

@@ -38,6 +38,7 @@ const AdminActivitySchema = new Schema(
                 'DELETE_PRODUCT',
                 'APPROVE_ORDER',
                 'REJECT_ORDER',
+                'CREATE_MANUAL_ORDER',
                 'CREATE_SPIN_ITEM',
                 'UPDATE_SPIN_ITEM',
                 'DELETE_SPIN_ITEM',
@@ -60,6 +61,10 @@ const AdminActivitySchema = new Schema(
     { timestamps: true }
 );
 
-const AdminActivity = models.AdminActivity || model('AdminActivity', AdminActivitySchema);
+if (models.AdminActivity) {
+    delete models.AdminActivity;
+}
+
+const AdminActivity = model('AdminActivity', AdminActivitySchema);
 
 export default AdminActivity;
