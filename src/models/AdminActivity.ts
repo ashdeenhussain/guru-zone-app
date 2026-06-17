@@ -1,6 +1,15 @@
 import { Schema, model, models } from 'mongoose';
 
-const AdminActivitySchema = new Schema(
+export interface IAdminActivity {
+    adminId: any;
+    adminName: string | null | undefined;
+    actionType: string;
+    targetId?: any;
+    details: string;
+    metadata?: any;
+}
+
+const AdminActivitySchema = new Schema<IAdminActivity>(
     {
         adminId: {
             type: Schema.Types.ObjectId,
