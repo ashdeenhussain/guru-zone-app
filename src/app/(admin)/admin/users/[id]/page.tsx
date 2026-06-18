@@ -20,6 +20,7 @@ import {
     ArrowDownLeft
 } from 'lucide-react';
 import WalletAdjustmentModal from '@/components/admin/WalletAdjustmentModal';
+import TransactionDetailModal from '@/components/admin/TransactionDetailModal';
 
 interface Transaction {
     _id: string;
@@ -28,6 +29,16 @@ interface Transaction {
     description: string;
     createdAt: string;
     status: string;
+    method?: string;
+    proofImage?: string;
+    trxID?: string;
+    bankDetails?: {
+        bankName?: string;
+        accountTitle?: string;
+        accountNumber?: string;
+    };
+    rejectionReason?: string;
+    details?: any;
 }
 
 interface UserDetails {
@@ -62,6 +73,7 @@ export default function UserDetailsPage() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
     const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
+    const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
     useEffect(() => {
         fetchUserDetails();
@@ -286,7 +298,11 @@ export default function UserDetailsPage() {
                                             <td colSpan={4} className="py-8 text-center text-muted-foreground">No transactions found.</td>
                                         </tr>
                                     ) : transactions.map((trx) => (
-                                        <tr key={trx._id} className="group hover:bg-muted/30 transition-colors">
+                                        <tr 
+                                            key={trx._id} 
+                                            className="group hover:bg-muted/30 transition-colors cursor-pointer"
+                                            onClick={() => setSelectedTransaction(trx)}
+                                        >
                                             <td className="py-4 pl-2">
                                                 <div className="font-bold text-foreground">
                                                     {trx.type.replace('_', ' ').toUpperCase()}
@@ -344,6 +360,19 @@ export default function UserDetailsPage() {
                         userId={user._id}
                         userName={user.name}
                         onSuccess={fetchUserDetails} // Refresh data on success
+                    />
+                )
+            }
+            {
+                selectedTransaction && user && (
+                    <TransactionDetailModal
+                        isOpen={!!selectedTransaction}
+                        onClose={() => setSelectedTransaction(null)}
+                        transaction={selectedTransaction}
+                        user={{
+                            name: user.name,
+                            email: user.email
+                        }}
                     />
                 )
             }
