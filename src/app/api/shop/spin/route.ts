@@ -39,13 +39,7 @@ export async function POST(req: Request) {
             }
 
             if ((user.spinsAvailable || 0) <= 0) {
-                if ((user.loyaltyProgress || 0) >= 2500) {
-                    const extraSpins = Math.floor(user.loyaltyProgress / 2500);
-                    user.spinsAvailable = (user.spinsAvailable || 0) + extraSpins;
-                    user.loyaltyProgress = user.loyaltyProgress % 2500;
-                } else {
-                    throw new Error("No spins available");
-                }
+                throw new Error("No spins available");
             }
 
             // Fetch Items - Sorted by _id to match frontend order

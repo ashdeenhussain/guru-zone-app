@@ -51,14 +51,6 @@ export async function POST(req: Request) {
 
             // Verify if user actually had a "Spin Token" (spinsAvailable > 0)
             if ((user.spinsAvailable || 0) <= 0) {
-                if ((user.loyaltyProgress || 0) >= 2500) {
-                    const extraSpins = Math.floor(user.loyaltyProgress / 2500);
-                    user.spinsAvailable = (user.spinsAvailable || 0) + extraSpins;
-                    user.loyaltyProgress = user.loyaltyProgress % 2500;
-                }
-            }
-
-            if ((user.spinsAvailable || 0) <= 0) {
                 throw new Error("Requirements not met: No spin token available.");
             }
 

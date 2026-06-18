@@ -69,24 +69,19 @@ export async function PATCH(
 
             const user = await User.findById(order.userId);
             if (user) {
-                // Loyalty Logic: 1 Coin = 1 Point. 2500 Points = 1 Spin.
-                user.loyaltyProgress = (user.loyaltyProgress || 0) + order.pricePaid;
-
+                // Loyalty Logic: Grant spins strictly per single transaction (no accumulation)
                 const POINTS_PER_SPIN = 2500;
-                if (user.loyaltyProgress >= POINTS_PER_SPIN) {
-                    const spinsEarned = Math.floor(user.loyaltyProgress / POINTS_PER_SPIN);
+                const spinsEarned = Math.floor(order.pricePaid / POINTS_PER_SPIN);
 
-                    if (spinsEarned > 0) {
-                        user.spinsAvailable = (user.spinsAvailable || 0) + spinsEarned;
-                        user.loyaltyProgress = user.loyaltyProgress % POINTS_PER_SPIN; // Keep remainder
+                if (spinsEarned > 0) {
+                    user.spinsAvailable = (user.spinsAvailable || 0) + spinsEarned;
 
-                        await Notification.create({
-                            userId: order.userId,
-                            title: '🎉 Lucky Spin Earned!',
-                            message: `You earned ${spinsEarned} Lucky Spin(s) from your purchase!`,
-                            type: 'success'
-                        });
-                    }
+                    await Notification.create({
+                        userId: order.userId,
+                        title: '🎉 Lucky Spin Earned!',
+                        message: `You earned ${spinsEarned} Lucky Spin(s) from your purchase!`,
+                        type: 'success'
+                    });
                 }
                 await user.save();
             }

@@ -53,14 +53,6 @@ export async function PATCH(
             // 2. Handle Balance & Transaction Update based on Type
             if (transaction.type === 'deposit') {
                 user.walletBalance += finalAmount;
-                
-                // Loyalty Progress & Spins logic
-                user.loyaltyProgress = (user.loyaltyProgress || 0) + finalAmount;
-                const newSpins = Math.floor(user.loyaltyProgress / 2500);
-                if (newSpins > 0) {
-                    user.spinsAvailable = (user.spinsAvailable || 0) + newSpins;
-                    user.loyaltyProgress = user.loyaltyProgress % 2500;
-                }
             } else if (transaction.type === 'withdrawal') {
                 // For withdrawals, balance was already deducted at request time.
                 // No need to change balance here.
