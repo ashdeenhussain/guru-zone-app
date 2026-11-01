@@ -17,7 +17,8 @@ import {
     Headphones,
     ChevronRight,
     Shield,
-    Swords
+    Swords,
+    Sparkles
 } from "lucide-react";
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
@@ -205,6 +206,14 @@ export default function Navbar() {
                             >
                                 <History size={20} />
                                 <span>History</span>
+                            </Link>
+                            <Link
+                                href="/id-valuation"
+                                className="flex items-center space-x-3 p-2 text-yellow-400 font-bold hover:text-yellow-300 transition-colors bg-amber-500/10 rounded-lg border border-amber-500/20"
+                                onClick={() => setIsOpen(false)}
+                            >
+                                <Sparkles size={20} className="text-yellow-400" />
+                                <span>FF ID Valuation 🔥</span>
                             </Link>
                             <Link
                                 href="/dashboard/support"

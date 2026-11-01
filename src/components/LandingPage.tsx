@@ -546,6 +546,82 @@ export default function LandingPage({ initialData, city }: { initialData?: any, 
                                     </Link>
                                 </motion.div>
                             </div>
+
+                            {/* Block 5: Free Fire ID Valuation */}
+                            <div className="grid md:grid-cols-2 gap-8 md:gap-16 items-center">
+                                {/* Text Column (Left) */}
+                                <motion.div 
+                                    initial={{ opacity: 0, x: -40 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    viewport={{ once: true, margin: "-100px" }}
+                                    transition={{ duration: 0.7, ease: "easeOut" }}
+                                    className="space-y-6 text-left"
+                                >
+                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-bold border border-amber-500/20">
+                                        <Sparkles className="w-3.5 h-3.5" /> FREE MARKET ESTIMATOR TOOL
+                                    </div>
+                                    <h2 className="text-2xl md:text-4xl font-black text-foreground leading-tight">
+                                        Free Fire ID Valuation & Price Calculator
+                                    </h2>
+                                    <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
+                                        Wondering what your account is worth? Answer 8 quick interactive questions about your Max Evo Guns, Season 1-5 OG bundles, and Gloo Walls to get an instant live market estimate in PKR. 100% Free with no login required!
+                                    </p>
+                                    <Link href="/id-valuation">
+                                        <button className="px-6 py-3 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black font-black rounded-xl shadow-lg shadow-amber-500/25 hover:shadow-amber-500/50 hover:scale-105 transition-all flex items-center gap-2 group">
+                                            Check ID Value Now ⚡ <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                                        </button>
+                                    </Link>
+                                </motion.div>
+
+                                {/* Graphic Column (Right) */}
+                                <motion.div 
+                                    initial={{ opacity: 0, x: 40 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    viewport={{ once: true, margin: "-100px" }}
+                                    transition={{ duration: 0.7, ease: "easeOut" }}
+                                    className="relative w-full h-full flex items-center justify-center min-h-[300px]"
+                                >
+                                    <div className="absolute w-64 h-64 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
+                                    
+                                    <div className="relative w-full max-w-sm glass rounded-3xl border border-amber-500/30 p-5 overflow-hidden shadow-2xl space-y-3.5">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-primary flex items-center justify-center font-bold">
+                                                    👑
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-xs text-foreground">Free Fire ID Valuation</p>
+                                                    <p className="text-[10px] text-muted-foreground">Live Market Analysis</p>
+                                                </div>
+                                            </div>
+                                            <span className="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded font-bold">
+                                                Live 2026
+                                            </span>
+                                        </div>
+
+                                        <div className="p-3 bg-white/5 dark:bg-black/40 rounded-xl border border-amber-500/20 text-center">
+                                            <p className="text-[10px] text-primary uppercase font-bold tracking-wider">Estimated Market Value</p>
+                                            <p className="text-xl md:text-2xl font-black text-foreground mt-0.5">Rs. 18,500 - 24,000</p>
+                                            <p className="text-[10px] text-muted-foreground mt-1">Tier: 🔥 Legendary Collector ID</p>
+                                        </div>
+
+                                        <div className="space-y-1 text-xs">
+                                            <div className="flex justify-between py-1 border-b border-white/5 text-muted-foreground text-[11px]">
+                                                <span>⚡ Max Evo Guns (MP40/M1887)</span>
+                                                <span className="text-primary font-bold">High Value</span>
+                                            </div>
+                                            <div className="flex justify-between py-1 border-b border-white/5 text-muted-foreground text-[11px]">
+                                                <span>👑 S1-5 Vintage Pass Items</span>
+                                                <span className="text-primary font-bold">OG Bonus</span>
+                                            </div>
+                                            <div className="flex justify-between py-1 text-muted-foreground text-[11px]">
+                                                <span>🛡️ 20+ Gloo Walls & Emotes</span>
+                                                <span className="text-primary font-bold">Verified</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            </div>
                         </div>
                     </div>
 
@@ -791,10 +867,11 @@ export default function LandingPage({ initialData, city }: { initialData?: any, 
                                 </ul>
                             </div>
                             <div>
-                                <h4 className="font-bold text-foreground mb-4">Store</h4>
+                                <h4 className="font-bold text-foreground mb-4">Store & Tools</h4>
                                 <ul className="space-y-2 text-muted-foreground text-sm">
                                     <li><Link href="/topup" className="hover:text-primary transition-colors">Free Fire Top Up</Link></li>
                                     <li><Link href="/topup" className="hover:text-primary transition-colors">Memberships & Passes</Link></li>
+                                    <li><Link href="/id-valuation" className="hover:text-primary text-yellow-400 font-bold transition-colors flex items-center gap-1"><span>FF ID Valuation</span> <span className="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1 rounded">FREE</span></Link></li>
                                 </ul>
                             </div>
                             <div>

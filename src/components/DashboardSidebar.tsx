@@ -24,7 +24,8 @@ import {
     Bell,
     Swords,
     ScrollText,
-    Gift
+    Gift,
+    Flame
 } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { useState, useEffect } from "react";
@@ -67,6 +68,7 @@ export default function DashboardSidebar() {
         { icon: Trophy, label: "My Tournaments", href: "/dashboard/tournaments" },
         { icon: Swords, label: "Battle Zone", href: "/battle-zone", badge: unreadCounts.chat },
         { icon: ShoppingBag, label: "Diamond Shop", href: "/dashboard/shop" },
+        { icon: Flame, label: "FF ID Valuation", href: "/id-valuation" },
         { icon: Crown, label: "Leaderboard", href: "/dashboard/leaderboard" },
         { icon: Wallet, label: "Wallet", href: "/dashboard/wallet" },
         { icon: ArrowUpRight, label: "Withdraw", href: "/dashboard/wallet/withdraw" },

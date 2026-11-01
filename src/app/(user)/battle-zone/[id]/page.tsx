@@ -109,7 +109,7 @@ export default function BattleMatchDetailsPage({ params }: { params: Promise<{ i
     const uid = currentUserParticipant?.uid || userData?.freeFireUid || "N/A";
 
     // WhatsApp Message Formatting
-    const adminWhatsapp = "923306414313"; // Target admin number
+    const adminWhatsapp = "923246364313"; // Target admin number
     const matchDetails = `${match?.title} (${match?.gameMode} ${match?.format})`;
     const whatsappMessage = `Hello Admin, I am reporting a Disputed Match.
 

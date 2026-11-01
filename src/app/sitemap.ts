@@ -41,6 +41,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 0.9,
     },
+    {
+      url: 'https://www.guru-zone.com/id-valuation',
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.95,
+    },
     ...cityEntries,
     {
       url: 'https://www.guru-zone.com/dashboard/shop',

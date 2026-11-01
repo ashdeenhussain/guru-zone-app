@@ -13,7 +13,8 @@ import {
     Bell,
     Swords,
     ScrollText,
-    Gift
+    Gift,
+    Flame
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -276,6 +277,24 @@ export default function MobileNavigation() {
                                         <p className="text-xs text-muted-foreground">Join community challenges</p>
                                     </div>
                                     <ArrowUpRight size={18} className="text-muted-foreground/50" />
+                                </Link>
+
+                                <Link
+                                    href="/id-valuation"
+                                    onClick={() => setIsMenuOpen(false)}
+                                    className="flex items-center gap-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/15 active:scale-[0.98] transition-all"
+                                >
+                                    <div className="p-3 bg-amber-500/20 text-yellow-400 rounded-xl">
+                                        <Flame size={24} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="font-bold text-yellow-400">FF ID Valuation</h4>
+                                            <span className="bg-amber-500/20 text-yellow-300 text-[8px] font-black px-1.5 py-0.5 rounded uppercase">FREE</span>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">Check your account market price</p>
+                                    </div>
+                                    <ArrowUpRight size={18} className="text-yellow-400/70" />
                                 </Link>
 
                                 <Link

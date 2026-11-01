@@ -31,7 +31,7 @@ interface PaymentMethod {
     isActive: boolean;
 }
 
-const FALLBACK_WA_NUMBER = "923306414313";
+const FALLBACK_WA_NUMBER = "923246364313";
 const DEFAULT_BANNERS = [
     { url: "/banner1.png" },
     { url: "/banner2_new.png" },
@@ -210,9 +210,11 @@ export default function TopUpPageClient() {
             .then(data => {
                 if (data.products) setProducts(data.products);
                 if (data.banners) setBanners(data.banners);
-                if (data.supportLink) {
+                if (data.supportLink && !data.supportLink.includes('/channel/')) {
                     const cleaned = data.supportLink.replace(/\D/g, "");
-                    if (cleaned.length >= 10) setWhatsappNumber(cleaned);
+                    if (cleaned.length >= 10 && (cleaned.startsWith("92") || cleaned.startsWith("03"))) {
+                        setWhatsappNumber(cleaned);
+                    }
                 }
             })
             .catch(() => {})
