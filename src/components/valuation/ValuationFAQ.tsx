@@ -4,28 +4,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, HelpCircle, ShieldCheck, Sparkles, AlertTriangle } from "lucide-react";
 
-export const VALUATION_FAQS = [
-    {
-        q: "How is the Free Fire ID valuation calculated?",
-        a: "Our algorithm calculates estimated market prices based on thousands of real Free Fire ID sales in Pakistan and South Asia. We weight critical assets such as player level, account seniority (Season 1-5 OG status), number of Max-Level (Lv. 7) Evo Guns, rare Incubator & Collab outfits, Gloo Wall skin count, and profile rank."
-    },
-    {
-        q: "Why are Season 1 & 2 (Sakura / Hip Hop) accounts worth so much?",
-        a: "Season 1 (Sakura) and Season 2 (Hip Hop) Elite Passes were released in 2018 when the player base was very small. Because these original items cannot be purchased again directly from the in-game store, they have become supreme collector status symbols and command the highest market resale multiplier in Pakistan (often Rs. 20,000+ to Rs. 50,000+ depending on other items)."
-    },
-    {
-        q: "Does spending money on diamonds equal the account resale price?",
-        a: "No. In digital gaming markets, accounts typically resell at 20% to 35% of the total in-game diamonds purchased. However, Max-Level Evo Guns (like MP40 Cobra and M1887) and limited collaboration bundles retain the highest percentage of resale value."
-    },
-    {
-        q: "How can I increase the value of my Free Fire ID?",
-        a: "To maximize your account valuation: (1) Upgrade your Evo Guns to Level 7 to unlock kill emotes and announcement effects, (2) Acquire limited-time Incubator or Anime Collab sets, (3) Maintain high profile rank (Master / Grandmaster) and active Monthly Memberships, and (4) Collect unique Gloo Wall skins."
-    },
-    {
-        q: "How can I safely buy or sell a Free Fire account without getting scammed?",
-        a: "Never make direct payments or send account credentials first. Always use a verified community middleman or trusted escrow service who verifies the Gmail / Facebook / VK bind change before releasing funds. Guru Zone provides community verification groups to help players avoid scams."
-    }
-];
+import { VALUATION_FAQS } from "@/lib/valuation";
+export { VALUATION_FAQS };
 
 export default function ValuationFAQ() {
     const [openIndex, setOpenIndex] = useState<number | null>(0);

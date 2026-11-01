@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import IdValuationClient from "./IdValuationClient";
-import { VALUATION_FAQS } from "@/components/valuation/ValuationFAQ";
+import { VALUATION_FAQS } from "@/lib/valuation";
 
 export const metadata: Metadata = {
     title: "Free Fire ID Valuation & Market Price Calculator Pakistan | Check FF ID Price",
